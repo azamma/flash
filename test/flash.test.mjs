@@ -160,6 +160,31 @@ test('private keys, symlinks, binaries, ignored paths and flash config never rea
   assert.match(r.stderr, /blob\.dat \(binary\)/);
 });
 
+test('cache: a repeat run makes no request, an edit misses, --no-cache always asks', async () => {
+  const f = write('a.txt', 'MATCH v1');
+  await flash(['filter', 'q?', 'a.txt']);
+  assert.equal(jev.requests.length, 1);
+  const again = await flash(['filter', 'q?', 'a.txt']);
+  assert.equal(jev.requests.length, 1, 'second run must be served from cache');
+  assert.match(again.stdout, /0\.95 {2}a\.txt/);
+  assert.match(again.stderr, /1 cached/);
+  fs.writeFileSync(f, 'MATCH v2');
+  await flash(['filter', 'q?', 'a.txt']);
+  assert.equal(jev.requests.length, 2, 'edited content must miss');
+  await flash(['filter', 'q?', 'a.txt', '--no-cache']);
+  assert.equal(jev.requests.length, 3);
+  const dir = path.join(home, 'cache');
+  if (process.platform !== 'win32') assert.equal(fs.statSync(dir).mode & 0o777, 0o700);
+  for (const e of fs.readdirSync(dir)) {
+    if (process.platform !== 'win32') assert.equal(fs.statSync(path.join(dir, e)).mode & 0o777, 0o600);
+    assert.doesNotMatch(fs.readFileSync(path.join(dir, e), 'utf8'), /MATCH v/, 'cache must not hold content');
+  }
+  assert.match((await flash(['gain', '--plain'])).stdout, /answered from cache/);
+  assert.match((await flash(['cache', 'clear'])).stdout, /cleared/);
+  await flash(['filter', 'q?', 'a.txt']);
+  assert.equal(jev.requests.length, 4);
+});
+
 test('each run appends one counts-only row to history, and gain reads it', async () => {
   write('a.txt', 'MATCH secret-content');
   await flash(['filter', 'q?', 'a.txt']);

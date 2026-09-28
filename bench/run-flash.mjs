@@ -22,7 +22,7 @@ const SAVE = path.join(ROOT, 'results', '.last-save.json');
 function qs(dir, args, withSave = false) {
   const t0 = Date.now(), before = jevTotal();
   if (withSave) fs.rmSync(SAVE, { force: true });
-  const r = spawnSync(process.execPath, [QS, ...args, ...(withSave ? ['--save', SAVE] : [])], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync(process.execPath, [QS, ...args, '--no-cache', ...(withSave ? ['--save', SAVE] : [])], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0) throw new Error(`qs ${args.join(' ')} failed: ${r.stderr}`);
   const out = r.stdout.replace(/\n— full results saved to .*/, '');
   const cmd = `node flash.mjs ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`;

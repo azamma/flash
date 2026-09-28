@@ -25,7 +25,7 @@ Source: jevgrep v0.4.3 (`adbea4c`), MIT, © 2026 David Zhang. Code or prompt tex
 **What:** Port jevgrep's content checks. Skip files containing a `-----BEGIN … PRIVATE KEY-----` block. Treat control characters or invalid UTF-8 as binary, not only NUL. Skip symlinks. Never read `~/.flash`. Honor `.ignore` on the non-git walk path.
 **Testing:** fixture dir with a planted `DO_NOT_UPLOAD` private key, a symlink and a binary; the test asserts none of them reaches any request body.
 
-### Step 3: Answer cache in `decide()`
+### Step 3: Answer cache in `decide()` ✅ done
 **Files:** `flash.mjs` (`decide`, new `cacheGet`/`cachePut`, `gain`, `HELP`), `test/flash.test.mjs`
 **What:** Key = sha256 of `{schema, provider, base, model, promptVersion, body}`. Store answers only, never source, in `~/.flash/cache/<hash>.json`: directory 0700, files 0600, atomic write via temp file + rename, 7-day TTL, size cap. Source text is part of the body, so an edited file misses the cache automatically. Add `--no-cache` and `flash cache clear`. Cached hits count 0 Jev tokens, and `gain` shows the hit rate.
 The cache is **on by default**, as in jevgrep.

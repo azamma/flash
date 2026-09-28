@@ -5,12 +5,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
 const HISTORY = path.join(HOME, 'history.jsonl');
+const CACHE = path.join(HOME, 'cache');
+const CACHE_TTL_MS = 7 * 24 * 3600 * 1000;
 // Jev is served by TypeSafe directly and by OpenRouter's Decisions endpoint; same request/answer shape.
 const PROVIDERS = {
   typesafe: { base: 'https://api.typesafe.ai', decide: '/v1/systemone', check: '/v1/models', model: 'jev-latest',
@@ -30,7 +33,7 @@ const LOCK_RE = /(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb?|Carg
 
 function parseArgs(argv) {
   const pos = [], flags = {};
-  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard', 'plain']);
+  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard', 'plain', 'no-cache']);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--') { pos.push(...argv.slice(i + 1)); break; }
@@ -88,7 +91,7 @@ function recordStats(run) {
   try {
     fs.mkdirSync(HOME, { recursive: true });
     const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: path.basename(process.cwd()),
-      provider: provider().name, items: run.items, requests: run.requests, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved) };
+      provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved) };
     fs.appendFileSync(HISTORY, JSON.stringify(row) + '\n', { mode: 0o600 });
   } catch {}
 }
@@ -97,8 +100,34 @@ function recordStats(run) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Answer cache. The request body carries the content, so an edited file is a new key and a miss.
+// Only Jev's answers are stored, never the content. ponytail: expired entries are pruned on read and
+// by `flash cache clear`, not by a size-capped sweep; add one if ~/.flash/cache ever grows large.
+let cacheHits = 0;
+const cacheFile = (p, body) => path.join(CACHE, crypto.createHash('sha256')
+  .update(JSON.stringify(['flash-cache-v1', p.name, p.base, body])).digest('hex') + '.json');
+
+function cacheGet(file) {
+  try {
+    if (Date.now() - fs.statSync(file).mtimeMs > CACHE_TTL_MS) { fs.rmSync(file, { force: true }); return null; }
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch { return null; }
+}
+
+function cachePut(file, res) {
+  try {
+    fs.mkdirSync(CACHE, { recursive: true, mode: 0o700 });
+    const tmp = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify({ model: res.model, answers: res.answers }), { mode: 0o600 });
+    fs.renameSync(tmp, file);
+  } catch {}
+}
+
 async function decide(body, flags) {
   const p = provider(flags);
+  const cached = !flags['no-cache'] && cacheFile(p, body);
+  const hit = cached && cacheGet(cached);
+  if (hit) { cacheHits++; return { ...hit, usage: { input_tokens: 0 } }; }
   if (!p.key) die(`no ${p.name} API key. Get one at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`, 3);
   let lastErr;
   for (let attempt = 0; attempt <= 5; attempt++) {
@@ -115,7 +144,7 @@ async function decide(body, flags) {
       await sleep(500 * 2 ** attempt);
       continue;
     }
-    if (res.ok) return res.json();
+    if (res.ok) { const json = await res.json(); if (cached) cachePut(cached, json); return json; }
     const text = await res.text();
     if (res.status === 401 || res.status === 403) die(`${p.name} rejected the API key (${res.status}). Get a new one at ${p.keyUrl} and run: node flash.mjs setup --provider ${p.name}`, 3);
     if (res.status === 422 || res.status === 400) die(`Jev rejected the request (${res.status}): ${clip(text, 800)}`, 4);
@@ -291,7 +320,7 @@ async function runPerItem(items, flags, makeQ) {
 function footer(t0, items, extra, stats, outText, skipped) {
   const contentTok = items.reduce((a, it) => a + estTokens(it.text), 0);
   const saved = contentTok - estTokens(outText);
-  const parts = [`${items.length} scanned`, ...extra, `${((Date.now() - t0) / 1000).toFixed(1)}s`,
+  const parts = [`${items.length} scanned`, ...extra, ...(cacheHits ? [`${cacheHits} cached`] : []), `${((Date.now() - t0) / 1000).toFixed(1)}s`,
     `jev ${fmtK(stats.jevTokens)} tok (${cost(stats.jevTokens)})`,
     `~${fmtK(Math.max(0, saved))} Claude tokens not read`];
   let s = `— ${parts.join(' · ')}`;
@@ -613,15 +642,16 @@ function readHistory() {
 function groupBy(rows, key) {
   const g = {};
   for (const r of rows) {
-    const t = (g[key(r)] ??= { runs: 0, items: 0, jev_tokens: 0, saved: 0 });
-    t.runs += 1; t.items += r.items; t.jev_tokens += r.jev_tokens; t.saved += r.saved;
+    const t = (g[key(r)] ??= { runs: 0, items: 0, requests: 0, cached: 0, jev_tokens: 0, saved: 0 });
+    t.runs += 1; t.items += r.items; t.requests += r.requests || 0; t.cached += r.cached || 0; t.jev_tokens += r.jev_tokens; t.saved += r.saved;
   }
   return Object.entries(g);
 }
 
 function totalsLine(rows) {
   const [[, t]] = groupBy(rows, () => 'all');
-  return `since ${rows[0].ts.slice(0, 10)}: ${t.runs} runs · ${fmtK(t.items)} items · jev ${fmtK(t.jev_tokens)} tok (${cost(t.jev_tokens)}) · ~${fmtK(t.saved)} Claude tokens not read`;
+  return `since ${rows[0].ts.slice(0, 10)}: ${t.runs} runs · ${fmtK(t.items)} items · jev ${fmtK(t.jev_tokens)} tok (${cost(t.jev_tokens)}) · ~${fmtK(t.saved)} Claude tokens not read` +
+    (t.cached ? ` · ${Math.round((100 * t.cached) / t.requests)}% answered from cache` : '');
 }
 
 // Banner for `flash gain`: a bolt and FLASH in block letters. Colored only on a TTY without NO_COLOR.
@@ -692,6 +722,9 @@ Check that the key works and show lifetime savings. Exit 3 means the key is miss
   gain: `flash gain [--history [N]] [--plain] [--json]
 Tokens saved by command, project and day, read from ~/.flash/history.jsonl.
 --history lists the last N runs, --plain drops the banner, --json prints the raw history.`,
+  cache: `flash cache [clear]
+Show or delete the answer cache in ~/.flash/cache. Repeat runs over unchanged content are answered from it
+for free; edited content misses automatically. Answers only are stored, never content. Skip it per run with --no-cache.`,
   skill: `flash skill
 Print the agent instructions (SKILL.md) with this install's paths filled in.`,
 };
@@ -713,6 +746,7 @@ Commands:
   setup     save and verify a key, pick the default provider
   status    check the key, show lifetime savings
   gain      savings by command, project and day
+  cache     show or clear the answer cache
   skill     print the agent instructions (SKILL.md)
 Run "flash help <command>" or "flash <command> --help" for flags and examples.
 
@@ -722,6 +756,7 @@ Common flags:
   --ext ts,tsx       only these file types
   --json             machine-readable output on stdout
   --save FILE        write every per-item result to FILE
+  --no-cache         always ask Jev, ignore cached answers (kept 7 days)
   --fast             pack small items per request: about 10x faster, less accurate
   --provider P       typesafe or openrouter (default: FLASH_PROVIDER, then the saved choice, then whichever has a key)
   --model M          override the provider's default model
@@ -730,6 +765,19 @@ Output: results on stdout; the summary footer, skipped files and errors on stder
 Environment: FLASH_PROVIDER, FLASH_HOME (default ~/.flash), JEV_API_KEY / TYPESAFE_API_KEY, OPENROUTER_API_KEY
 Exit codes: 0 ok · 1 error · 2 bad usage · 3 key missing or rejected · 4 Jev rejected the request · 5 network or unexpected error
 Issues: https://github.com/azamma/flash/issues`;
+
+function cmdCache({ pos }) {
+  if (pos[0] === 'clear') {
+    const trash = `${CACHE}.clearing-${process.pid}`;
+    try { fs.renameSync(CACHE, trash); } catch { return console.log('cache already empty'); }
+    fs.rmSync(trash, { recursive: true, force: true });
+    return console.log(`cleared ${CACHE}`);
+  }
+  if (pos[0]) die(`unknown cache action "${pos[0]}". Use: flash cache [clear]`, 2);
+  let n = 0, bytes = 0;
+  try { for (const f of fs.readdirSync(CACHE)) { n++; bytes += fs.statSync(path.join(CACHE, f)).size; } } catch {}
+  console.log(`${n} cached answers · ${fmtK(bytes)}B in ${CACHE} · entries expire after 7 days`);
+}
 
 function cmdSkill() {
   const dir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -746,7 +794,7 @@ function distance(a, b) {
   return d[a.length][b.length];
 }
 
-const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk, skill: cmdSkill };
+const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk, skill: cmdSkill, cache: cmdCache };
 
 process.on('unhandledRejection', (e) => die(`unexpected error: ${e?.stack || e}`, 5));
 process.on('uncaughtException', (e) => die(`unexpected error: ${e?.stack || e}`, 5));

@@ -113,6 +113,10 @@ flash gain                 # tokens saved by command, project and day
 flash help <command>       # flags and examples for one command
 ```
 
+Answers are cached for 7 days in `~/.flash/cache` (answers only, never content). Re-running a
+command over unchanged content is free and instant; edited content is asked again. Pass
+`--no-cache` to force fresh answers, `flash cache clear` to wipe it.
+
 Results go to stdout. The summary footer, skipped files and errors go to stderr, so
 `flash filter ... | xargs` gets only results. Add `--json` for machine-readable output.
 `--save FILE` writes every per-item result to FILE, while stdout stays compact.
