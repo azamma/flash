@@ -315,6 +315,28 @@ test('each run appends one counts-only row to history, and gain reads it', async
   assert.match(md, /\| filter \| 1 \| 1 \| 100 \| \$0\.0000 \| ~\d+ \|/);
 });
 
+test('history records what was asked and where Jev pointed, and links runs to a blocked Read', async () => {
+  const big = write('big.py', Array.from({ length: 900 }, (_, i) => (i === 499 ? 'def refresh(): # MATCH' : `x${i} = ${i}`)).join('\n'));
+  await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', cwd: work, tool_input: { file_path: big } }) });
+  await flash(['find', 'token refresh', 'big.py']);
+  write('other.txt', 'MATCH');
+  await flash(['filter', 'q?', 'other.txt']);
+  const [guard, find, filter] = history();
+  assert.equal(guard.cmd, 'guard');
+  assert.equal(find.query, 'token refresh');
+  assert.deepEqual(find.inputs, ['big.py']);
+  assert.deepEqual(find.results[0], { id: 'big.py', line: 500, p: 0.85 });
+  assert.equal(find.after_guard, guard.ts, 'find on the blocked file links to the block');
+  assert.equal(filter.after_guard, undefined, 'a run on another file does not');
+  assert.doesNotMatch(JSON.stringify(history()), /def refresh/, 'file content never stored');
+  const g = (await flash(['gain', '--plain'])).stdout;
+  assert.match(g, /hook: whole-file Reads blocked[\s\S]*1 blocked +1 followed/);
+  const h = (await flash(['gain', '--history', '5'])).stdout;
+  assert.match(h, /"token refresh" → big\.py:500 0\.85 +\(after hook\)/);
+  assert.match(h, /blocked whole Read of big\.py/);
+  assert.match((await flash(['gain', '--md'])).stdout, /## Read hook[\s\S]*\| 1 \| 1 \|/);
+});
+
 test('skill prints SKILL.md with this install path filled in', async () => {
   const r = await flash(['skill']);
   assert.equal(r.code, 0);

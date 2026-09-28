@@ -88,12 +88,28 @@ function modelName(flags) {
   return flags.model || process.env.FLASH_MODEL || cfg.models?.[p.name] || p.model;
 }
 
-// One line per run in history.jsonl, the only stats store. Content never goes here, only counts.
+// One line per run in history.jsonl, the only stats store. Besides counts, each command sets `audit`:
+// what Claude asked (query, input paths) and where Jev pointed (ids, lines, scores), never file content.
+let audit = {};
+const GUARD_WINDOW_MS = 120_000;
+
+// A run over a file the Read hook blocked in the last 2 minutes counts as triggered by the hook.
+// ponytail: time + file-path heuristic; exact linking would need the hook to pass an id to Claude.
+function afterGuard(inputs) {
+  const now = Date.now(), abs = (inputs || []).map((i) => path.resolve(String(i)));
+  const g = readHistory().slice(-200).reverse().find((r) => r.cmd === 'guard' && r.file && now - Date.parse(r.ts) < GUARD_WINDOW_MS &&
+    abs.some((a) => a === path.resolve(r.file) || a.endsWith(path.sep + r.file)));
+  return g?.ts;
+}
+
 function recordStats(run) {
   try {
     fs.mkdirSync(HOME, { recursive: true });
     const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: path.basename(process.cwd()),
-      provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved) };
+      provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved),
+      ...audit, results: audit.results?.slice(0, 50) };
+    const g = afterGuard(audit.inputs);
+    if (g) row.after_guard = g;
     fs.appendFileSync(HISTORY, JSON.stringify(row) + '\n', { mode: 0o600 });
   } catch {}
 }
@@ -392,6 +408,7 @@ async function cmdFilter({ pos, flags }) {
   ];
   if (!sure.length && !unsure.length) lines.push('(no matches)');
   const saved = save(flags, rows.map((r) => ({ id: r.item.id, p: p(r) })));
+  audit = { query: question, inputs: pos, results: hits.map((r) => ({ id: r.item.id, p: +f2(p(r)) })) };
   const foot = footer(t0, items, [`${hits.length} matched`, `${unsure.length} borderline`], stats, lines.join('\n'), skipped) + saved;
   emit(flags, { matched: hits.map((r) => ({ id: r.item.id, p: p(r) })), borderline: unsure.map((r) => ({ id: r.item.id, p: p(r) })) }, lines, foot);
 }
@@ -446,6 +463,8 @@ async function cmdClassify({ pos, flags }) {
     }
   }
   const saved = save(flags, rows.map((r) => ({ id: r.item.id, label: r.answer.choice, confidence: r.answer.confidence })));
+  audit = { query: question, labels: Object.keys(criteria), inputs: pos,
+    results: rows.map((r) => ({ id: r.item.id, label: r.answer.choice, p: +f2(r.answer.confidence) })) };
   const foot = footer(t0, items, [`${low.length} low-confidence (?)`], stats, lines.join('\n'), skipped) + saved;
   emit(flags, rows.map((r) => ({ id: r.item.id, label: r.answer.choice, confidence: r.answer.confidence, probabilities: r.answer.probabilities })), lines, foot);
 }
@@ -473,6 +492,7 @@ async function cmdRank({ pos, flags }) {
   rows.sort((a, b) => b.answer.score - a.answer.score);
   const shown = flags.all ? rows : rows.slice(0, top);
   const lines = shown.map((r) => `${f2(r.answer.score / max)}  ${label(r.item, flags)}`);
+  audit = { query, inputs: pos, results: shown.map((r) => ({ id: r.item.id, p: +f2(r.answer.score / max) })) };
   const foot = footer(t0, items, [`top ${shown.length}`], stats, lines.join('\n'), skipped);
   emit(flags, shown.map((r) => ({ id: r.item.id, relevance: r.answer.score / max, confidence: r.answer.confidence })), lines, foot);
 }
@@ -521,6 +541,7 @@ async function cmdFind({ pos, flags }) {
     json = { hits, blocks };
   }
   if (!out.length) out.push('(no matching lines)');
+  audit = { query, inputs: pos, results: hits.map((h) => ({ id: h.file, line: +h.line, p: +f2(h.score) })) };
   const foot = footer(t0, files, [`${chunks.length} chunks`], stats, out.join('\n'), skipped);
   emit(flags, json, out, foot);
 }
@@ -739,6 +760,7 @@ async function cmdSearch({ pos, flags }) {
   const { out, json } = await describeCandidates(query, cands, flags, run);
   if (run.failed) process.stderr.write(`flash: ${run.failed} items got no answer after retries and were treated as not relevant.\n`);
   if (run.incomplete) process.stderr.write(`flash: stopped at --max-requests ${run.max}; results are partial. Raise it or narrow the root.\n`);
+  audit = { query, inputs: [root], results: cands.map((c) => ({ id: c.id, role: c.role, p: +f2(c.score), picked: c.picked.map((u) => `${u.name}@${u.start}-${u.end}`) })) };
   const foot = footer(t0, items, [`${cands.length} relevant`, `${run.requests} requests`], run, out.join('\n'), skipped);
   emit(flags, json, out, foot);
 }
@@ -764,6 +786,8 @@ async function cmdAsk({ pos, flags }) {
   const res = await decide(body, flags);
   const lines = Object.entries(res.answers).map(([id, a]) => fmtAnswer(id, a));
   const stateText = typeof body.state === 'string' ? body.state : JSON.stringify(body.state);
+  audit = { query: Object.values(body.questions).map((q) => (typeof q.instructions === 'string' ? q.instructions : JSON.stringify(q.instructions))).join(' | '),
+    inputs: typeof flags.state === 'string' && flags.state.startsWith('@') ? [flags.state.slice(1)] : [], results: lines };
   const foot = footer(t0, [{ text: stateText }], [], { requests: 1, jevTokens: res.usage?.input_tokens || 0 }, lines.join('\n'), []);
   emit(flags, res, lines, foot.replace('1 scanned · ', ''));
 }
@@ -852,6 +876,25 @@ function groupBy(rows, key) {
   return Object.entries(g);
 }
 
+// Per project: whole-file Reads the hook blocked, and how many of them Claude followed with a flash run.
+function guardStats(rows) {
+  const followed = new Set(rows.map((r) => r.after_guard).filter(Boolean));
+  const g = {};
+  for (const r of rows.filter((x) => x.cmd === 'guard')) {
+    const t = (g[r.project || '?'] ??= { blocked: 0, followed: 0 });
+    t.blocked++; if (followed.has(r.ts)) t.followed++;
+  }
+  return Object.entries(g).sort((a, b) => b[1].blocked - a[1].blocked);
+}
+
+// One history row as a line: what was asked and where Jev pointed.
+function describeRun(r) {
+  if (r.cmd === 'guard') return `blocked whole Read of ${r.file}`;
+  const top = (r.results || []).slice(0, 3).map((x) => (typeof x === 'string' ? x
+    : `${x.id}${x.line ? ':' + x.line : ''}${x.label ? ' [' + x.label + ']' : ''}${x.picked?.length ? ' ' + x.picked[0] : ''} ${x.p ?? ''}`.trim()));
+  return `${r.query ? JSON.stringify(clip(r.query, 70)) : ''}${top.length ? ' → ' + top.join(', ') : ''}${r.after_guard ? '  (after hook)' : ''}`;
+}
+
 function totalsLine(rows) {
   const [[, t]] = groupBy(rows, () => 'all');
   return `since ${rows[0].ts.slice(0, 10)}: ${t.runs} runs · ${fmtK(t.items)} items · jev ${fmtK(t.jev_tokens)} tok (${cost(t.jev_tokens)}) · ~${fmtK(t.saved)} Claude tokens not read` +
@@ -891,6 +934,8 @@ function gainMarkdown(rows) {
     ...table('By command', 'command', bySaved(groupBy(rows, (r) => r.cmd || '?'))),
     ...table('By project', 'project', bySaved(groupBy(rows, (r) => r.project || '?'))),
     ...table('By day', 'day', groupBy(rows, (r) => r.ts.slice(0, 10)).sort()),
+    ...(guardStats(rows).length ? ['## Read hook', '', '| project | whole-file Reads blocked | followed by a flash run |', '|---|---:|---:|',
+      ...guardStats(rows).map(([k, t]) => `| ${k} | ${t.blocked} | ${t.followed} |`), ''] : []),
     '_Claude tokens not read = estimated size of the content Jev judged (chars ÷ 4) minus what Flash printed back._'].join('\n');
 }
 
@@ -905,7 +950,7 @@ function cmdGain({ flags }) {
   if (flags.history) {
     const n = num(flags.history, 20);
     for (const r of rows.slice(-n)) console.log(`${r.ts.slice(0, 16).replace('T', ' ')}  ${(r.cmd || '').padEnd(8)} ${(r.project || '').padEnd(18)} ` +
-      `${fmtK(r.items).padStart(6)} items  jev ${fmtK(r.jev_tokens).padStart(6)}  saved ~${fmtK(r.saved)}  ${r.provider || ''}`);
+      `${fmtK(r.items).padStart(6)} items  jev ${fmtK(r.jev_tokens).padStart(6)}  saved ~${fmtK(r.saved)}  ${r.provider || ''}\n      ${describeRun(r)}`);
     return;
   }
   console.log(`flash ${totalsLine(rows)}`);
@@ -914,6 +959,11 @@ function cmdGain({ flags }) {
   show('by command', bySaved(groupBy(rows, (r) => r.cmd || '?')));
   show('by project', bySaved(groupBy(rows, (r) => r.project || '?')).slice(0, 10));
   show('last 7 days', groupBy(rows, (r) => r.ts.slice(0, 10)).sort().slice(-7));
+  const hook = guardStats(rows);
+  if (hook.length) {
+    console.log('\nhook: whole-file Reads blocked, and how many Claude followed with flash within 2 min');
+    for (const [k, t] of hook) console.log(`  ${k.padEnd(16)} ${String(t.blocked).padStart(5)} blocked  ${String(t.followed).padStart(5)} followed`);
+  }
 }
 
 const CMD_HELP = {
@@ -951,7 +1001,8 @@ Reads the key from a hidden prompt, or from stdin when piped. Avoid passing it a
 Check that the key works and show lifetime savings. Exit 3 means the key is missing or rejected.`,
   gain: `flash gain [--history [N]] [--plain] [--json] [--md]
 Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Reads the hook blocked count as "guard".
---history lists the last N runs, --plain drops the banner, --json prints the raw history,
+--history lists the last N runs with what was asked and where Jev pointed, --plain drops the banner,
+--json prints the raw history (query, inputs, result ids/lines/scores; never file content),
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
   cache: `flash cache [clear]
 Show or delete the answer cache in ~/.flash/cache. Repeat runs over unchanged content are answered from it

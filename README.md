@@ -39,7 +39,7 @@ Flash is a fork of [quicksilver](https://github.com/UditAkhourii/quicksilver). T
 | **Two providers** | Reach Jev through [TypeSafe](https://console.typesafe.ai) or [OpenRouter](https://openrouter.ai/settings/keys). Keys are stored per provider; switch with `--provider` or `FLASH_PROVIDER`. |
 | **An enforcement hook** | A `PreToolUse` hook refuses whole-file `Read`s of large files and tells Claude to run `flash find` / `flash filter` first. The skill stops being optional. |
 | **Jev you can see** | After every run, the Claude Code UI shows `⚡ flash → Jev … tok ($…)`; a blocked read shows `⚡ flash: blocked whole Read of …`. |
-| **A local savings log** | `flash gain` breaks tokens saved down by command, project and day, from `~/.flash/history.jsonl` (counts only, never content). Reads the hook blocked appear as `guard`, with the file name. |
+| **A local savings log** | `flash gain` breaks tokens saved down by command, project and day, from `~/.flash/history.jsonl`. Each run also records what Claude asked and where Jev pointed (ids, lines, scores; never file content), and runs that follow a hook block are marked, so `gain` shows per project how many blocked Reads Claude followed with Flash. `gain --history` lists them; `--json` exports them for audits or benchmarks. |
 | **Agent-ready setup** | [`AGENT-SETUP.md`](AGENT-SETUP.md) walks an agent through install, key, hooks and checks, one verifiable step at a time. |
 
 From [jevgrep](https://github.com/dzhng/jevgrep), ported without its dependencies:
