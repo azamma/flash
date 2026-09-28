@@ -326,10 +326,16 @@ test('guard blocks a whole Read of a large file and allows a ranged one', async 
   const big = write('big.txt', Array.from({ length: 900 }, (_, i) => `line ${i}`).join('\n'));
   const whole = await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: big } }) });
   assert.equal(JSON.parse(whole.stdout).hookSpecificOutput.permissionDecision, 'deny');
+  const logged = history();
+  assert.equal(logged.length, 1, 'only the blocked read is logged');
+  assert.equal(logged[0].cmd, 'guard');
+  assert.match(logged[0].file, /big\.txt$/);
   const ranged = await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: big, offset: 1, limit: 20 } }) });
   assert.equal(ranged.stdout, '');
   const small = await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: write('s.txt', 'hi') } }) });
   assert.equal(small.stdout, '');
+  assert.equal(history().length, 1, 'allowed reads are not logged');
+  assert.match((await flash(['gain', '--plain'])).stdout, /guard +1 runs/);
 });
 
 test('guard turns the footer of a real run into a UI message', async () => {

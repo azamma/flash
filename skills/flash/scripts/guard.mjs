@@ -5,6 +5,7 @@
 // Set FLASH_GUARD=off to disable. Thresholds: FLASH_GUARD_LINES, FLASH_GUARD_BYTES.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -46,6 +47,15 @@ if (input.hook_event_name === 'PostToolUse') {
   if (s) process.stdout.write(JSON.stringify({ systemMessage: `⚡ flash → Jev ${s.slice(2)}` }));
 } else {
   const reason = verdict(input);
+  if (reason) {
+    // One counts-only row in the same history `flash gain` reads, so blocked reads show up as cmd "guard".
+    const cwd = input.cwd || process.cwd(), home = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
+    try {
+      fs.mkdirSync(home, { recursive: true });
+      fs.appendFileSync(path.join(home, 'history.jsonl'), JSON.stringify({ ts: new Date().toISOString(), cmd: 'guard',
+        project: path.basename(cwd), file: path.relative(cwd, input.tool_input.file_path), items: 1, requests: 0, jev_tokens: 0, saved: 0 }) + '\n', { mode: 0o600 });
+    } catch {}
+  }
   if (reason) process.stdout.write(JSON.stringify({
     systemMessage: `⚡ flash: blocked whole Read of ${path.basename(input.tool_input.file_path)}, routing Claude to Jev`,
     hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason },

@@ -950,7 +950,7 @@ Reads the key from a hidden prompt, or from stdin when piped. Avoid passing it a
   status: `flash status [--provider P]
 Check that the key works and show lifetime savings. Exit 3 means the key is missing or rejected.`,
   gain: `flash gain [--history [N]] [--plain] [--json] [--md]
-Tokens saved by command, project and day, read from ~/.flash/history.jsonl.
+Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Reads the hook blocked count as "guard".
 --history lists the last N runs, --plain drops the banner, --json prints the raw history,
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
   cache: `flash cache [clear]
