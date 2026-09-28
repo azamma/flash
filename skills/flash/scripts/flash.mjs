@@ -9,7 +9,6 @@ import { execFileSync } from 'node:child_process';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
-const STATS = path.join(HOME, 'stats.json');
 const HISTORY = path.join(HOME, 'history.jsonl');
 // Jev is served by TypeSafe directly and by OpenRouter's Decisions endpoint; same request/answer shape.
 const PROVIDERS = {
@@ -64,14 +63,13 @@ function writeJson(file, obj, mode) {
   if (mode) try { fs.chmodSync(file, mode); } catch {}
 }
 
-// Stored keys live under cfg.keys[provider]; a top-level api_key/model is the pre-multi-provider TypeSafe config.
-const storedKey = (cfg, name) => cfg.keys?.[name] || (name === 'typesafe' ? cfg.api_key : '') || '';
+const storedKey = (cfg, name) => cfg.keys?.[name] || '';
 const envKey = (name) => PROVIDERS[name].env.find((v) => process.env[v]);
 
-// --provider > FLASH_PROVIDER / JEV_PROVIDER > saved choice > whichever provider has a key (TypeSafe first).
+// --provider > FLASH_PROVIDER > saved choice > whichever provider has a key (TypeSafe first).
 function provider(flags = {}) {
   const cfg = readJson(CONFIG, {});
-  let name = flags.provider || process.env.FLASH_PROVIDER || process.env.JEV_PROVIDER || cfg.provider;
+  let name = flags.provider || process.env.FLASH_PROVIDER || cfg.provider;
   if (!name) name = Object.keys(PROVIDERS).find((n) => envKey(n) || storedKey(cfg, n)) || 'typesafe';
   if (!PROVIDERS[name]) die(`unknown provider "${name}". Use: ${Object.keys(PROVIDERS).join(', ')}`);
   const p = PROVIDERS[name], env = envKey(name);
@@ -81,19 +79,13 @@ function provider(flags = {}) {
 
 function modelName(flags) {
   const cfg = readJson(CONFIG, {}), p = provider(flags);
-  return flags.model || process.env.FLASH_MODEL || cfg.models?.[p.name] || (p.name === 'typesafe' && cfg.model) || p.model;
+  return flags.model || process.env.FLASH_MODEL || cfg.models?.[p.name] || p.model;
 }
 
+// One line per run in history.jsonl, the only stats store. Content never goes here, only counts.
 function recordStats(run) {
-  const s = readJson(STATS, { since: new Date().toISOString(), runs: 0, requests: 0, items: 0, jev_input_tokens: 0, claude_tokens_saved: 0 });
-  s.runs += 1;
-  s.requests += run.requests;
-  s.items += run.items;
-  s.jev_input_tokens += run.jevTokens;
-  s.claude_tokens_saved += Math.max(0, run.saved);
-  try { writeJson(STATS, s); } catch {}
-  // One line per run, for `flash gain`. Content never goes here, only counts.
   try {
+    fs.mkdirSync(HOME, { recursive: true });
     const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: path.basename(process.cwd()),
       provider: provider().name, items: run.items, requests: run.requests, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved) };
     fs.appendFileSync(HISTORY, JSON.stringify(row) + '\n', { mode: 0o600 });
@@ -104,11 +96,11 @@ function recordStats(run) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function decide(body, flags, { retries = 5 } = {}) {
+async function decide(body, flags) {
   const p = provider(flags);
   if (!p.key) die(`no ${p.name} API key. Get one at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`, 3);
   let lastErr;
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  for (let attempt = 0; attempt <= 5; attempt++) {
     let res;
     try {
       res = await fetch(p.base + p.decide, {
@@ -277,7 +269,7 @@ function footer(t0, items, extra, stats, outText, skipped) {
   const contentTok = items.reduce((a, it) => a + estTokens(it.text), 0);
   const saved = contentTok - estTokens(outText);
   const parts = [`${items.length} scanned`, ...extra, `${((Date.now() - t0) / 1000).toFixed(1)}s`,
-    `jev ${fmtK(stats.jevTokens)} tok ($${(stats.jevTokens * PRICE_PER_TOKEN).toFixed(4)})`,
+    `jev ${fmtK(stats.jevTokens)} tok (${cost(stats.jevTokens)})`,
     `~${fmtK(Math.max(0, saved))} Claude tokens not read`];
   let s = `— ${parts.join(' · ')}`;
   if (skipped.length) s += `\n— skipped ${skipped.length}: ${clip(skipped.join(', '), 400)}`;
@@ -285,6 +277,7 @@ function footer(t0, items, extra, stats, outText, skipped) {
   return s;
 }
 
+const cost = (t) => `$${(t * PRICE_PER_TOKEN).toFixed(4)}`;
 const fmtK = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n));
 
 function emit(flags, jsonObj, lines, foot) {
@@ -562,7 +555,6 @@ async function cmdSetup({ pos, flags }) {
   const cfg = readJson(CONFIG, {});
   if (flags.remove) {
     if (cfg.keys) delete cfg.keys[p.name];
-    if (p.name === 'typesafe') delete cfg.api_key;
     writeJson(CONFIG, cfg, 0o600);
     return console.log(`Removed saved ${p.name} key from ${CONFIG}`);
   }
@@ -572,7 +564,6 @@ async function cmdSetup({ pos, flags }) {
   if (res.status === 401 || res.status === 403) die(`that key was rejected by ${p.name} (${res.status}). Double-check it at ${p.keyUrl}`, 3);
   if (!res.ok) die(`could not verify key: HTTP ${res.status}`);
   cfg.keys = { ...cfg.keys, [p.name]: key };
-  if (p.name === 'typesafe') delete cfg.api_key;
   cfg.provider = p.name;
   if (flags.model) cfg.models = { ...cfg.models, [p.name]: flags.model };
   writeJson(CONFIG, cfg, 0o600);
@@ -583,11 +574,11 @@ async function cmdStatus({ flags }) {
   const p = provider(flags);
   if (!p.key) { console.log(`not configured for ${p.name} — get a key at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`); process.exit(3); }
   const res = await checkKey(p, p.key).catch(() => null);
-  const s = readJson(STATS, null);
+  const rows = readHistory();
   if (!res) console.log(`key found (${p.keySource}) but ${p.name} is unreachable right now`);
   else if (!res.ok) { console.log(`key found (${p.keySource}) but rejected by ${p.name} (HTTP ${res.status}) — run setup with a fresh key from ${p.keyUrl}`); process.exit(3); }
   else console.log(`ready · provider ${p.name} · key from ${p.keySource} · model ${modelName(flags)}`);
-  if (s) console.log(`since ${s.since.slice(0, 10)}: ${s.runs} runs · ${fmtK(s.items)} items judged · jev ${fmtK(s.jev_input_tokens)} tok ($${(s.jev_input_tokens * PRICE_PER_TOKEN).toFixed(4)}) · ~${fmtK(s.claude_tokens_saved)} Claude tokens not read`);
+  if (rows.length) console.log(totalsLine(rows));
 }
 
 function readHistory() {
@@ -602,6 +593,11 @@ function groupBy(rows, key) {
     t.runs += 1; t.items += r.items; t.jev_tokens += r.jev_tokens; t.saved += r.saved;
   }
   return Object.entries(g);
+}
+
+function totalsLine(rows) {
+  const [[, t]] = groupBy(rows, () => 'all');
+  return `since ${rows[0].ts.slice(0, 10)}: ${t.runs} runs · ${fmtK(t.items)} items · jev ${fmtK(t.jev_tokens)} tok (${cost(t.jev_tokens)}) · ~${fmtK(t.saved)} Claude tokens not read`;
 }
 
 // Banner for `flash gain`: a bolt and FLASH in block letters. Colored only on a TTY without NO_COLOR.
@@ -624,11 +620,10 @@ function banner() {
 }
 
 function cmdGain({ flags }) {
-  const rows = readHistory(), s = readJson(STATS, null);
-  if (flags.json) return console.log(JSON.stringify({ totals: s, history: rows }, null, 2));
+  const rows = readHistory();
+  if (flags.json) return console.log(JSON.stringify({ history: rows }, null, 2));
   if (!flags.plain && !flags.history) console.log(banner());
-  if (!s) return console.log('no runs yet');
-  const cost = (t) => `$${(t * PRICE_PER_TOKEN).toFixed(4)}`;
+  if (!rows.length) return console.log('no runs yet');
   const line = (k, t) => `  ${k.padEnd(16)} ${String(t.runs).padStart(5)} runs  ${fmtK(t.items).padStart(7)} items  ` +
     `jev ${fmtK(t.jev_tokens).padStart(7)} (${cost(t.jev_tokens)})  saved ~${fmtK(t.saved)}`;
   if (flags.history) {
@@ -637,8 +632,7 @@ function cmdGain({ flags }) {
       `${fmtK(r.items).padStart(6)} items  jev ${fmtK(r.jev_tokens).padStart(6)}  saved ~${fmtK(r.saved)}  ${r.provider || ''}`);
     return;
   }
-  console.log(`flash since ${s.since.slice(0, 10)}: ${s.runs} runs · ${fmtK(s.items)} items · jev ${fmtK(s.jev_input_tokens)} tok (${cost(s.jev_input_tokens)}) · ~${fmtK(s.claude_tokens_saved)} Claude tokens not read`);
-  if (!rows.length) return;
+  console.log(`flash ${totalsLine(rows)}`);
   const show = (title, entries) => { console.log(`\n${title}`); for (const [k, t] of entries) console.log(line(k, t)); };
   const bySaved = (e) => e.sort((a, b) => b[1].saved - a[1].saved);
   show('by command', bySaved(groupBy(rows, (r) => r.cmd || '?')));

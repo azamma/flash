@@ -17,7 +17,7 @@
     "node": ">=18"
   },
   "keywords": ["claude", "claude-code", "skill", "jev", "typesafe", "tokens", "llm", "cost", "agents"],
-  "author": "Udit Akhouri",
+  "author": "Agustín Zammarrelli (fork of quicksilver by Udit Akhouri)",
   "license": "MIT",
   "repository": {
     "type": "git",

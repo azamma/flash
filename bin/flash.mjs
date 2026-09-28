@@ -14,7 +14,7 @@ const PKG = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(PKG, 'skills', 'flash');
 const CLAUDE = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 const DEST = path.join(CLAUDE, 'skills', 'flash');
-const FLASH = path.join(DEST, 'scripts', 'flash.mjs');
+const FLASH = path.join(SRC, 'scripts', 'flash.mjs');
 
 const c = (code, s) => (process.stdout.isTTY ? `\x1b[${code}m${s}\x1b[0m` : s);
 const run = (args, opts = {}) => spawnSync(process.execPath, [FLASH, ...args], { stdio: 'inherit', ...opts }).status ?? 1;
@@ -31,26 +31,18 @@ if (cmd === 'install') {
   const flag = (name) => rest.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3) || (rest.includes(`--${name}`) ? rest[rest.indexOf(`--${name}`) + 1] : '');
   const keyFlag = flag('key');
   const prov = flag('provider') ? ['--provider', flag('provider')] : [];
-  const ready = spawnSync(process.execPath, [FLASH, 'status', ...prov], { stdio: 'ignore' }).status === 0;
   const keyHelp = `TypeSafe key from https://console.typesafe.ai, or OpenRouter key from https://openrouter.ai/settings/keys with --provider openrouter`;
   if (keyFlag) run(['setup', keyFlag, ...prov]);
-  else if (!ready) {
-    if (process.stdin.isTTY) {
+  else if (run(['status', ...prov]) !== 0) {
+    if (!process.stdin.isTTY) console.log(`\nNext: set your Jev key once →  npx github:azamma/flash setup [--provider openrouter]   (${keyHelp})`);
+    else {
       console.log(`\nOne-time setup: paste your Jev API key (${keyHelp}).`);
       if (run(['setup', ...prov]) !== 0) console.log(`\nNo key saved. Run later: npx github:azamma/flash setup [--provider openrouter]`);
-    } else {
-      console.log(`\nNext: set your Jev key once →  npx github:azamma/flash setup [--provider openrouter]   (${keyHelp})`);
     }
-  } else run(['status', ...prov]);
+  }
   console.log(`\n${c('32', 'Done.')} Restart Claude Code (or start a new session). Claude now delegates bulk judgment calls to Jev automatically.`);
   console.log(`Try asking: "which files in this repo handle auth?" or "find the errors in app.log".`);
 } else if (cmd === 'uninstall') {
   fs.rmSync(DEST, { recursive: true, force: true });
   console.log(`Removed ${DEST}. Your key stays in ~/.flash/config.json. Delete that folder to remove it.`);
-} else {
-  if (!fs.existsSync(FLASH)) {
-    const local = path.join(SRC, 'scripts', 'flash.mjs');
-    process.exit(spawnSync(process.execPath, [local, cmd, ...rest], { stdio: 'inherit' }).status ?? 1);
-  }
-  process.exit(run([cmd, ...rest]));
-}
+} else process.exit(run([cmd, ...rest]));

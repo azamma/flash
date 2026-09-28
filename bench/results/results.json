@@ -191,16 +191,5 @@
     "jevUsd": 0.453962124,
     "baseTokens": 313901,
     "qsTokens": 45503
-  },
-  "fit": {
-    "n": 12,
-    "tokenReduction": 0.8550402834014545,
-    "medianTokenReduction": 0.8194147514698022,
-    "speedup": 2.935536153944498,
-    "qsScore": 0.8951014067803961,
-    "baseScore": 0.9421090152699811,
-    "jevUsd": 0.453962124,
-    "baseTokens": 313901,
-    "qsTokens": 45503
   }
 }

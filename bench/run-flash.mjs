@@ -3,16 +3,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { prf, hitRate } from './metrics.mjs';
 
-const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const QS = path.join(ROOT, '..', 'skills', 'flash', 'scripts', 'flash.mjs');
 const SKILL_TOKENS = Math.ceil(fs.readFileSync(path.join(ROOT, '..', 'skills', 'flash', 'SKILL.md'), 'utf8').length / 4);
 const TOOL_CALL_OVERHEAD = 40; // tokens for the tool-call wrapper around each command
 const tok = (s) => Math.ceil(s.length / 4);
 const only = process.argv.slice(2);
 
-const statsFile = path.join(process.env.FLASH_HOME || path.join(process.env.HOME || process.env.USERPROFILE, '.flash'), 'stats.json');
-const jevTotal = () => { try { return JSON.parse(fs.readFileSync(statsFile, 'utf8')).jev_input_tokens; } catch { return 0; } };
+const historyFile = path.join(process.env.FLASH_HOME || path.join(process.env.HOME || process.env.USERPROFILE, '.flash'), 'history.jsonl');
+const jevTotal = () => { try { return fs.readFileSync(historyFile, 'utf8').split('\n').filter(Boolean).reduce((a, l) => a + JSON.parse(l).jev_tokens, 0); } catch { return 0; } };
 
 // withSave: also write full per-item results via --save so scoring doesn't depend on the display format.
 // Claude is charged only for the display output it would actually read.
@@ -20,12 +22,7 @@ const SAVE = path.join(ROOT, 'results', '.last-save.json');
 function qs(dir, args, withSave = false) {
   const t0 = Date.now(), before = jevTotal();
   if (withSave) fs.rmSync(SAVE, { force: true });
-  let r;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    r = spawnSync(process.execPath, [QS, ...args, ...(withSave ? ['--save', SAVE] : [])], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-    if (r.status === 0) break;
-    console.error(`attempt ${attempt} failed (status ${r.status}, signal ${r.signal}): ${r.stderr || r.error}`);
-  }
+  const r = spawnSync(process.execPath, [QS, ...args, ...(withSave ? ['--save', SAVE] : [])], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0) throw new Error(`qs ${args.join(' ')} failed: ${r.stderr}`);
   const out = r.stdout.replace(/\n— full results saved to .*/, '');
   const cmd = `node flash.mjs ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`;
@@ -36,14 +33,6 @@ function qs(dir, args, withSave = false) {
 const rows = (out) => out.split('\n').filter((l) => /^[ ?]?\d\.\d\d  /.test(l));
 const idOf = (line) => line.replace(/^[ ?]?\d\.\d\d  /, '').split('  ')[0].replace(/~$/, '');
 const lineNo = (id) => Number(id.split(':').pop());
-
-function prf(pred, truth, neutral = []) {
-  const T = new Set(truth.map(String)), N = new Set(neutral.map(String));
-  const P = pred.map(String).filter((p) => !N.has(p));
-  const tp = P.filter((p) => T.has(p)).length;
-  const precision = P.length ? tp / P.length : 1, recall = T.size ? tp / T.size : 1;
-  return { precision, recall, f1: precision + recall ? (2 * precision * recall) / (precision + recall) : 0, predicted: P.length, tp };
-}
 
 fs.mkdirSync(path.join(ROOT, 'results'), { recursive: true });
 const file = path.join(ROOT, 'results', 'flash.json');
@@ -72,27 +61,18 @@ for (const id of fs.readdirSync(path.join(ROOT, 'data')).filter((d) => /^s\d+$/.
     const correct = ids.filter((k) => pred[k] === m.truth[k]).length;
     score = { metric: 'accuracy', value: correct / ids.length, correct, total: ids.length };
   } else if (m.kind === 'find') {
-    let hits1 = 0, hits5 = 0;
-    for (const [name, q] of Object.entries(m.queries)) {
+    const h = hitRate(Object.entries(m.queries).map(([name, q]) => {
       const r = qs(dir, ['find', q, m.input, '--top', '5']); runs.push(r);
       const [lo, hi] = m.truth[name];
-      const got = rows(r.out).map((l) => lineNo(idOf(l)));
-      const inRange = got.map((n) => n >= lo && n <= hi);
-      if (inRange[0]) hits1++;
-      if (inRange.some(Boolean)) hits5++;
-    }
-    const n = Object.keys(m.queries).length;
-    score = { metric: 'hit@5', value: hits5 / n, hit1: hits1 / n, hit5: hits5 / n };
+      return [rows(r.out).map((l) => lineNo(idOf(l))), (n) => n >= lo && n <= hi];
+    }));
+    score = { metric: 'hit@5', value: h.hitK, hit1: h.hit1, hit5: h.hitK };
   } else if (m.kind === 'rank') {
-    let hits1 = 0, hits3 = 0;
-    for (const [qid, q] of Object.entries(m.queries)) {
+    const h = hitRate(Object.entries(m.queries).map(([qid, q]) => {
       const r = qs(dir, ['rank', q, m.input, '--top', '3']); runs.push(r);
-      const got = rows(r.out).map(idOf);
-      if (m.truth[qid].includes(got[0])) hits1++;
-      if (got.some((g) => m.truth[qid].includes(g))) hits3++;
-    }
-    const n = Object.keys(m.queries).length;
-    score = { metric: 'hit@3', value: hits3 / n, hit1: hits1 / n, hit3: hits3 / n };
+      return [rows(r.out).map(idOf), (g) => m.truth[qid].includes(g)];
+    }));
+    score = { metric: 'hit@3', value: h.hitK, hit1: h.hit1, hit3: h.hitK };
   }
   const inputTokens = fs.readdirSync(dir, { recursive: true })
     .map((f) => path.join(dir, f)).filter((f) => fs.statSync(f).isFile())

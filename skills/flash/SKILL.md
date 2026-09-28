@@ -39,8 +39,6 @@ Run `flash status` first.
 
   Env keys also work and take precedence over saved ones: `JEV_API_KEY` or
   `TYPESAFE_API_KEY` for TypeSafe, `OPENROUTER_API_KEY` for OpenRouter.
-  Provider order: `--provider` flag, then `FLASH_PROVIDER` / `JEV_PROVIDER`,
-  then the saved choice, then whichever provider has a key (TypeSafe first).
   After setup, carry on with the original task. Don't stop at "configured".
 
 Exit code 3 means a key problem: missing, or rejected by the provider. Re-run setup.
@@ -167,5 +165,4 @@ Jev reads questions **literally**. Its accuracy comes from how precise the quest
 - **Batch triage:** dump items to JSONL (issues, test output, grep hits),
   `flash classify`, then act per bucket.
 
-Jev handles 1,200 requests/min. Flash packs small items into shared
-requests, runs 8 in parallel, and retries rate limits (429/529) automatically.
+Jev handles 1,200 requests/min. Flash retries rate limits (429/529) automatically.

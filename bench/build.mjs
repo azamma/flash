@@ -2,9 +2,10 @@
 // Real data: Loghub BGL, Banking77, SMS Spam, SST-2, honojs/hono, lodash. Synthetic where no labelled set exists.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const RAW = path.join(ROOT, 'data', 'raw');
 const HONO = path.join(RAW, 'hono');
 

@@ -11,8 +11,7 @@
     {
       "name": "flash",
       "source": "./",
-      "description": "Offload Claude's bulk judgment calls to Jev. Skill, large-file Read guard hook, and /flash:gain, /flash:status.",
-      "version": "0.2.0"
+      "description": "Offload Claude's bulk judgment calls to Jev. Skill, large-file Read guard hook, and /flash:gain, /flash:status."
     }
   ]
 }

@@ -170,22 +170,8 @@ and never both ways at once, or every hook runs twice.
 
 Having an agent set this up? Point it at [`AGENT-SETUP.md`](AGENT-SETUP.md): install, key, hooks and checks, step by step.
 
-Claude picks the skill on its own, but you can force it for large files. Add this
-`PreToolUse` hook to `~/.claude/settings.json`. It refuses whole-file `Read`s over
-600 lines or 60 KB and tells Claude to run `flash find` / `flash filter` first, then read
-only the hits with `offset`/`limit`:
-
-```json
-{ "hooks": { "PreToolUse": [ { "matcher": "^Read$", "hooks": [
-  { "type": "command", "command": "node \"$HOME/.claude/skills/flash/scripts/guard.mjs\"", "timeout": 5 }
-] } ] } }
-```
-
-To see Jev at work, register the same script as a `PostToolUse` hook with matcher
-`^Bash$`: after every `flash` run it shows `⚡ flash → Jev 12 scanned · 0.6s · jev 2.1k tok ($0.0001) · …`
-in the Claude Code UI. A blocked read shows `⚡ flash: blocked whole Read of …`.
-
-Tune with `FLASH_GUARD_LINES` / `FLASH_GUARD_BYTES`; `FLASH_GUARD=off` disables it.
+Hook JSON, what each message looks like and the `FLASH_GUARD*` tuning knobs are in
+[`AGENT-SETUP.md` step 3](AGENT-SETUP.md).
 
 ## Where it shines, and where it doesn't
 
