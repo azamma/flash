@@ -25,9 +25,10 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 3: agent-browser adapter and common page format
 **Description:** First capture one real `agent-browser snapshot -i --json` (plus `get url`, `get title`) into `test/fixtures/web/` and build the parser against it; keep the plain-tree regex as fallback, tested on the 4 existing captures. `web.mjs`: common format, adapter (`available`, `snapshot`, `act`), driver lookup on PATH or `FLASH_AGENT_BROWSER`, every call with `--session flash-<session>`. Password/file/hidden inputs keep only `{ref, role, name}`, never a value. Each ref carries the text of its enclosing container (for freshness).
 **Acceptance criteria:**
-- [ ] Parser tested on the real `--json` capture and on the 4 plain-tree captures.
-- [ ] Every agent-browser invocation includes `--session`; a test with a fake binary asserts it.
-- [ ] Missing driver: exit 3 with the install command; nothing installed.
+- [x] Parser tested on the real `--json` capture and on the 4 plain-tree captures.
+- [x] Every agent-browser invocation includes `--session`; a test with a fake binary asserts it.
+- [x] Missing driver: exit 3 with the install command; nothing installed. (`available()` returns the
+      install-hint string in this task; Task 4's CLI wiring turns that into the actual exit 3.)
 **Verification:** `npm test` (fixtures in `test/fixtures/web/`, fake `agent-browser` on PATH).
 **Dependencies:** None · **Files:** `skills/flash/scripts/web.mjs`, `test/web.test.mjs`, `test/fixtures/web/*` · **Scope:** M
 

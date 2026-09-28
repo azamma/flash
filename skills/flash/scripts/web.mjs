@@ -1,0 +1,155 @@
+// flash web: drive a browser through an adapter, turning its page into one common format.
+// Zero dependencies. Node 18+. Pure logic and adapters live here; flash.mjs wires the CLI and
+// does all history logging (logRow), so this module has no side effects at import time.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
+
+export const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
+export const WEB_HOME = path.join(HOME, 'web');
+
+// Same rule as flash.mjs's history rows: the git repo's root folder, or the working folder.
+// ponytail: duplicated (not imported) because flash.mjs runs its CLI as a side effect of being
+// loaded, so web.mjs must never import it back.
+export function projectName(cwd) {
+  try {
+    return path.basename(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim());
+  } catch { return path.basename(cwd); }
+}
+
+export function sessionName(flags, cwd = process.cwd()) {
+  return `flash-${flags.session || projectName(cwd)}`;
+}
+
+export function pageFile(session) {
+  return path.join(WEB_HOME, session, 'page.json');
+}
+
+// ---------- agent-browser adapter ----------
+
+function driverCmd() {
+  const custom = process.env.FLASH_AGENT_BROWSER;
+  if (custom) { const [cmd, ...pre] = custom.trim().split(/\s+/); return { cmd, pre }; }
+  return { cmd: 'agent-browser', pre: [] };
+}
+
+function runDriver(args, opts = {}) {
+  const { cmd, pre } = driverCmd();
+  try {
+    const out = execFileSync(cmd, [...pre, ...args], { encoding: 'utf8', timeout: opts.timeout ?? 30_000, stdio: ['ignore', 'pipe', 'pipe'] });
+    return { ok: true, out };
+  } catch (e) {
+    return { ok: false, error: (e.stderr || '').toString().trim() || e.message };
+  }
+}
+
+const INSTALL_HINT = 'agent-browser not found on PATH. Install with: npm i -g agent-browser ' +
+  '(or set FLASH_AGENT_BROWSER="npx -y agent-browser" to run it via npx without installing).';
+
+function actionArgs(action) {
+  if (action.kind === 'click') return ['click', `@${action.ref}`];
+  if (action.kind === 'fill') return ['fill', `@${action.ref}`, action.value ?? ''];
+  if (action.kind === 'select') return ['select', `@${action.ref}`, action.value ?? ''];
+  if (action.kind === 'press') return ['press', action.value ?? ''];
+  return null;
+}
+
+export const agentBrowser = {
+  name: 'agent-browser',
+  // true, or an install hint string.
+  available() {
+    return runDriver(['--version'], { timeout: 10_000 }).ok ? true : INSTALL_HINT;
+  },
+  snapshot(session) {
+    const sess = ['--session', session];
+    const tree = runDriver([...sess, 'snapshot', '-i', '--json']);
+    if (!tree.ok) return { ok: false, error: tree.error };
+    const url = runDriver([...sess, 'get', 'url']);
+    const title = runDriver([...sess, 'get', 'title']);
+    const refs = parseTree(extractTreeText(tree.out)).map(sanitizeRef);
+    // ponytail: no separate full-page-text call (the adapter contract is exactly these 3 driver
+    // calls); "text" is synthesized from the ref names already fetched. Loses static prose that
+    // carries no control, fine for pick/check's purpose; revisit if Task 7's bench shows it hurts.
+    const text = refs.map((r) => r.name).filter(Boolean).join('\n').slice(0, 6000);
+    return { ok: true, page: {
+      driver: 'agent-browser',
+      url: url.ok ? url.out.trim() : '',
+      title: title.ok ? title.out.trim() : '',
+      text,
+      refs,
+      taken: new Date().toISOString(),
+    } };
+  },
+  act(session, action) {
+    const args = actionArgs(action);
+    if (!args) return { ok: false, error: `unsupported action kind: ${action.kind}` };
+    const r = runDriver(['--session', session, ...args]);
+    return r.ok ? { ok: true } : { ok: false, error: r.error };
+  },
+};
+
+// ---------- common page format: parse agent-browser's indented ref tree ----------
+// Lines look like: `  - role "name" [attr1, attr2, ref=eN]: value`. Works on the tree text
+// agent-browser prints (snapshot -i), whether it arrives wrapped in --json or as plain text —
+// same regex, so an older or --json-less capture still parses (the "plain-tree regex" fallback).
+
+const LINE_RE = /^( *)- ([\w-]+)(?: "((?:\\.|[^"\\])*)")?(?: \[([^\]]*)\])?(.*)$/;
+
+const unescapeName = (s) => s.replace(/\\(.)/g, '$1');
+
+export function extractTreeText(raw) {
+  try {
+    const json = JSON.parse(raw);
+    if (typeof json?.data?.snapshot === 'string') return json.data.snapshot;
+    if (typeof json?.snapshot === 'string') return json.snapshot;
+  } catch {}
+  return raw;
+}
+
+// Returns [{ ref, role, name, value, state, context }]. `context` is the nearest enclosing
+// line's own "role \"name\"" label, used to detect stale elements before acting (plan.md).
+export function parseTree(text) {
+  const stack = []; // [{ indent, label }]
+  const refs = [];
+  for (const raw of text.split('\n')) {
+    if (!raw.trim()) continue;
+    const m = LINE_RE.exec(raw);
+    if (!m) continue;
+    const [, indentStr, role, rawName, bracket, restRaw] = m;
+    const indent = indentStr.length;
+    while (stack.length && stack.at(-1).indent >= indent) stack.pop();
+    const name = rawName !== undefined ? unescapeName(rawName) : '';
+    let ref = null, state = [];
+    if (bracket) {
+      const parts = bracket.split(',').map((p) => p.trim()).filter(Boolean);
+      const refPart = parts.find((p) => /^ref=e\d+$/.test(p));
+      if (refPart) ref = refPart.slice(4);
+      state = parts.filter((p) => !/^ref=e\d+$/.test(p));
+    }
+    const rest = restRaw || '';
+    const value = rest.startsWith(':') ? rest.slice(1).replace(/^ /, '') : null;
+    const context = stack.length ? stack.at(-1).label : null;
+    if (ref) refs.push({ ref, role, name, value, state, context });
+    stack.push({ indent, label: name ? `${role} "${name}"` : role });
+  }
+  return refs;
+}
+
+// agent-browser's own axtree doesn't expose an input's DOM `type`, so a password field looks
+// exactly like a textbox until it holds a value. It does mask a filled password as a run of the
+// bullet character, though (verified live) — never the plaintext — so that plus a name keyword
+// is the best signal available. ponytail: name-keyword heuristic, not DOM-type-based; false
+// negatives are possible for an unlabelled password field with no value yet, but nothing ever
+// carries a plaintext password through this path.
+const PASSWORD_NAME_RE = /\b(password|contraseñ?a|clave)\b/i;
+const MASKED_VALUE_RE = /^[•*]+$/;
+const FILE_VALUE_RE = /choose file|seleccionar archivo|browse|select file|no file (chosen|selected)|ning[uú]n archivo|archivo seleccionado/i;
+
+export function sanitizeRef(r) {
+  if (r.value == null) return r;
+  if (MASKED_VALUE_RE.test(r.value) || PASSWORD_NAME_RE.test(r.name || '')) return { ...r, role: 'password', value: null };
+  if (FILE_VALUE_RE.test(r.value)) return { ...r, value: null };
+  return r;
+}
