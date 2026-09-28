@@ -55,7 +55,8 @@ If yes, and each decision fits yes/no, pick-a-label, or rate-on-a-scale, delegat
 
 | Situation | Command |
 | --- | --- |
-| "Which files deal with X?" across a repo | `flash filter "Does this file implement or handle X?" src` |
+| "Where is X implemented?" in a codebase | `flash search "how is X done?" src` (walks folders, prints the relevant files with source) |
+| "Which files deal with X?" as a flat list | `flash filter "Does this file implement or handle X?" src` |
 | Errors or anomalies in a big log | `flash filter "Does this line indicate a failure?" app.log --lines` |
 | Where in a 5k-line file is Y? | `flash find "Y" big_file.py --top 5 --context` |
 | Sort 200 tickets, test failures, or TODOs into buckets | `flash classify --labels "bug,feature,question" --items items.jsonl` |
@@ -107,6 +108,7 @@ flash filter "<yes/no question>" <inputs> [--threshold 0.5] [--lines]
 flash classify --labels "a,b,c" <inputs> [--question "..."] [--only a] [--min-confidence 0.6]
 flash classify --labels-json '{"bug":"Something is broken","feature":"A request for new behaviour"}' <inputs>
 flash rank "<query>" <inputs> [--top 10 | --all]
+flash search "<question about the code>" [root] [--top 10] [--max-requests 1000] [--fast] [--no-source]
 flash find "<what you're looking for>" <files> [--top 5] [--context [N]] [--max-source-bytes 20000]
 flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
 flash ask spec.json        # {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}

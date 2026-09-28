@@ -33,7 +33,7 @@ const LOCK_RE = /(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb?|Carg
 
 function parseArgs(argv) {
   const pos = [], flags = {};
-  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard', 'plain', 'no-cache']);
+  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard', 'plain', 'no-cache', 'no-source']);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--') { pos.push(...argv.slice(i + 1)); break; }
@@ -124,7 +124,7 @@ function cachePut(file, res) {
   } catch {}
 }
 
-async function decide(body, flags) {
+async function decide(body, flags, { soft = false } = {}) {
   const p = provider(flags);
   const cached = !flags['no-cache'] && cacheFile(p, body);
   const hit = cached && cacheGet(cached);
@@ -148,12 +148,16 @@ async function decide(body, flags) {
     if (res.ok) { const json = await res.json(); if (cached) cachePut(cached, json); return json; }
     const text = await res.text();
     if (res.status === 401 || res.status === 403) die(`${p.name} rejected the API key (${res.status}). Get a new one at ${p.keyUrl} and run: node flash.mjs setup --provider ${p.name}`, 3);
-    if (res.status === 422 || res.status === 400) die(`Jev rejected the request (${res.status}): ${clip(text, 800)}`, 4);
+    if (res.status === 422 || res.status === 400 || res.status === 413) {
+      if (soft) return null;
+      die(`Jev rejected the request (${res.status}): ${clip(text, 800)}`, 4);
+    }
     lastErr = `HTTP ${res.status}: ${clip(text, 300)}`;
-    if (![408, 409, 429, 500, 502, 503, 504, 529].includes(res.status)) break;
+    if (![408, 409, 429, 500, 502, 503, 504, 520, 522, 524, 529].includes(res.status)) break;
     const ra = Number(res.headers.get('retry-after'));
     await sleep(ra > 0 ? ra * 1000 : 500 * 2 ** attempt + Math.random() * 250);
   }
+  if (soft) return null;
   die(`Jev request failed: ${lastErr}`, 5);
 }
 
@@ -598,6 +602,134 @@ function readStateArg(v) {
   return v;
 }
 
+// ---------- search: folder → file → chunk traversal (after jevgrep, MIT, David Zhang) ----------
+
+const CHUNK_BYTES = 12_000;
+
+// [{start, end, text}] cut at line boundaries, about CHUNK_BYTES each.
+function chunkLines(text) {
+  const lines = text.split(/\r?\n/), out = [];
+  let start = 0, size = 0;
+  lines.forEach((l, i) => {
+    size += l.length + 1;
+    if (size >= CHUNK_BYTES || i === lines.length - 1) { out.push({ start: start + 1, end: i + 1, text: lines.slice(start, i + 1).join('\n') }); start = i + 1; size = 0; }
+  });
+  return out;
+}
+
+function preview(dir) {
+  const names = [...dir.dirs.keys()].map((d) => d + '/').concat(dir.files.map((f) => path.basename(f.id)));
+  const exts = {};
+  for (const f of dir.all) { const e = path.extname(f.id) || '(none)'; exts[e] = (exts[e] || 0) + 1; }
+  let shown = [], bytes = 0;
+  for (const n of names) { if (shown.length >= 64 || bytes + n.length > 4000) break; shown.push(n); bytes += n.length + 1; }
+  return { children: shown, more: names.length - shown.length, files_below: dir.all.length, extensions: exts };
+}
+
+// Ask one yes/no per entry. Entry: { state, ask(ref) } where ref prefixes the state's fields.
+// Unpacked by default (more accurate); --fast packs up to 128 entries or 38 KB per request and
+// splits a refused or failing pack in half. Stops sending past the request budget.
+async function askAll(entries, flags, run) {
+  const model = modelName(flags);
+  const pack = flags.fast ? 128 : 1;
+  const groups = [];
+  let cur = [], bytes = 0;
+  for (const e of entries) {
+    const b = JSON.stringify(e.state).length;
+    if (cur.length && (cur.length >= pack || bytes + b > 38_000)) { groups.push(cur); cur = []; bytes = 0; }
+    cur.push(e); bytes += b;
+  }
+  if (cur.length) groups.push(cur);
+  const scores = new Map();
+  const send = async (g) => {
+    if (run.requests >= run.max) { run.incomplete = true; return; }
+    run.requests++;
+    const packed = g.length > 1;
+    const body = packed
+      ? { model, state: { items: Object.fromEntries(g.map((e, j) => [`i${j}`, e.state])) },
+          questions: Object.fromEntries(g.map((e, j) => [`q${j}`, { type: 'noul', instructions: e.ask(`items.i${j}.`) }])) }
+      : { model, state: g[0].state, questions: { q0: { type: 'noul', instructions: g[0].ask('') } } };
+    const res = await decide(body, flags, { soft: true });
+    if (!res && packed) { const h = Math.ceil(g.length / 2); await send(g.slice(0, h)); await send(g.slice(h)); return; }
+    if (!res) { run.failed++; return; } // one unanswerable item scores 0 instead of sinking the search
+    run.jevTokens += res.usage?.input_tokens || 0;
+    g.forEach((e, j) => scores.set(e, res.answers[`q${j}`]?.noul ?? 0));
+  };
+  await pool(groups.map((g) => () => send(g)), num(flags.concurrency, 16));
+  return entries.map((e) => scores.get(e) ?? 0);
+}
+
+async function cmdSearch({ pos, flags }) {
+  const [query, root = '.'] = pos;
+  if (!query) die('usage: search "<what you are looking for>" [root] [--max-requests 1000] [--fast]', 2);
+  const t0 = Date.now();
+  const { items, skipped } = collect([root], { ...flags, lines: false, 'max-chars': Infinity, limit: flags.limit ?? Infinity });
+  requireInputs(items, 'search');
+  const rootAbs = path.resolve(root);
+  // Directory tree relative to root: { dirs: Map(name -> node), files: [items directly here], all: [items below] }.
+  const node = () => ({ dirs: new Map(), files: [], all: [] });
+  const tree = node();
+  for (const it of items) {
+    const parts = path.relative(rootAbs, path.resolve(it.id)).split(path.sep);
+    let n = tree;
+    n.all.push(it);
+    for (const d of parts.slice(0, -1)) { n = n.dirs.get(d) || n.dirs.set(d, node()).get(d); n.all.push(it); }
+    n.files.push(it);
+  }
+  const run = { requests: 0, jevTokens: 0, max: num(flags['max-requests'], 1000), incomplete: false, failed: 0 };
+  const best = new Map(); // file id -> { score, start, end }
+  const relPath = (base, name) => (base ? `${base}/${name}` : name);
+  // Level 0 and 1 are listed without asking; deeper folders must pass a preview check first.
+  let frontier = [['', tree, 0]];
+  while (frontier.length) {
+    const entries = [];
+    const next = [];
+    for (const [dirPath, dir, depth] of frontier) {
+      for (const f of dir.files) for (const c of chunkLines(f.text)) {
+        entries.push({ kind: 'file', file: f, chunk: c,
+          state: { query, path: f.id, lines: `${c.start}-${c.end}`, content: c.text },
+          ask: (r) => `Does \`${r}content\` (file \`${r}path\`, lines \`${r}lines\`) contain code or text that implements, defines or directly handles \`${r}query\`? Count code that is currently buggy.` });
+      }
+      for (const [name, sub] of dir.dirs) {
+        const p = relPath(dirPath, name);
+        if (depth < 1) { next.push([p, sub, depth + 1]); continue; }
+        entries.push({ kind: 'dir', dir: sub, path: p, depth,
+          state: { query, folder: p, preview: preview(sub) },
+          ask: (r) => `Could the folder \`${r}folder\`, judging by \`${r}preview\`, contain code or text that implements or directly handles \`${r}query\`?` });
+      }
+    }
+    const scores = await askAll(entries, flags, run);
+    entries.forEach((e, i) => {
+      const sc = scores[i];
+      if (e.kind === 'dir') { if (sc > 0.5) next.push([e.path, e.dir, e.depth + 1]); return; }
+      const prev = best.get(e.file.id);
+      if (sc > 0.5 && (!prev || sc > prev.score)) best.set(e.file.id, { score: sc, start: e.chunk.start, end: e.chunk.end });
+    });
+    frontier = next;
+  }
+  const cands = [...best].sort((a, b) => b[1].score - a[1].score).slice(0, num(flags.top, 10));
+  let out = cands.map(([id, c]) => `${f2(c.score)}  ${id}  lines ${c.start}-${c.end}`);
+  let json = cands.map(([id, c]) => ({ id, ...c }));
+  if (!flags['no-source'] && cands.length) {
+    const blocks = [];
+    let bytes = 0;
+    const maxBytes = num(flags['max-source-bytes'], 20000);
+    for (const [id, c] of cands) {
+      const src = items.find((it) => it.id === id).text.split(/\r?\n/).slice(c.start - 1, c.end).join('\n');
+      if (bytes + src.length > maxBytes) { blocks.push({ omitted: true, maxBytes }); break; }
+      bytes += src.length;
+      blocks.push({ file: id, start: c.start, end: c.end, source: src });
+    }
+    out = [...out, '', ...blocks.flatMap(renderBlock), 'End context.'];
+    json = { files: json, blocks };
+  }
+  if (!cands.length) out = ['(no relevant files)'];
+  if (run.failed) process.stderr.write(`flash: ${run.failed} items got no answer after retries and were treated as not relevant.\n`);
+  if (run.incomplete) process.stderr.write(`flash: stopped at --max-requests ${run.max}; results are partial. Raise it or narrow the root.\n`);
+  const foot = footer(t0, items, [`${cands.length} relevant`, `${run.requests} requests`], run, out.join('\n'), skipped);
+  emit(flags, json, out, foot);
+}
+
 async function cmdAsk({ pos, flags }) {
   const t0 = Date.now();
   let body;
@@ -773,6 +905,11 @@ Order items by relevance to the query, best first.
 Locate the lines in large files that match a description. --context adds the source around each hit
 (N lines each side, default 3, widened to the comment above it; nearby hits merge) so no follow-up Read is needed.
   flash find "where the session token is refreshed" src/auth.ts --context`,
+  search: `flash search "<what you're looking for>" [root] [--top 10] [--max-requests 1000] [--fast] [--no-source]
+Find the files in a repo that matter for a question, without reading the rest. Walks folder by folder:
+first-level folders are always opened, deeper ones only when Jev says their contents could match;
+files are judged in 12 KB chunks. Prints the relevant files, then their best chunk as source.
+  flash search "how are webhook signatures verified?" src`,
   ask: `flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
 flash ask spec.json     raw {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}
 One judgment over one document; the default answer is a yes/no probability.
@@ -798,7 +935,8 @@ const HELP = `flash — hand Claude's bulk judgment calls to Jev, read only what
 Examples:
   flash filter "Does this file handle authentication?" src
   flash filter "Does this line report a failure?" app.log --lines
-  flash find "where the session token is refreshed" src/auth.ts
+  flash find "where the session token is refreshed" src/auth.ts --context
+  flash search "how are webhook signatures verified?" src
   flash classify --labels "bug,feature,question" --items tickets.jsonl
 
 Commands:
@@ -806,6 +944,7 @@ Commands:
   classify  put each item in one label
   rank      order items by relevance to a query
   find      locate the matching lines inside large files
+  search    find the relevant files in a repo, folder by folder, with their source
   ask       one judgment over one document, or a raw spec.json request
   setup     save and verify a key, pick the default provider
   status    check the key, show lifetime savings
@@ -858,7 +997,7 @@ function distance(a, b) {
   return d[a.length][b.length];
 }
 
-const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk, skill: cmdSkill, cache: cmdCache };
+const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk, search: cmdSearch, skill: cmdSkill, cache: cmdCache };
 
 process.on('unhandledRejection', (e) => die(`unexpected error: ${e?.stack || e}`, 5));
 process.on('uncaughtException', (e) => die(`unexpected error: ${e?.stack || e}`, 5));

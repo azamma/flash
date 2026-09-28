@@ -41,7 +41,7 @@ The cache is **on by default**, as in jevgrep.
 **What:** Add `--context` to `find`. Each hit becomes `Source block "path" lines a-b:` in a fence longer than any backtick run inside the excerpt. Hits get ±3 lines, widened to take in adjacent comments; overlapping ranges merge. Output ends with `End context.`, and `--max-source-bytes` caps the total. Claude then needs no follow-up `Read`. The guard's hint recommends `find --context`.
 **Testing:** fixture with known line ranges; the test checks merged ranges, a fence around source that itself contains backticks, the byte cap, and the end marker. Measure output tokens against today's `find` + `Read`.
 
-### Step 6: `flash search "<query>" [root]`: folder → file → chunk traversal
+### Step 6: `flash search "<query>" [root]`: folder → file → chunk traversal ✅ done
 **Files:** `flash.mjs` (new `cmdSearch`, `previewDirectory`, `packNouls`), `HELP`, `SKILL.md`, `test/flash.test.mjs`
 **What:** Port jevgrep's `discover` loop:
 - List root and first-level folders without asking Jev.

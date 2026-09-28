@@ -7,7 +7,7 @@ const has = (v) => JSON.stringify(v ?? '').includes('MATCH');
 
 // For a packed request the question points at `items.iN`; otherwise the whole state is the item.
 function subject(state, q) {
-  const m = /`items\.(i\d+)`/.exec(q.instructions || '');
+  const m = /`items\.(i\d+)[.`]/.exec(q.instructions || '');
   return m ? state.items?.[m[1]] : state;
 }
 

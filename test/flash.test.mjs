@@ -104,6 +104,51 @@ test('find --context prints merged verbatim blocks with a safe fence and a byte 
   assert.doesNotMatch(capped.stdout, /Source block/);
 });
 
+function searchRepo() {
+  write('README.md', 'A project.');
+  write('notes.txt', 'Some notes.');
+  write('src/util.ts', 'export const add = (a, b) => a + b;');
+  write('src/auth/MATCH_login.ts', 'export function login() {}\n// MATCH verifies the password\n');
+  write('src/deep/inner/hidden.ts', 'DEEP_CONTENT MATCH');
+}
+
+test('search opens first-level folders, prunes deeper ones by preview, and prints source', async () => {
+  searchRepo();
+  const r = await flash(['search', 'password check', '.']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /^0\.95 {2}src\/auth\/MATCH_login\.ts {2}lines 1-3$/m);
+  assert.doesNotMatch(r.stdout, /util\.ts|hidden\.ts/);
+  assert.match(r.stdout, /Source block "src\/auth\/MATCH_login\.ts" lines 1-3:/);
+  assert.match(r.stdout.trim(), /End context\.$/);
+  const sent = JSON.stringify(jev.requests.map((q) => q.body));
+  assert.doesNotMatch(sent, /DEEP_CONTENT/, 'a pruned folder is never uploaded');
+  assert.match(sent, /"folder":"src\/deep"/);
+  assert.equal(jev.requests.length, 6, 'root files 2 + src/util.ts + 2 folders + login.ts');
+});
+
+test('search stops at the request budget and says so', async () => {
+  searchRepo();
+  const r = await flash(['search', 'password check', '.', '--max-requests', '2']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(jev.requests.length, 2);
+  assert.match(r.stderr, /stopped at --max-requests 2/);
+});
+
+test('search --fast packs each level into one request and splits a refused pack', async () => {
+  searchRepo();
+  let r = await flash(['search', 'password check', '.', '--fast', '--no-cache']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(jev.requests.length, 3, 'one packed request per level');
+  assert.match(r.stdout, /src\/auth\/MATCH_login\.ts/);
+  jev.reset();
+  jev.force({ status: 422 });
+  r = await flash(['search', 'password check', '.', '--fast', '--no-cache']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(Object.keys(jev.requests[0].body.questions).length, 2);
+  assert.equal(jev.requests.length, 5, 'refused pack of 2 retried as 2 singles, then 2 more levels');
+  assert.match(r.stdout, /src\/auth\/MATCH_login\.ts/);
+});
+
 test('a 429 is retried and the run still succeeds', async () => {
   write('a.txt', 'MATCH');
   jev.force({ status: 429, headers: { 'retry-after': '0' } });
