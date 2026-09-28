@@ -1,6 +1,6 @@
 {
   "name": "flash",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Offload Claude's bulk judgment calls (filter, classify, rank, find) to Jev, TypeSafe's System One model, through TypeSafe or OpenRouter. Ships the skill, a hook that routes large-file reads through Jev, and /flash:gain and /flash:status.",
   "author": {
     "name": "Agustín Zammarrelli",

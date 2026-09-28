@@ -105,7 +105,7 @@ function afterGuard(inputs) {
 function recordStats(run) {
   try {
     fs.mkdirSync(HOME, { recursive: true });
-    const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: path.basename(process.cwd()),
+    const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: projectName(process.cwd()),
       provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved),
       ...audit, results: audit.results?.slice(0, 50) };
     const g = afterGuard(audit.inputs);
@@ -117,6 +117,13 @@ function recordStats(run) {
 // ---------- HTTP ----------
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// The project a row belongs to: the git repo's root folder, or the working folder outside git.
+function projectName(cwd) {
+  try {
+    return path.basename(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim());
+  } catch { return path.basename(cwd); }
+}
 
 // Answer cache. The request body carries the content, so an edited file is a new key and a miss.
 // Only Jev's answers are stored, never the content. ponytail: expired entries are pruned on read and

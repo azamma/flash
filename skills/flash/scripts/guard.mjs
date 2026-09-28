@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const MAX_LINES = Number(process.env.FLASH_GUARD_LINES) || 600;
@@ -98,6 +98,13 @@ function trimMcp(input) {
   };
 }
 
+// The project a row belongs to: the git repo's root folder, or the working folder outside git.
+function projectName(cwd) {
+  try {
+    return path.basename(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim());
+  } catch { return path.basename(cwd); }
+}
+
 let raw = '';
 for await (const c of process.stdin) raw += c;
 let input = {};
@@ -116,7 +123,7 @@ if (input.hook_event_name === 'PostToolUse' && input.tool_name?.startsWith('mcp_
     try {
       fs.mkdirSync(home, { recursive: true });
       fs.appendFileSync(path.join(home, 'history.jsonl'), JSON.stringify({ ts: new Date().toISOString(), cmd: 'guard',
-        project: path.basename(cwd), file: path.relative(cwd, input.tool_input.file_path), items: 1, requests: 0, jev_tokens: 0, saved: 0 }) + '\n', { mode: 0o600 });
+        project: projectName(cwd), file: path.relative(cwd, input.tool_input.file_path), items: 1, requests: 0, jev_tokens: 0, saved: 0 }) + '\n', { mode: 0o600 });
     } catch {}
   }
   if (reason) process.stdout.write(JSON.stringify({

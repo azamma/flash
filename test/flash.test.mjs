@@ -1,7 +1,7 @@
 // Runs flash.mjs and guard.mjs as subprocesses against a fake Jev server. No network, no real key.
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -413,4 +413,12 @@ test('guard trims a big MCP list to the items Jev keeps and saves the full respo
   const off = await run(GUARD, [], { env: { FLASH_MCP: 'off' }, input: JSON.stringify({
     hook_event_name: 'PostToolUse', tool_name: 'mcp__kb__search', tool_input: {}, tool_response: [{ type: 'text', text }] }) });
   assert.equal(off.stdout, '');
+});
+
+test('history names the project after the git root, not the subfolder', async () => {
+  execFileSync('git', ['init', '-q'], { cwd: work });
+  const big = write('sub/big.txt', 'x\n'.repeat(700));
+  await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', cwd: path.join(work, 'sub'), tool_input: { file_path: big } }) });
+  assert.equal(history().at(-1).project, path.basename(work));
+  fs.rmSync(path.join(work, '.git'), { recursive: true, force: true });
 });
