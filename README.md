@@ -268,4 +268,6 @@ The lightning mark is original artwork for this project.
 
 ## License
 
-MIT © Udit Akhouri
+MIT © 2026 Agustín Zammarrelli. Flash is a fork of [quicksilver](https://github.com/UditAkhourii/quicksilver),
+MIT © Udit Akhouri, and includes code derived from jevgrep, MIT © David Zhang.
+See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
