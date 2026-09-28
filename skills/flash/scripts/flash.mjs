@@ -41,7 +41,8 @@ function parseArgs(argv) {
       const eq = a.indexOf('=');
       if (eq > 0) { flags[a.slice(2, eq)] = a.slice(eq + 1); continue; }
       const name = a.slice(2);
-      if (bools.has(name) || i + 1 >= argv.length || argv[i + 1].startsWith('--')) flags[name] = true;
+      const optionalNumber = (name === 'context' || name === 'history') && !/^\d+$/.test(argv[i + 1] || '');
+      if (bools.has(name) || optionalNumber || i + 1 >= argv.length || argv[i + 1].startsWith('--')) flags[name] = true;
       else flags[name] = argv[++i];
     } else pos.push(a);
   }
@@ -531,10 +532,53 @@ async function cmdFind({ pos, flags }) {
   }), num(flags.concurrency, 16));
   const top = num(flags.top, 5), minScore = num(flags['min-score'], 0.05);
   const hits = perChunk.flat().filter((h) => h.score >= minScore).sort((a, b) => b.score - a.score).slice(0, top);
-  const out = hits.map((h) => `${f2(h.score)}  ${h.file}:${h.line}  ${clip(h.text.trim(), num(flags.width, 160))}`);
+  let out = hits.map((h) => `${f2(h.score)}  ${h.file}:${h.line}  ${clip(h.text.trim(), num(flags.width, 160))}`);
+  let json = hits;
+  if (flags.context && hits.length) {
+    const blocks = contextBlocks(hits, files, num(flags.context === true ? undefined : flags.context, 3), num(flags['max-source-bytes'], 20000));
+    out = [...out, '', ...blocks.flatMap(renderBlock), 'End context.'];
+    json = { hits, blocks };
+  }
   if (!out.length) out.push('(no matching lines)');
   const foot = footer(t0, files, [`${chunks.length} chunks`], stats, out.join('\n'), skipped);
-  emit(flags, hits, out, foot);
+  emit(flags, json, out, foot);
+}
+
+// --context: turn hit lines into verbatim source blocks so Claude needs no follow-up Read.
+const COMMENT_RE = /^\s*(\/\/|#|\*|\/\*|--|;|<!--|"""|''')/;
+
+function contextBlocks(hits, files, pad, maxBytes) {
+  const byFile = new Map();
+  for (const h of hits) {
+    const lines = files.find((f) => f.id === h.file).text.split(/\r?\n/);
+    let a = Math.max(1, Number(h.line) - pad), b = Math.min(lines.length, Number(h.line) + pad);
+    // Widen upward over the comment block (blank lines inside it included) that documents the hit.
+    for (let i = a - 1; i >= 1 && (COMMENT_RE.test(lines[i - 1]) || (!lines[i - 1].trim() && COMMENT_RE.test(lines[i - 2] ?? ''))); i--) a = i;
+    const f = byFile.get(h.file) || byFile.set(h.file, { lines, ranges: [], best: h.score }).get(h.file);
+    f.ranges.push([a, b]);
+  }
+  const blocks = [];
+  let bytes = 0;
+  for (const [file, f] of byFile) {
+    const merged = f.ranges.sort((x, y) => x[0] - y[0]).reduce((acc, r) => {
+      const last = acc.at(-1);
+      if (last && r[0] <= last[1] + 1) last[1] = Math.max(last[1], r[1]); else acc.push([...r]);
+      return acc;
+    }, []);
+    for (const [a, b] of merged) {
+      const source = f.lines.slice(a - 1, b).join('\n');
+      if (bytes + source.length > maxBytes) return [...blocks, { omitted: true, maxBytes }];
+      bytes += source.length;
+      blocks.push({ file, start: a, end: b, source });
+    }
+  }
+  return blocks;
+}
+
+function renderBlock(b) {
+  if (b.omitted) return [`… more source omitted past --max-source-bytes ${b.maxBytes}. Raise it or Read the hit lines above.`];
+  const fence = '`'.repeat(Math.max(3, ...(b.source.match(/`+/g) || []).map((m) => m.length + 1)));
+  return [`Source block "${b.file}" lines ${b.start}-${b.end}:`, fence, b.source, fence, ''];
 }
 
 function fmtAnswer(id, a) {
@@ -725,9 +769,10 @@ or --labels-json '{"bug":"Something broken"}'. Add a catch-all label such as "ot
   rank: `flash rank "<query>" <inputs> [--top 10 | --all]
 Order items by relevance to the query, best first.
   flash rank "retry logic for HTTP calls" src --top 5`,
-  find: `flash find "<what you're looking for>" <files> [--top 5] [--chunk 150]
-Locate the lines in large files that match a description. Read around the hits with offset/limit afterwards.
-  flash find "where the session token is refreshed" src/auth.ts`,
+  find: `flash find "<what you're looking for>" <files> [--top 5] [--chunk 150] [--context [N]] [--max-source-bytes 20000]
+Locate the lines in large files that match a description. --context adds the source around each hit
+(N lines each side, default 3, widened to the comment above it; nearby hits merge) so no follow-up Read is needed.
+  flash find "where the session token is refreshed" src/auth.ts --context`,
   ask: `flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
 flash ask spec.json     raw {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}
 One judgment over one document; the default answer is a yes/no probability.

@@ -36,7 +36,7 @@ The cache is **on by default**, as in jevgrep.
 **What:** Keep the current providers and endpoints (TypeSafe `/v1/systemone` with `jev-latest`, OpenRouter `/api/alpha/decisions`), both verified live; add no new providers. Replace the per-provider key-check endpoints (`/v1/models`, `/v1/key`) with jevgrep's doctor approach: one real, synthetic decision call that must answer p > 0.5. This proves the key *and* the decision endpoint work, the same way for every provider. Redact the key from error text.
 **Testing:** `flash status --provider <p>` against the fake server (ok, 401, low probability); live `status` with the real TypeSafe and OpenRouter keys.
 
-### Step 5: Verbatim source excerpts for `find`
+### Step 5: Verbatim source excerpts for `find` ✅ done
 **Files:** `flash.mjs` (`cmdFind`, new `renderContext`), `SKILL.md`, `skills/flash/scripts/guard.mjs` (hint text), `test/flash.test.mjs`
 **What:** Add `--context` to `find`. Each hit becomes `Source block "path" lines a-b:` in a fence longer than any backtick run inside the excerpt. Hits get ±3 lines, widened to take in adjacent comments; overlapping ranges merge. Output ends with `End context.`, and `--max-source-bytes` caps the total. Claude then needs no follow-up `Read`. The guard's hint recommends `find --context`.
 **Testing:** fixture with known line ranges; the test checks merged ranges, a fence around source that itself contains backticks, the byte cap, and the end marker. Measure output tokens against today's `find` + `Read`.

@@ -57,7 +57,7 @@ If yes, and each decision fits yes/no, pick-a-label, or rate-on-a-scale, delegat
 | --- | --- |
 | "Which files deal with X?" across a repo | `flash filter "Does this file implement or handle X?" src` |
 | Errors or anomalies in a big log | `flash filter "Does this line indicate a failure?" app.log --lines` |
-| Where in a 5k-line file is Y? | `flash find "Y" big_file.py --top 5` |
+| Where in a 5k-line file is Y? | `flash find "Y" big_file.py --top 5 --context` |
 | Sort 200 tickets, test failures, or TODOs into buckets | `flash classify --labels "bug,feature,question" --items items.jsonl` |
 | Best candidates for a query (search hits, docs, files) | `flash rank "query" docs/ --top 10` |
 | One yes/no over a large document | `flash ask "Does this contract allow termination without notice?" --state @contract.txt` |
@@ -86,10 +86,12 @@ Flash's hook refuses whole-file `Read`s of files over 600 lines or 60 KB. Don't 
 around it with `cat` or a huge `limit`. Locate what you need first, then read only there:
 
 ```bash
-flash find "<what you need from the file>" path/to/big_file --top 5
+flash find "<what you need from the file>" path/to/big_file --top 5 --context
 ```
 
-Then `Read` with `offset`/`limit` around the hit lines. For logs, use
+`--context` prints the source around each hit (3 lines each side, widened to the comment
+above it, nearby hits merged), so usually no `Read` is needed. If you need more, `Read`
+with `offset`/`limit` around the hit lines. For logs, use
 `flash filter "<question>" app.log --lines` instead of `find`.
 
 ## Commands
@@ -105,7 +107,7 @@ flash filter "<yes/no question>" <inputs> [--threshold 0.5] [--lines]
 flash classify --labels "a,b,c" <inputs> [--question "..."] [--only a] [--min-confidence 0.6]
 flash classify --labels-json '{"bug":"Something is broken","feature":"A request for new behaviour"}' <inputs>
 flash rank "<query>" <inputs> [--top 10 | --all]
-flash find "<what you're looking for>" <files> [--top 5]
+flash find "<what you're looking for>" <files> [--top 5] [--context [N]] [--max-source-bytes 20000]
 flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
 flash ask spec.json        # {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}
 flash status               # key check, plus lifetime tokens saved

@@ -85,6 +85,25 @@ test('find points at the matching line number', async () => {
   assert.match(r.stdout.split('\n')[0], /big\.py:12 {2}def refresh/);
 });
 
+test('find --context prints merged verbatim blocks with a safe fence and a byte cap', async () => {
+  const lines = Array.from({ length: 40 }, (_, i) => `v${i + 1} = ${i + 1}`);
+  lines[8] = '# Refresh the session token before it expires.';
+  lines[9] = '# Called by the auth middleware.';
+  lines[11] = 'def refresh(): # MATCH';
+  lines[13] = 'doc = "use ```refresh()``` here"';
+  lines[15] = 'def refresh_again(): # MATCH';
+  write('auth.py', lines.join('\n'));
+  const r = await flash(['find', 'token refresh', '--context', 'auth.py', '--chunk', '5']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /Source block "auth\.py" lines 9-19:\n````\n# Refresh the session token/);
+  assert.equal((r.stdout.match(/Source block/g) || []).length, 1, 'overlapping hits merge into one block');
+  assert.match(r.stdout, /v19 = 19\n````\n/);
+  assert.match(r.stdout.trim(), /End context\.$/);
+  const capped = await flash(['find', 'token refresh', 'auth.py', '--chunk', '5', '--context', '--max-source-bytes', '10']);
+  assert.match(capped.stdout, /more source omitted past --max-source-bytes 10/);
+  assert.doesNotMatch(capped.stdout, /Source block/);
+});
+
 test('a 429 is retried and the run still succeeds', async () => {
   write('a.txt', 'MATCH');
   jev.force({ status: 429, headers: { 'retry-after': '0' } });

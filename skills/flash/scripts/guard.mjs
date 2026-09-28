@@ -33,8 +33,8 @@ function verdict(input) {
   const flash = path.join(path.dirname(fileURLToPath(import.meta.url)), 'flash.mjs');
   const what = lines === Infinity ? `${Math.round(size / 1024)} KB` : `${lines} lines`;
   return `Flash guard: ${t.file_path} is ${what}. Don't read it whole. First locate what matters with ` +
-    `node "${flash}" find "<what you need>" "${t.file_path}" (or filter --lines for logs), ` +
-    `then Read with offset/limit around the hits. Only read it whole if you really need every line: use offset 1 and an explicit limit.`;
+    `node "${flash}" find "<what you need>" "${t.file_path}" --context (or filter --lines for logs). ` +
+    `--context returns the source around each hit, so you may not need a Read at all; otherwise Read with offset/limit around the hits. Only read it whole if you really need every line: use offset 1 and an explicit limit.`;
 }
 
 let raw = '';
