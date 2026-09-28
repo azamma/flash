@@ -52,7 +52,7 @@ The cache is **on by default**, as in jevgrep.
 
 **Testing:** fake server with scripted probabilities checks that pruned folders are never read, that the budget holds, and that `--fast` packs and splits on failure; live run on the hono corpus that `bench/` already uses.
 
-### Step 7: Declaration units and file roles (heuristic)
+### Step 7: Declaration units and file roles (heuristic) ✅ done
 **Files:** `skills/flash/scripts/units.mjs` (new; installers copy the whole skill dir), `flash.mjs` (`cmdSearch`), `test/units.test.mjs`
 **What:**
 - Split candidate files into declarations. Python uses an indentation scan for `def`/`class` (decorators, class header as a context unit). JS/TS uses a brace-and-keyword heuristic for top-level `function`/`class`/`const … =>`/`export`. Anything else falls back to 3 KB text chunks.

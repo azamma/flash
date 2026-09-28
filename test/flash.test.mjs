@@ -116,14 +116,29 @@ test('search opens first-level folders, prunes deeper ones by preview, and print
   searchRepo();
   const r = await flash(['search', 'password check', '.']);
   assert.equal(r.code, 0, r.stderr);
-  assert.match(r.stdout, /^0\.95 {2}src\/auth\/MATCH_login\.ts {2}lines 1-3$/m);
+  assert.match(r.stdout, /^0\.95 {2}src\/auth\/MATCH_login\.ts {2}implementation\n {6}0\.95 {2}login@1-2$/m);
   assert.doesNotMatch(r.stdout, /util\.ts|hidden\.ts/);
-  assert.match(r.stdout, /Source block "src\/auth\/MATCH_login\.ts" lines 1-3:/);
+  assert.match(r.stdout, /Source block "src\/auth\/MATCH_login\.ts" lines 1-2:/);
   assert.match(r.stdout.trim(), /End context\.$/);
   const sent = JSON.stringify(jev.requests.map((q) => q.body));
   assert.doesNotMatch(sent, /DEEP_CONTENT/, 'a pruned folder is never uploaded');
   assert.match(sent, /"folder":"src\/deep"/);
-  assert.equal(jev.requests.length, 6, 'root files 2 + src/util.ts + 2 folders + login.ts');
+  assert.equal(jev.requests.length, 8, 'root files 2 + src/util.ts + 2 folders + login.ts, then its role + 1 declaration');
+});
+
+test('search orders files by role and shows only selected declarations', async () => {
+  write('src/jwt.py', [
+    'import hmac', '',
+    'def verify(token):', '    # MATCH checks the signature', '    return hmac.compare_digest(token, "x")', '',
+    'def unrelated():', '    return 42',
+  ].join('\n'));
+  write('src/test_jwt.py', 'def test_verify():\n    assert verify("MATCH")\n');
+  const r = await flash(['search', 'signature check', 'src']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /src\/jwt\.py {2}implementation\n {6}0\.95 {2}verify@3-5/);
+  assert.match(r.stdout, /src\/test_jwt\.py {2}test/);
+  assert.ok(r.stdout.indexOf('src/jwt.py') < r.stdout.indexOf('src/test_jwt.py'), 'implementation before test');
+  assert.doesNotMatch(r.stdout, /unrelated|return 42/);
 });
 
 test('search stops at the request budget and says so', async () => {
@@ -138,14 +153,14 @@ test('search --fast packs each level into one request and splits a refused pack'
   searchRepo();
   let r = await flash(['search', 'password check', '.', '--fast', '--no-cache']);
   assert.equal(r.code, 0, r.stderr);
-  assert.equal(jev.requests.length, 3, 'one packed request per level');
+  assert.equal(jev.requests.length, 4, 'one packed request per level, plus one for roles and declarations');
   assert.match(r.stdout, /src\/auth\/MATCH_login\.ts/);
   jev.reset();
   jev.force({ status: 422 });
   r = await flash(['search', 'password check', '.', '--fast', '--no-cache']);
   assert.equal(r.code, 0, r.stderr);
   assert.equal(Object.keys(jev.requests[0].body.questions).length, 2);
-  assert.equal(jev.requests.length, 5, 'refused pack of 2 retried as 2 singles, then 2 more levels');
+  assert.equal(jev.requests.length, 6, 'refused pack of 2 retried as 2 singles, then 2 more levels and the declaration pass');
   assert.match(r.stdout, /src\/auth\/MATCH_login\.ts/);
 });
 

@@ -8,6 +8,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { splitUnits, unitSource } from './units.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -626,7 +627,8 @@ function preview(dir) {
   return { children: shown, more: names.length - shown.length, files_below: dir.all.length, extensions: exts };
 }
 
-// Ask one yes/no per entry. Entry: { state, ask(ref) } where ref prefixes the state's fields.
+// Ask every entry its questions. Entry: { state, questions(ref) -> {id: question} } where ref prefixes
+// the state's fields. Returns one {id: answer} map per entry ({} when unanswered).
 // Unpacked by default (more accurate); --fast packs up to 128 entries or 38 KB per request and
 // splits a refused or failing pack in half. Stops sending past the request budget.
 async function askAll(entries, flags, run) {
@@ -645,18 +647,79 @@ async function askAll(entries, flags, run) {
     if (run.requests >= run.max) { run.incomplete = true; return; }
     run.requests++;
     const packed = g.length > 1;
-    const body = packed
-      ? { model, state: { items: Object.fromEntries(g.map((e, j) => [`i${j}`, e.state])) },
-          questions: Object.fromEntries(g.map((e, j) => [`q${j}`, { type: 'noul', instructions: e.ask(`items.i${j}.`) }])) }
-      : { model, state: g[0].state, questions: { q0: { type: 'noul', instructions: g[0].ask('') } } };
+    const qs = g.map((e, j) => e.questions(packed ? `items.i${j}.` : ''));
+    const body = {
+      model,
+      state: packed ? { items: Object.fromEntries(g.map((e, j) => [`i${j}`, e.state])) } : g[0].state,
+      questions: Object.fromEntries(qs.flatMap((q, j) => Object.entries(q).map(([id, spec]) => [`${id}_${j}`, spec]))),
+    };
     const res = await decide(body, flags, { soft: true });
     if (!res && packed) { const h = Math.ceil(g.length / 2); await send(g.slice(0, h)); await send(g.slice(h)); return; }
     if (!res) { run.failed++; return; } // one unanswerable item scores 0 instead of sinking the search
     run.jevTokens += res.usage?.input_tokens || 0;
-    g.forEach((e, j) => scores.set(e, res.answers[`q${j}`]?.noul ?? 0));
+    g.forEach((e, j) => scores.set(e, Object.fromEntries(Object.keys(qs[j]).map((id) => [id, res.answers[`${id}_${j}`]]))));
   };
   await pool(groups.map((g) => () => send(g)), num(flags.concurrency, 16));
-  return entries.map((e) => scores.get(e) ?? 0);
+  return entries.map((e) => scores.get(e) ?? {});
+}
+
+// Second pass over the candidate files, as in jevgrep: judge each declaration twice (does it implement
+// or test the behaviour; is it the queried API rather than a look-alike) and take the lower answer.
+// Above 0.5 it is selected and shown as source, 0.25–0.5 is listed as a reading lead. One more
+// question per file labels its role, which orders the output.
+const ROLES = { implementation: 'Implements the behaviour the query asks about', caller: 'Calls, routes to or wires up that implementation',
+  helper: 'Utility code the implementation relies on', test: 'Tests that behaviour', fixture: 'Test data, mocks or fixtures', other: 'None of these' };
+
+async function describeCandidates(query, cands, flags, run) {
+  if (!cands.length) return { out: ['(no relevant files)'], json: [] };
+  const entries = [];
+  for (const c of cands) {
+    const lines = c.text.split(/\r?\n/);
+    c.units = splitUnits(c.text, c.id);
+    entries.push({ file: c, state: { query, path: c.id, head: c.text.slice(0, 3000) },
+      questions: (r) => ({ role: { type: 'choice', instructions: `What role does the file \`${r}path\` (it starts with \`${r}head\`) play for \`${r}query\`?`, criteria: ROLES } }) });
+    for (const u of c.units) {
+      const state = { query, path: c.id, declaration: u.name, lines: `${u.start}-${u.end}`, code: unitSource(lines, u),
+        ...(u.start > 20 ? { file_head: lines.slice(0, 20).join('\n') } : {}) };
+      entries.push({ file: c, unit: u, state, questions: (r) => ({
+        q: { type: 'noul', instructions: `Does \`${r}code\` (\`${r}declaration\` in \`${r}path\`) directly implement, define or test the behaviour asked about in \`${r}query\`? Count code that is currently buggy.` },
+        scope: { type: 'noul', instructions: `Is \`${r}code\` part of the API or feature that \`${r}query\` is about, rather than unrelated code that only looks similar?` },
+      }) });
+    }
+  }
+  const answers = await askAll(entries, flags, run);
+  entries.forEach((e, i) => {
+    const a = answers[i];
+    if (!e.unit) { e.file.role = a.role?.choice || 'other'; return; }
+    e.unit.value = Math.min(a.q?.noul ?? 0, a.scope?.noul ?? 0);
+  });
+  const rank = Object.keys(ROLES);
+  cands.sort((x, y) => rank.indexOf(x.role) - rank.indexOf(y.role) || y.score - x.score);
+  const out = [], blocks = [];
+  let bytes = 0;
+  const maxBytes = num(flags['max-source-bytes'], 20000);
+  for (const c of cands) {
+    const picked = c.units.filter((u) => u.value > 0.5), leads = c.units.filter((u) => u.value > 0.25 && u.value <= 0.5);
+    out.push(`${f2(c.score)}  ${c.id}  ${c.role}${picked.length ? '' : '; locations only'}`);
+    for (const u of picked) out.push(`      ${f2(u.value)}  ${u.name}@${u.start}-${u.end}`);
+    if (leads.length) out.push(`      leads: ${leads.map((u) => `${u.name}@${u.start}-${u.end}`).join(', ')}`);
+    if (flags['no-source']) continue;
+    const lines = c.text.split(/\r?\n/);
+    const merged = picked.map((u) => [u.start, u.end]).sort((x, y) => x[0] - y[0])
+      .reduce((acc, r) => { const l = acc.at(-1); if (l && r[0] <= l[1] + 1) l[1] = Math.max(l[1], r[1]); else acc.push([...r]); return acc; }, []);
+    for (const [a, b] of merged) {
+      const source = lines.slice(a - 1, b).join('\n');
+      if (blocks.at(-1)?.omitted) break;
+      if (bytes + source.length > maxBytes) { blocks.push({ omitted: true, maxBytes }); break; }
+      bytes += source.length;
+      blocks.push({ file: c.id, start: a, end: b, source });
+    }
+  }
+  if (blocks.length) out.push('', ...blocks.flatMap(renderBlock), 'End context.');
+  const json = cands.map((c) => ({ id: c.id, score: c.score, role: c.role,
+    selected: c.units.filter((u) => u.value > 0.5).map(({ name, start, end, value }) => ({ name, start, end, value })),
+    leads: c.units.filter((u) => u.value > 0.25 && u.value <= 0.5).map(({ name, start, end, value }) => ({ name, start, end, value })) }));
+  return { out, json: flags['no-source'] ? json : { files: json, blocks } };
 }
 
 async function cmdSearch({ pos, flags }) {
@@ -688,42 +751,28 @@ async function cmdSearch({ pos, flags }) {
       for (const f of dir.files) for (const c of chunkLines(f.text)) {
         entries.push({ kind: 'file', file: f, chunk: c,
           state: { query, path: f.id, lines: `${c.start}-${c.end}`, content: c.text },
-          ask: (r) => `Does \`${r}content\` (file \`${r}path\`, lines \`${r}lines\`) contain code or text that implements, defines or directly handles \`${r}query\`? Count code that is currently buggy.` });
+          questions: (r) => ({ rel: { type: 'noul', instructions: `Does \`${r}content\` (file \`${r}path\`, lines \`${r}lines\`) contain code or text that implements, defines or directly handles \`${r}query\`? Count code that is currently buggy.` } }) });
       }
       for (const [name, sub] of dir.dirs) {
         const p = relPath(dirPath, name);
         if (depth < 1) { next.push([p, sub, depth + 1]); continue; }
         entries.push({ kind: 'dir', dir: sub, path: p, depth,
           state: { query, folder: p, preview: preview(sub) },
-          ask: (r) => `Could the folder \`${r}folder\`, judging by \`${r}preview\`, contain code or text that implements or directly handles \`${r}query\`?` });
+          questions: (r) => ({ rel: { type: 'noul', instructions: `Could the folder \`${r}folder\`, judging by \`${r}preview\`, contain code or text that implements or directly handles \`${r}query\`?` } }) });
       }
     }
-    const scores = await askAll(entries, flags, run);
+    const answers = await askAll(entries, flags, run);
     entries.forEach((e, i) => {
-      const sc = scores[i];
+      const sc = answers[i].rel?.noul ?? 0;
       if (e.kind === 'dir') { if (sc > 0.5) next.push([e.path, e.dir, e.depth + 1]); return; }
       const prev = best.get(e.file.id);
       if (sc > 0.5 && (!prev || sc > prev.score)) best.set(e.file.id, { score: sc, start: e.chunk.start, end: e.chunk.end });
     });
     frontier = next;
   }
-  const cands = [...best].sort((a, b) => b[1].score - a[1].score).slice(0, num(flags.top, 10));
-  let out = cands.map(([id, c]) => `${f2(c.score)}  ${id}  lines ${c.start}-${c.end}`);
-  let json = cands.map(([id, c]) => ({ id, ...c }));
-  if (!flags['no-source'] && cands.length) {
-    const blocks = [];
-    let bytes = 0;
-    const maxBytes = num(flags['max-source-bytes'], 20000);
-    for (const [id, c] of cands) {
-      const src = items.find((it) => it.id === id).text.split(/\r?\n/).slice(c.start - 1, c.end).join('\n');
-      if (bytes + src.length > maxBytes) { blocks.push({ omitted: true, maxBytes }); break; }
-      bytes += src.length;
-      blocks.push({ file: id, start: c.start, end: c.end, source: src });
-    }
-    out = [...out, '', ...blocks.flatMap(renderBlock), 'End context.'];
-    json = { files: json, blocks };
-  }
-  if (!cands.length) out = ['(no relevant files)'];
+  const cands = [...best].sort((a, b) => b[1].score - a[1].score).slice(0, num(flags.top, 10))
+    .map(([id, c]) => ({ id, score: c.score, text: items.find((it) => it.id === id).text }));
+  const { out, json } = await describeCandidates(query, cands, flags, run);
   if (run.failed) process.stderr.write(`flash: ${run.failed} items got no answer after retries and were treated as not relevant.\n`);
   if (run.incomplete) process.stderr.write(`flash: stopped at --max-requests ${run.max}; results are partial. Raise it or narrow the root.\n`);
   const foot = footer(t0, items, [`${cands.length} relevant`, `${run.requests} requests`], run, out.join('\n'), skipped);
@@ -908,7 +957,9 @@ Locate the lines in large files that match a description. --context adds the sou
   search: `flash search "<what you're looking for>" [root] [--top 10] [--max-requests 1000] [--fast] [--no-source]
 Find the files in a repo that matter for a question, without reading the rest. Walks folder by folder:
 first-level folders are always opened, deeper ones only when Jev says their contents could match;
-files are judged in 12 KB chunks. Prints the relevant files, then their best chunk as source.
+files are judged in 12 KB chunks. The top files are then split into functions and classes; each is
+judged on its own and the selected ones print as source. Files are ordered by role (implementation,
+caller, helper, test, fixture).
   flash search "how are webhook signatures verified?" src`,
   ask: `flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
 flash ask spec.json     raw {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}

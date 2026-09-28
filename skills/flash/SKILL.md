@@ -144,6 +144,22 @@ one pattern, followed by the matching line numbers:
 — 340 scanned · 3 matched · 1 borderline · 4.1s · jev 90k tok ($0.0038) · ~88k Claude tokens not read
 ```
 
+**search** lists files by role (implementation, caller, helper, test, fixture), each with its
+selected declarations and their Jev value, then the selected code as source blocks:
+
+```
+0.97  src/utils/jwt/jwt.ts  implementation
+      0.94  verify@96-189
+      leads: decode@60-80
+0.81  src/request.ts  other; locations only
+Source block "src/utils/jwt/jwt.ts" lines 96-189:
+…
+End context.
+```
+
+`leads` are weaker matches (0.25–0.5) worth a look; `locations only` means the file matched
+but no single declaration did. Read those with `offset`/`limit` if you need them.
+
 **classify** prints the count per label, then the ids in each label. After that it lists
 each low-confidence item with its runner-up label and its text:
 
