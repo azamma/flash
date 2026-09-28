@@ -310,6 +310,9 @@ test('each run appends one counts-only row to history, and gain reads it', async
   assert.doesNotMatch(JSON.stringify(rows), /secret-content/);
   const g = await flash(['gain', '--plain']);
   assert.match(g.stdout, /1 runs · 1 items/);
+  const md = (await flash(['gain', '--md'])).stdout;
+  assert.match(md, /^# Flash savings, \d{4}-\d\d-\d\d to /);
+  assert.match(md, /\| filter \| 1 \| 1 \| 100 \| \$0\.0000 \| ~\d+ \|/);
 });
 
 test('skill prints SKILL.md with this install path filled in', async () => {

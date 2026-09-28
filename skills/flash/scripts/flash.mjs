@@ -34,7 +34,7 @@ const LOCK_RE = /(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb?|Carg
 
 function parseArgs(argv) {
   const pos = [], flags = {};
-  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard', 'plain', 'no-cache', 'no-source']);
+  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard', 'plain', 'no-cache', 'no-source', 'md']);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--') { pos.push(...argv.slice(i + 1)); break; }
@@ -877,9 +877,27 @@ function banner() {
   return [...rows, `  ${gold('────────── ◆ ──────────')}  ${dim('CLAUDE THINKS · JEV SKIMS')}`, ''].join('\n');
 }
 
+// Savings report as Markdown tables, for a README, a PR or a team update. Estimates from history.jsonl,
+// not a quality benchmark: accuracy is measured in the repo's bench/.
+function gainMarkdown(rows) {
+  if (!rows.length) return '# Flash savings\n\nNo runs yet.';
+  const [[, all]] = groupBy(rows, () => 'all');
+  const table = (title, key, entries) => [`## ${title}`, '', `| ${key} | runs | items | Jev tokens | Jev cost | Claude tokens not read |`, '|---|---:|---:|---:|---:|---:|',
+    ...entries.map(([k, t]) => `| ${k} | ${t.runs} | ${fmtK(t.items)} | ${fmtK(t.jev_tokens)} | ${cost(t.jev_tokens)} | ~${fmtK(t.saved)} |`), ''];
+  const bySaved = (e) => e.sort((a, b) => b[1].saved - a[1].saved);
+  return [`# Flash savings, ${rows[0].ts.slice(0, 10)} to ${rows.at(-1).ts.slice(0, 10)}`, '',
+    `**~${fmtK(all.saved)} Claude tokens not read** across ${all.runs} runs and ${fmtK(all.items)} items, for ${cost(all.jev_tokens)} of Jev` +
+      (all.cached ? ` (${((100 * all.cached) / all.requests).toFixed(1)}% of requests answered from cache).` : '.'), '',
+    ...table('By command', 'command', bySaved(groupBy(rows, (r) => r.cmd || '?'))),
+    ...table('By project', 'project', bySaved(groupBy(rows, (r) => r.project || '?'))),
+    ...table('By day', 'day', groupBy(rows, (r) => r.ts.slice(0, 10)).sort()),
+    '_Claude tokens not read = estimated size of the content Jev judged (chars ÷ 4) minus what Flash printed back._'].join('\n');
+}
+
 function cmdGain({ flags }) {
   const rows = readHistory();
   if (flags.json) return console.log(JSON.stringify({ history: rows }, null, 2));
+  if (flags.md) return console.log(gainMarkdown(rows));
   if (!flags.plain && !flags.history) console.log(banner());
   if (!rows.length) return console.log('no runs yet');
   const line = (k, t) => `  ${k.padEnd(16)} ${String(t.runs).padStart(5)} runs  ${fmtK(t.items).padStart(7)} items  ` +
@@ -931,9 +949,10 @@ Reads the key from a hidden prompt, or from stdin when piped. Avoid passing it a
   printenv OPENROUTER_API_KEY | flash setup --provider openrouter`,
   status: `flash status [--provider P]
 Check that the key works and show lifetime savings. Exit 3 means the key is missing or rejected.`,
-  gain: `flash gain [--history [N]] [--plain] [--json]
+  gain: `flash gain [--history [N]] [--plain] [--json] [--md]
 Tokens saved by command, project and day, read from ~/.flash/history.jsonl.
---history lists the last N runs, --plain drops the banner, --json prints the raw history.`,
+--history lists the last N runs, --plain drops the banner, --json prints the raw history,
+--md prints a Markdown report: flash gain --md > flash-savings.md`,
   cache: `flash cache [clear]
 Show or delete the answer cache in ~/.flash/cache. Repeat runs over unchanged content are answered from it
 for free; edited content misses automatically. Answers only are stored, never content. Skip it per run with --no-cache.`,

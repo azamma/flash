@@ -104,7 +104,7 @@ flash search   "where is the JWT signature verified?" src            # code sear
 flash find     "the retry backoff logic" huge_module.py --context    # locate lines in huge files, with source
 flash ask      "Does this contract allow termination without notice?" --state @contract.txt
 flash status                                                          # key check + lifetime tokens saved
-flash gain                                                            # savings by command, project, day (--history N: per run)
+flash gain                                                            # savings by command, project, day (--history N: per run, --md: Markdown report)
 flash cache clear                                                     # wipe cached answers (--no-cache skips them per run)
 flash help find                                                       # flags and examples for one command
 flash skill                                                           # print the agent instructions (SKILL.md)
