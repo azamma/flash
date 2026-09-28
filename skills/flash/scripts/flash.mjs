@@ -146,33 +146,62 @@ const post = (p, key, body, ms) => fetch(p.base + p.decide, {
   headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...p.headers },
 });
 
+// Fail closed: every question must come back with an answer of its own type and in-range numbers.
+// A malformed body is never used and never cached. (Checks adapted from jev-mcp, MIT © Joey Kudish.)
+const unit = (x) => typeof x === 'number' && x >= 0 && x <= 1;
+function validAnswers(body, json) {
+  return Object.entries(body.questions || {}).every(([id, q]) => {
+    const a = json?.answers?.[id];
+    if (!a || a.type !== q.type) return false;
+    if (q.type === 'noul') return unit(a.noul);
+    if (q.type === 'score') return Number.isFinite(a.score);
+    const ps = Object.values(a.probabilities || {});
+    return typeof a.choice === 'string' && ps.every(unit) && (!ps.length || Math.abs(ps.reduce((s, x) => s + x, 0) - 1) < 0.02);
+  });
+}
+
+const DEADLINE_MS = 180_000;
+const MAX_BODY = 1_000_000;
+
 async function decide(body, flags, { soft = false } = {}) {
   const p = provider(flags);
   const cached = !flags['no-cache'] && cacheFile(p, body);
   const hit = cached && cacheGet(cached);
   if (hit) { cacheHits++; return { ...hit, usage: { input_tokens: 0 } }; }
   if (!p.key) die(`no ${p.name} API key. Get one at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`, 3);
+  // Upstream bodies are never echoed: Claude reads this output, and a provider error is untrusted text.
   let lastErr;
-  for (let attempt = 0; attempt <= 5; attempt++) {
+  const end = Date.now() + DEADLINE_MS;
+  for (let attempt = 0; attempt <= 5 && Date.now() < end; attempt++) {
     let res;
     try {
-      res = await post(p, p.key, body, 60_000);
+      res = await post(p, p.key, body, Math.min(60_000, end - Date.now()));
     } catch (e) {
-      lastErr = `network error: ${e.message}`;
+      // A timeout may have reached Jev and been billed; don't pay for it twice.
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') { lastErr = 'timed out waiting for Jev'; break; }
+      lastErr = `network error (${e.cause?.code || e.name})`;
       await sleep(500 * 2 ** attempt);
       continue;
     }
-    if (res.ok) { const json = await res.json(); if (cached) cachePut(cached, json); return json; }
+    // ponytail: size checked after reading, not streamed; Jev answers are a few KB.
     const text = await res.text();
+    if (text.length > MAX_BODY) { lastErr = 'response over 1 MB'; break; }
+    if (res.ok) {
+      let json;
+      try { json = JSON.parse(text); } catch {}
+      if (validAnswers(body, json)) { if (cached) cachePut(cached, json); return json; }
+      lastErr = 'malformed answer from Jev';
+      continue;
+    }
     if (res.status === 401 || res.status === 403) die(`${p.name} rejected the API key (${res.status}). Get a new one at ${p.keyUrl} and run: node flash.mjs setup --provider ${p.name}`, 3);
     if (res.status === 422 || res.status === 400 || res.status === 413) {
       if (soft) return null;
-      die(`Jev rejected the request (${res.status}): ${clip(text, 800)}`, 4);
+      die(`Jev rejected the request (HTTP ${res.status}). The input may be too large or malformed: try fewer items, or drop --fast.`, 4);
     }
-    lastErr = `HTTP ${res.status}: ${clip(text, 300)}`;
+    lastErr = `HTTP ${res.status}`;
     if (![408, 409, 429, 500, 502, 503, 504, 520, 522, 524, 529].includes(res.status)) break;
     const ra = Number(res.headers.get('retry-after'));
-    await sleep(ra > 0 ? ra * 1000 : 500 * 2 ** attempt + Math.random() * 250);
+    await sleep(Math.min(ra > 0 ? ra * 1000 : 500 * 2 ** attempt + Math.random() * 250, Math.max(0, end - Date.now())));
   }
   if (soft) return null;
   die(`Jev request failed: ${lastErr}`, 5);
