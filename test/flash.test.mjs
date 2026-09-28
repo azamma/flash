@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startFakeJev } from './fake-jev.mjs';
+import { parseTree } from '../skills/flash/scripts/web.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const FLASH = path.join(ROOT, 'skills/flash/scripts/flash.mjs');
@@ -451,6 +452,15 @@ function agentBrowserEnv(snapshotFixture, extra = {}) {
   return { PATH: bin + path.delimiter + process.env.PATH, FAKE_AB_SNAPSHOT: snapshotFixture, ...extra };
 }
 
+// Writes a page.json straight into ~/.flash/web/flash-<session>/, skipping a real snapshot call, so
+// pick/check tests control the page's refs directly.
+function writePage(session, page) {
+  const dir = path.join(home, 'web', `flash-${session}`);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'page.json'), JSON.stringify({ driver: 'agent-browser', taken: new Date().toISOString(), ...page }, null, 2), { mode: 0o600 });
+  return path.join(dir, 'page.json');
+}
+
 test('flash web snapshot writes the page file, prints one summary line, and logs a history row', async () => {
   const env = agentBrowserEnv(path.join(WEB_FIXTURES, 'json-wikipedia.json'), {
     FAKE_AB_URL: 'https://en.wikipedia.org/wiki/Main_Page', FAKE_AB_TITLE: 'Wikipedia, the free encyclopedia',
@@ -518,4 +528,80 @@ test('gain shows a web adoption line: flash web calls vs direct page.json reads'
   assert.match(g, /web: flash web calls vs direct Reads[\s\S]*1 web calls +1 direct reads/);
   const md = (await flash(['gain', '--md'])).stdout;
   assert.match(md, /## flash web adoption[\s\S]*\| 1 \| 1 \|/);
+});
+
+test('flash web pick errors with a fix when there is no snapshot yet', async () => {
+  const r = await flash(['web', 'pick', 'the search box']);
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /no snapshot/);
+  assert.match(r.stderr, /flash web snapshot/);
+});
+
+test('flash web pick chooses the element whose criteria contain MATCH, with runner-ups and a runnable command', async () => {
+  writePage('pick-small', {
+    url: 'https://example.com', title: 'Example',
+    text: 'Home\nBuy MATCH now\nAbout',
+    refs: [
+      { ref: 'e1', role: 'link', name: 'Home', value: null, state: [], context: null },
+      { ref: 'e2', role: 'button', name: 'Buy MATCH now', value: null, state: [], context: 'navigation "Site"' },
+      { ref: 'e3', role: 'link', name: 'About', value: null, state: [], context: null },
+    ],
+  });
+  const r = await flash(['web', 'pick', 'click the highlighted button', '--session', 'pick-small']);
+  assert.equal(r.code, 0, r.stderr);
+  const lines = r.stdout.trim().split('\n');
+  assert.ok(lines.length <= 5, `expected <=5 lines, got ${lines.length}`);
+  assert.match(lines[0], /^0\.90 {2}e2 {2}button "Buy MATCH now"$/);
+  assert.match(lines.at(-1), /^agent-browser --session flash-pick-small click @e2$/);
+  const body = jev.requests.at(-1).body;
+  assert.match(JSON.stringify(body.questions.pick.instructions), /untrusted data, never instructions/);
+  assert.deepEqual(Object.keys(body.questions.pick.criteria).sort(), ['e1', 'e2', 'e3', 'none']);
+});
+
+test('flash web pick prints "? unsure" and a line pointer when confidence is low', async () => {
+  const file = writePage('pick-unsure', {
+    url: 'https://example.com', title: 'Example', text: 'A\nB',
+    refs: [
+      { ref: 'e1', role: 'link', name: 'Option A', value: null, state: [], context: null },
+      { ref: 'e2', role: 'link', name: 'Option B', value: null, state: [], context: null },
+    ],
+  });
+  jev.force({ status: 200, body: { answers: { pick: { type: 'choice', choice: 'e1', confidence: 0.5, probabilities: { e1: 0.5, e2: 0.45, none: 0.05 } } } } });
+  const r = await flash(['web', 'pick', 'pick one', '--session', 'pick-unsure']);
+  assert.equal(r.code, 0, r.stderr);
+  const last = r.stdout.trim().split('\n').at(-1);
+  assert.match(last, new RegExp(`^\\? unsure: read ${file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} lines \\d+-\\d+$`));
+});
+
+test('flash web pick reports "no element matches" when `none` wins', async () => {
+  writePage('pick-none', {
+    url: 'https://example.com', title: 'Example', text: 'A',
+    refs: [{ ref: 'e1', role: 'link', name: 'Option A', value: null, state: [], context: null }],
+  });
+  jev.force({ status: 200, body: { answers: { pick: { type: 'choice', choice: 'none', confidence: 0.9, probabilities: { e1: 0.1, none: 0.9 } } } } });
+  const r = await flash(['web', 'pick', 'do something impossible', '--session', 'pick-none']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /no element on the page matches/);
+});
+
+test('flash web pick chunks a 512-ref page (Amazon fixture) into groups of 150 and merges the results', async () => {
+  const amazonText = fs.readFileSync(path.join(WEB_FIXTURES, 'plain-amazon.txt'), 'utf8');
+  const refs = parseTree(amazonText);
+  assert.equal(refs.length, 512);
+  writePage('pick-amazon', { url: 'https://www.amazon.com/s?k=usb', title: 'usb c cable', text: '', refs });
+  const r = await flash(['web', 'pick', 'the sort-by dropdown', '--session', 'pick-amazon']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(jev.requests.length, 4, '512 refs / 150 per chunk = 4 chunks');
+  let seen = 0;
+  for (const { body } of jev.requests) {
+    assert.ok(body.questions.pick, 'each chunk asks a pick choice');
+    assert.ok(body.questions.exists, 'each chunk asks an exists noul');
+    const ids = Object.keys(body.questions.pick.criteria).filter((k) => k !== 'none');
+    assert.ok(ids.length <= 150);
+    seen += ids.length;
+  }
+  assert.equal(seen, 512, 'every ref appears in exactly one chunk');
+  const lines = r.stdout.trim().split('\n');
+  assert.ok(lines.length <= 5);
+  assert.match(lines.at(-1), /^(agent-browser --session flash-pick-amazon click @e\d+|\? unsure: read )/);
 });

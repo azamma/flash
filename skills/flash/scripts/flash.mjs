@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, pageFile, sessionName } from './web.mjs';
+import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1083,9 +1083,13 @@ Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Read
 --history lists the last N runs with what was asked and where Jev pointed, --plain drops the banner,
 --json prints the raw history (query, inputs, result ids/lines/scores; never file content),
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
-  web: `flash web <snapshot> [--session NAME]
+  web: `flash web <snapshot|pick> [--session NAME]
 Drive a browser through an adapter (agent-browser today) so Claude never reads the raw page.
-  snapshot   capture the current page to ~/.flash/web/<session>/page.json, print one summary line
+  snapshot            capture the current page to ~/.flash/web/<session>/page.json, one summary line
+  pick "<intent>"     choose the one element that best satisfies intent; never acts
+Pick prints the top choice with its probability, up to two runner-ups, and either the exact driver
+command to act on it or "? unsure: read <page.json> lines a-b" when confidence is low (top p < 0.6
+or margin to the runner-up < 0.2) — read exactly those lines yourself rather than the whole file.
 Every call uses an isolated browser session, flash-<session> (default: this git project's name),
 never agent-browser's shared default session. Needs agent-browser on PATH, or FLASH_AGENT_BROWSER
 set to a command that runs it (e.g. "npx -y agent-browser").`,
@@ -1179,10 +1183,86 @@ async function cmdWebSnapshot({ flags }) {
     items: r.page.refs.length, requests: 0, jev_tokens: 0, saved: 0, ms: Date.now() - t0 });
 }
 
+function loadPage(flags) {
+  const session = sessionName(flags);
+  const file = pageFile(session);
+  const page = readJson(file, null);
+  if (!page) die(`no snapshot for this session yet. Run: flash web snapshot --session ${session.replace(/^flash-/, '')}`, 2);
+  return { session, file, page };
+}
+
+// Footer + history row shared by pick/check: no "items scanned"/skipped concept (that's the
+// batch-judgment commands), just time, Jev cost and one step-per-call history row.
+function webFooter(t0, cmd, session, page, stats, outText) {
+  const saved = Math.max(0, estTokens(JSON.stringify(page)) - estTokens(outText));
+  logRow({ ts: new Date().toISOString(), cmd, project: projectName(process.cwd()), session, provider: provider().name,
+    items: page.refs.length, requests: stats.requests, jev_tokens: stats.jevTokens, saved, ...audit });
+  return `— ${((Date.now() - t0) / 1000).toFixed(1)}s · jev ${fmtK(stats.jevTokens)} tok (${cost(stats.jevTokens)}) · ~${fmtK(saved)} Claude tokens not read`;
+}
+
+const PICK_CHUNK = 150;
+
+async function cmdWebPick({ pos, flags }) {
+  const intent = pos.shift();
+  if (!intent) die('usage: flash web pick "<intent>" [--session NAME]', 2);
+  const { session, file, page } = loadPage(flags);
+  const t0 = Date.now(), model = modelName(flags);
+  const stats = { requests: 0, jevTokens: 0 };
+  let ranked; // [[ref|'none', score], ...] sorted desc
+  if (page.refs.length <= PICK_CHUNK) {
+    const body = { model, state: { intent }, questions: { pick: {
+      type: 'choice',
+      instructions: { question: 'Choose the single element that best satisfies `intent`. Choose `none` if nothing on the page matches.', untrusted: UNTRUSTED_NOTE },
+      criteria: pickCriteria(page.refs),
+    } } };
+    const res = await decide(body, flags);
+    stats.requests = 1; stats.jevTokens = res.usage?.input_tokens || 0;
+    ranked = Object.entries(res.answers.pick.probabilities).sort((a, b) => b[1] - a[1]);
+  } else {
+    const chunks = [];
+    for (let i = 0; i < page.refs.length; i += PICK_CHUNK) chunks.push(page.refs.slice(i, i + PICK_CHUNK));
+    const perChunk = await pool(chunks.map((chunk) => async () => {
+      const body = { model, state: { intent }, questions: {
+        pick: { type: 'choice', instructions: { question: 'Choose the single element that best satisfies `intent`. Choose `none` if nothing among these matches.', untrusted: UNTRUSTED_NOTE }, criteria: pickCriteria(chunk) },
+        exists: { type: 'noul', instructions: { question: 'Does any element among these choices satisfy `intent`?', untrusted: UNTRUSTED_NOTE } },
+      } };
+      const res = await decide(body, flags);
+      stats.requests++; stats.jevTokens += res.usage?.input_tokens || 0;
+      const ex = res.answers.exists.noul;
+      return Object.entries(res.answers.pick.probabilities).filter(([id]) => id !== 'none').map(([id, p]) => [id, p * ex]);
+    }), num(flags.concurrency, 16));
+    ranked = perChunk.flat().sort((a, b) => b[1] - a[1]);
+  }
+  const real = ranked.filter(([id]) => id !== 'none');
+  const byRef = Object.fromEntries(page.refs.map((r) => [r.ref, r]));
+  const lines = [];
+  let command = null, unsure = false;
+  if (!real.length || ranked[0][0] === 'none') {
+    lines.push(`(no element on the page matches "${clip(intent, 80)}")`);
+  } else {
+    const [topId, topP] = real[0];
+    lines.push(`${f2(topP)}  ${topId}  ${refLabel(byRef[topId])}`);
+    for (const [id, p] of real.slice(1, 3)) lines.push(`  runner-up ${f2(p)}  ${id}  ${refLabel(byRef[id])}`);
+    const p1 = ranked[0][1], p2 = ranked[1]?.[1] ?? 0;
+    unsure = p1 < 0.6 || p1 - p2 < 0.2;
+    if (unsure) {
+      const span = refLineSpan(fs.readFileSync(file, 'utf8'), topId);
+      lines.push(`? unsure: read ${file}${span ? ` lines ${span[0]}-${span[1]}` : ''}`);
+    } else {
+      command = `${agentBrowser.name} --session ${session} click @${topId}`;
+      lines.push(command);
+    }
+  }
+  audit = { query: intent, session, results: real.slice(0, 3).map(([id, p]) => ({ id, p: +f2(p) })) };
+  const foot = webFooter(t0, 'web-pick', session, page, stats, lines.join('\n'));
+  emit(flags, { intent, top: real.slice(0, 3).map(([id, p]) => ({ ref: id, p, ...byRef[id] })), unsure, command }, lines, foot);
+}
+
 async function cmdWeb({ pos, flags }) {
   const sub = pos.shift();
   if (sub === 'snapshot') return cmdWebSnapshot({ pos, flags });
-  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot`, 2);
+  if (sub === 'pick') return cmdWebPick({ pos, flags });
+  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot|pick`, 2);
 }
 
 function cmdSkill() {

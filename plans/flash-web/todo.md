@@ -52,9 +52,9 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 5: `flash web pick "<intent>"`
 **Description:** Choice over refs (+`none`) with criteria objects; the untrusted-page instruction on every question; chunking above ~150 refs (reuse `find`'s merge); prints top-1 with p, two runner-ups, the exact driver command with `--session`, or `? unsure: read <page.json> lines a-b` under the confidence rule. `--json`.
 **Acceptance criteria:**
-- [ ] ≤ 5 lines; ends with a runnable command or the unsure line.
-- [ ] Amazon fixture (512 refs) is chunked and merged.
-- [ ] Request bodies carry the untrusted-data instruction (test asserts it).
+- [x] ≤ 5 lines; ends with a runnable command or the unsure line.
+- [x] Amazon fixture (512 refs) is chunked and merged.
+- [x] Request bodies carry the untrusted-data instruction (test asserts it).
 **Verification:** `npm test`; live run on 2 real pages.
 **Dependencies:** 1, 4 · **Files:** `web.mjs`, `flash.mjs`, tests · **Scope:** M
 
