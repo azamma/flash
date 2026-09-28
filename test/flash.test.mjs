@@ -393,28 +393,6 @@ test('guard turns the footer of a real run into a UI message', async () => {
   assert.match(JSON.parse(post.stdout).systemMessage, /^⚡ flash → Jev 1 scanned/);
 });
 
-test('guard trims a big MCP list to the items Jev keeps and saves the full response', async () => {
-  const list = Array.from({ length: 10 }, (_, i) => ({ title: i % 4 === 0 ? `MATCH doc ${i}` : `other doc ${i}`, body: 'x'.repeat(2500) }));
-  const text = JSON.stringify(list);
-  const hook = (response) => run(GUARD, [], { input: JSON.stringify({
-    hook_event_name: 'PostToolUse', tool_name: 'mcp__kb__search', tool_input: { query: 'p2p' }, cwd: work, tool_response: response,
-  }) });
-  const r = await hook([{ type: 'text', text }]);
-  const out = JSON.parse(r.stdout);
-  const [block] = out.hookSpecificOutput.updatedToolOutput;
-  const [note, json] = [block.text.slice(0, block.text.indexOf('\n')), block.text.slice(block.text.indexOf('\n') + 1)];
-  assert.deepEqual(JSON.parse(json).map((d) => d.title), ['MATCH doc 0', 'MATCH doc 4', 'MATCH doc 8']);
-  const saved = /saved at (\S+);/.exec(note)[1];
-  assert.equal(fs.readFileSync(saved, 'utf8'), text, 'full response kept on disk');
-  assert.match(out.systemMessage, /kept 3\/10 items/);
-  // Small outputs, non-lists, and FLASH_MCP=off pass through untouched.
-  assert.equal((await hook([{ type: 'text', text: '[1,2,3]' }])).stdout, '');
-  assert.equal((await hook({ content: [{ type: 'text', text: 'x'.repeat(20_000) }] })).stdout, '');
-  const off = await run(GUARD, [], { env: { FLASH_MCP: 'off' }, input: JSON.stringify({
-    hook_event_name: 'PostToolUse', tool_name: 'mcp__kb__search', tool_input: {}, tool_response: [{ type: 'text', text }] }) });
-  assert.equal(off.stdout, '');
-});
-
 test('history names the project after the git root, not the subfolder', async () => {
   execFileSync('git', ['init', '-q'], { cwd: work });
   const big = write('sub/big.txt', 'x\n'.repeat(700));

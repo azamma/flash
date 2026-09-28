@@ -95,10 +95,6 @@ above it, nearby hits merged), so usually no `Read` is needed. If you need more,
 with `offset`/`limit` around the hit lines. For logs, use
 `flash filter "<question>" app.log --lines` instead of `find`.
 
-## When an MCP response is trimmed
-
-A hook trims big MCP list responses. The output then starts with `[flash: Jev kept N of M items …]` and names the file with the full response. Work from the kept items. If the answer seems missing, Read that file with offset/limit, or run `flash filter`/`find` on it with a sharper question. Don't re-run the MCP call to get the rest.
-
 ## Commands
 
 **Inputs** (for filter, classify, rank): files, directories (respects
