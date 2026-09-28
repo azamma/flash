@@ -54,7 +54,7 @@ key is missing or was rejected; repeat this step.
 `guard.mjs` handles two hook events:
 
 - **PreToolUse on `Read`**: denies a whole-file read of a text file over 600 lines or
-  60 KB. It points Claude to `flash find` / `flash filter`, then to `Read` with `offset`/`limit`.
+  60 KB. It points Claude to `flash find --context` / `flash filter`, then to `Read` with `offset`/`limit` if still needed.
 - **PostToolUse on `Bash`**: after a `flash` run, shows the Jev footer in the UI
   (`⚡ flash → Jev … tok ($…)`).
 
@@ -95,7 +95,7 @@ Append this to `~/.claude/CLAUDE.md` unless a `# flash` section is already there
 
 ```markdown
 # flash
-- Before reading many files, long logs or big lists just to decide what matters, use the `flash` skill (`flash filter|classify|rank|find`) and read only the survivors. A PreToolUse hook (`~/.claude/skills/flash/scripts/guard.mjs`) blocks whole-file Reads of large files; follow its message instead of working around it.
+- Before reading many files, long logs or big lists just to decide what matters, use the `flash` skill (`flash search` for code questions; `flash filter|classify|rank|find` otherwise) and read only the survivors. A PreToolUse hook (`~/.claude/skills/flash/scripts/guard.mjs`) blocks whole-file Reads of large files; follow its message instead of working around it.
 ```
 
 **Done when** `grep -c "^# flash" ~/.claude/CLAUDE.md` prints `1`.

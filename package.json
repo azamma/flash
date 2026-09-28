@@ -1,6 +1,6 @@
 {
   "name": "flash-skill",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Claude Code skill that hands bulk judgment calls (filter, classify, rank, find) to Jev: 86% fewer Claude tokens on benchmark, up to 20x faster.",
   "type": "module",
   "bin": {
@@ -11,7 +11,8 @@
     "skills/",
     ".claude-plugin/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "engines": {
     "node": ">=18"

@@ -81,6 +81,6 @@ test('files the scan cannot split fall back to text chunks covering every line',
 test('an oversized declaration is cut into text windows', () => {
   const body = Array.from({ length: 600 }, (_, i) => `  step${i}();`).join('\n');
   const units = splitUnits(`function big() {\n${body}\n}`, 'big.js');
-  assert.ok(units.length > 1 && units.every((u) => u.name.startsWith('big@')));
+  assert.ok(units.length > 1 && units.every((u) => u.name === 'big'));
   assert.equal(units.at(-1).end, 602);
 });

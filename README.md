@@ -42,10 +42,18 @@ Flash is a fork of [quicksilver](https://github.com/UditAkhourii/quicksilver). T
 | **A local savings log** | `flash gain` breaks tokens saved down by command, project and day, from `~/.flash/history.jsonl` (counts only, never content). |
 | **Agent-ready setup** | [`AGENT-SETUP.md`](AGENT-SETUP.md) walks an agent through install, key, hooks and checks, one verifiable step at a time. |
 
-**Next up, inspired by [jevgrep](https://github.com/dzhng/jevgrep):** an answer cache, verbatim source
-excerpts with line ranges (`flash find --context`), and repo-scale code search that walks folders,
-files and declarations (`flash search`). The plan is in
-[`plans/jevgrep-in-flash/plan.md`](plans/jevgrep-in-flash/plan.md).
+From [jevgrep](https://github.com/dzhng/jevgrep), ported without its dependencies:
+
+| | What you get |
+|---|---|
+| **`flash search`** | Code search that walks the repo folder by folder, prunes folders Jev rules out from a preview, judges each function or class on its own, and prints the relevant files by role (implementation, caller, test…) with the selected code. |
+| **`find --context`** | Verbatim source blocks around each hit, with line ranges, so Claude usually needs no follow-up `Read`. |
+| **Answer cache** | Repeat runs over unchanged content are free and instant. Answers only, never content, for 7 days in `~/.flash/cache`. |
+| **A real health check** | `flash status` and `setup` send one decision with a known answer, the same way for both providers. |
+| **Safer inputs** | Files holding a private key, binaries, symlinks, ignored paths and `~/.flash` never reach Jev. |
+
+On the retrieval benchmark (S13, below), `flash search` matched Claude alone's accuracy with 43%
+fewer Claude tokens.
 
 ## Proof: the benchmark
 
@@ -92,10 +100,12 @@ flash filter   "Does this file handle user sessions?" src           # which file
 flash filter   "Does this line report a failure?" app.log --lines    # log triage, repeats collapsed
 flash classify --labels "bug,feature,question" --items issues.jsonl # bulk routing
 flash rank     "where do we issue refunds?" src --top 5              # relevance ranking
-flash find     "the retry backoff logic" huge_module.py              # locate lines in huge files
+flash search   "where is the JWT signature verified?" src            # code search: files by role, with the code
+flash find     "the retry backoff logic" huge_module.py --context    # locate lines in huge files, with source
 flash ask      "Does this contract allow termination without notice?" --state @contract.txt
 flash status                                                          # key check + lifetime tokens saved
 flash gain                                                            # savings by command, project, day (--history N: per run)
+flash cache clear                                                     # wipe cached answers (--no-cache skips them per run)
 flash help find                                                       # flags and examples for one command
 flash skill                                                           # print the agent instructions (SKILL.md)
 ```
@@ -249,8 +259,9 @@ and the footer format the hook depends on. Works on Node 18+.
 
 - **[quicksilver](https://github.com/UditAkhourii/quicksilver)** by Udit Akhouri: the project Flash
   forks. The CLI, the judgment commands and the benchmark come from it.
-- **[jevgrep](https://github.com/dzhng/jevgrep)** by David Zhang: the model for Flash's code-search
-  roadmap (hierarchical retrieval, answer cache, source excerpts, the accounting rules for benchmarks).
+- **[jevgrep](https://github.com/dzhng/jevgrep)** by David Zhang (MIT): `flash search`'s folder → file →
+  declaration traversal and its prompts, the answer cache, source excerpts, the provider health check and
+  the benchmark accounting rules are ported from it. See [`NOTICE`](NOTICE).
 - **[Jev](https://docs.typesafe.ai)** by TypeSafe: the System One model doing the judging.
 
 The lightning mark is original artwork for this project.

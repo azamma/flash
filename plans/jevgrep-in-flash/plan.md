@@ -67,7 +67,7 @@ Only the heuristic path is built. An exact Python `ast` pass through a system `p
 **What:** New situation on hono: truth = files + line ranges for a "where is X" question. Score file recall, range hit, and output tokens for `find` (old), `find --context` and `search`, against the Claude-alone baseline. Adopt jevgrep's accounting rules: freeze the baseline and never rerun it, keep failed runs, report Jev cost separately from Claude tokens, and treat missing cost as unknown rather than zero.
 **Testing:** `node bench/score.mjs` reproduces the numbers; results committed under `bench/results/`.
 
-### Step 9: Docs, attribution, release
+### Step 9: Docs, attribution, release ✅ done
 **Files:** `NOTICE` (new), `README.md`, `skills/flash/SKILL.md`, `AGENT-SETUP.md`, `package.json` (version), `.claude-plugin/plugin.json` (version)
 **What:** Credit jevgrep's MIT notice for the ported algorithm and prompt texts. Document `search`, `find --context`, the cache and the new `status` check. Update the SKILL.md command table so Claude picks `search` for code questions and `filter`/`classify` for everything else, and add the new flags to the agent runbook. Bump the version.
 **Testing:** `npm test` green; reinstall with `./install.sh`; a live `flash search` in this repo; the guard hint and PostToolUse footer still fire in Claude Code.

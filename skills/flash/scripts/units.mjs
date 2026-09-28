@@ -82,7 +82,7 @@ function textUnits(lines, from = 1, to = lines.length, name = 'text') {
   let start = from, size = 0;
   for (let i = from; i <= to; i++) {
     size += lines[i - 1].length + 1;
-    if (size >= TEXT_CHUNK || i === to) { out.push({ name: `${name}@${start}`, start, end: i }); start = i + 1; size = 0; }
+    if (size >= TEXT_CHUNK || i === to) { out.push({ name, start, end: i }); start = i + 1; size = 0; }
   }
   return out;
 }
