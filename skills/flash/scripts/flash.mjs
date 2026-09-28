@@ -147,9 +147,23 @@ function gitFiles(dir) {
   } catch { return null; }
 }
 
-function walk(dir, acc = []) {
+// Patterns from .gitignore/.ignore for the non-git walk. Git repos go through `git ls-files` instead.
+// ponytail: no negation (!), no ** — enough for the usual "dist/", "*.log", "tmp"; git handles the rest.
+function ignoreRules(dir) {
+  const lines = ['.gitignore', '.ignore'].flatMap((f) => { try { return fs.readFileSync(path.join(dir, f), 'utf8').split(/\r?\n/); } catch { return []; } });
+  return lines.map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !l.startsWith('!')).map((l) => {
+    const body = l.replace(/^\//, '').replace(/\/$/, '').replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]');
+    return new RegExp(`^${body}$`);
+  });
+}
+
+// Symlinks are never followed: e.isFile() and e.isDirectory() are false for them.
+function walk(dir, acc = [], rules = []) {
+  const here = [...rules, ...ignoreRules(dir)];
+  const ignored = (name) => here.some((r) => r.test(name));
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (e.isDirectory()) { if (!IGNORE_DIRS.has(e.name) && !e.name.startsWith('.')) walk(path.join(dir, e.name), acc); }
+    if (ignored(e.name)) continue;
+    if (e.isDirectory()) { if (!IGNORE_DIRS.has(e.name) && !e.name.startsWith('.')) walk(path.join(dir, e.name), acc, here); }
     else if (e.isFile()) acc.push(path.join(dir, e.name));
   }
   return acc;
@@ -164,15 +178,22 @@ function expand(spec) {
   const st = fs.statSync(spec);
   if (st.isFile()) return [spec];
   const tracked = gitFiles(spec);
-  return (tracked?.length ? tracked : walk(spec)).filter((f) => { try { return fs.statSync(f).isFile(); } catch { return false; } });
+  return (tracked?.length ? tracked : walk(spec)).filter((f) => { try { return fs.lstatSync(f).isFile(); } catch { return false; } });
 }
 
+// Control bytes other than tab, newline, CR, form feed and ESC (ANSI colours in logs) mean binary.
+const CONTROL_RE = /[\x00-\x08\x0b\x0e-\x1a\x1c-\x1f\x7f]/;
+const PRIVATE_KEY_RE = /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/;
+const utf8 = new TextDecoder('utf-8', { fatal: true });
+
+// Returns { text } or { skip: reason }.
 function readText(file, maxBytes) {
-  const st = fs.statSync(file);
-  if (st.size > maxBytes) return null;
-  const buf = fs.readFileSync(file);
-  if (buf.subarray(0, 8192).includes(0)) return null; // binary
-  return buf.toString('utf8');
+  if (fs.statSync(file).size > maxBytes) return { skip: `>${maxBytes / 1024 / 1024}MB` };
+  let text;
+  try { text = utf8.decode(fs.readFileSync(file)); } catch { return { skip: 'binary' }; }
+  if (CONTROL_RE.test(text)) return { skip: 'binary' };
+  if (PRIVATE_KEY_RE.test(text)) return { skip: 'contains a private key, never sent' };
+  return { text };
 }
 
 function readStdin() {
@@ -220,8 +241,9 @@ function collect(pos, flags) {
     if (exts && !exts.includes(path.extname(f).toLowerCase())) continue;
     if (!flags['no-secrets-guard'] && SECRET_RE.test(r)) { skipped.push(`${r} (secret-like, never sent)`); continue; }
     if (LOCK_RE.test(r)) continue;
-    const text = readText(abs, 2 * 1024 * 1024);
-    if (text === null) { skipped.push(`${r} (binary or >2MB)`); continue; }
+    if ((abs + path.sep).startsWith(path.resolve(HOME) + path.sep)) { skipped.push(`${r} (flash config, never sent)`); continue; }
+    const { text, skip } = readText(abs, 2 * 1024 * 1024);
+    if (skip) { skipped.push(`${r} (${skip})`); continue; }
     if (!text.trim()) continue;
     flags.lines ? pushLines(r, text) : push(r, text);
   }

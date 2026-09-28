@@ -136,6 +136,30 @@ test('secret files never reach a request body', async () => {
   assert.doesNotMatch(JSON.stringify(jev.requests.map((q) => q.body)), /DO_NOT_UPLOAD/);
 });
 
+test('private keys, symlinks, binaries, ignored paths and flash config never reach Jev', async () => {
+  write('src/app.ts', 'MATCH app');
+  write('src/color.log', '\x1b[31mERROR\x1b[0m MATCH coloured log stays readable');
+  write('src/deploy.txt', 'notes\n-----BEGIN OPENSSH PRIVATE KEY-----\nDO_NOT_UPLOAD\n-----END OPENSSH PRIVATE KEY-----\n');
+  write('src/blob.dat', 'DO_NOT_UPLOAD\x01\x02\x03');
+  fs.writeFileSync(path.join(work, 'src/latin1.txt'), Buffer.from([0x44, 0x4f, 0x5f, 0xe9, 0xff, 0x4e]));
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'flash-outside-'));
+  fs.writeFileSync(path.join(outside, 'x.txt'), 'DO_NOT_UPLOAD');
+  fs.symlinkSync(path.join(outside, 'x.txt'), path.join(work, 'src/link.txt'));
+  fs.symlinkSync(outside, path.join(work, 'src/linkdir'));
+  write('src/.ignore', 'ignored.txt\ntmp/\n*.bak\n');
+  write('src/ignored.txt', 'DO_NOT_UPLOAD');
+  write('src/tmp/cache.txt', 'DO_NOT_UPLOAD');
+  write('src/old.bak', 'DO_NOT_UPLOAD');
+  fs.writeFileSync(path.join(home, 'notes.txt'), 'DO_NOT_UPLOAD');
+  const r = await flash(['filter', 'q?', 'src', home]);
+  assert.equal(r.code, 0, r.stderr);
+  const sent = JSON.stringify(jev.requests.map((q) => q.body));
+  assert.doesNotMatch(sent, /DO_NOT_UPLOAD/);
+  assert.match(sent, /coloured log stays readable/);
+  assert.match(r.stderr, /deploy\.txt \(contains a private key/);
+  assert.match(r.stderr, /blob\.dat \(binary\)/);
+});
+
 test('each run appends one counts-only row to history, and gain reads it', async () => {
   write('a.txt', 'MATCH secret-content');
   await flash(['filter', 'q?', 'a.txt']);

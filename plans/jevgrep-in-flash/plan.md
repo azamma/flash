@@ -20,7 +20,7 @@ Source: jevgrep v0.4.3 (`adbea4c`), MIT, © 2026 David Zhang. Code or prompt tex
 **What:** `node:test` + `node:http` server that answers `{answers:{id:{type,…}}}` and records request bodies. Tests run `flash.mjs` as a subprocess with `FLASH_API_BASE` pointing at the server and `FLASH_HOME` in a temp dir. First tests cover current behavior: filter/classify/find output, footer format (the `guard.mjs` regex depends on it), retry on 429, exit 3 on 401, and history rows.
 **Testing:** `npm test` passes on Node 18 and 22 with no network.
 
-### Step 2: File filtering hardening
+### Step 2: File filtering hardening ✅ done
 **Files:** `skills/flash/scripts/flash.mjs` (`collect`, `walk`, `readText`), `test/flash.test.mjs`
 **What:** Port jevgrep's content checks. Skip files containing a `-----BEGIN … PRIVATE KEY-----` block. Treat control characters or invalid UTF-8 as binary, not only NUL. Skip symlinks. Never read `~/.flash`. Honor `.ignore` on the non-git walk path.
 **Testing:** fixture dir with a planted `DO_NOT_UPLOAD` private key, a symlink and a binary; the test asserts none of them reaches any request body.
