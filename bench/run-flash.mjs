@@ -27,7 +27,7 @@ function qs(dir, args, withSave = false) {
   const out = r.stdout.replace(/\n— full results saved to .*/, '');
   const cmd = `node flash.mjs ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`;
   const saved = withSave ? JSON.parse(fs.readFileSync(SAVE, 'utf8')) : null;
-  return { out, saved, ms: Date.now() - t0, jev: jevTotal() - before, claudeTokens: tok(cmd) + tok(out) + TOOL_CALL_OVERHEAD };
+  return { out, saved, ms: Date.now() - t0, jev: jevTotal() - before, claudeTokens: tok(cmd) + tok(out) + tok(r.stderr) + TOOL_CALL_OVERHEAD };
 }
 
 const rows = (out) => out.split('\n').filter((l) => /^[ ?]?\d\.\d\d  /.test(l));

@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -71,7 +72,7 @@ function provider(flags = {}) {
   const cfg = readJson(CONFIG, {});
   let name = flags.provider || process.env.FLASH_PROVIDER || cfg.provider;
   if (!name) name = Object.keys(PROVIDERS).find((n) => envKey(n) || storedKey(cfg, n)) || 'typesafe';
-  if (!PROVIDERS[name]) die(`unknown provider "${name}". Use: ${Object.keys(PROVIDERS).join(', ')}`);
+  if (!PROVIDERS[name]) die(`unknown provider "${name}". Use: ${Object.keys(PROVIDERS).join(', ')}`, 2);
   const p = PROVIDERS[name], env = envKey(name);
   return { ...p, name, base: (process.env.FLASH_API_BASE || p.base).replace(/\/$/, ''),
     key: env ? process.env[env] : storedKey(cfg, name), keySource: env ? `env ${env}` : CONFIG };
@@ -156,10 +157,10 @@ function walk(dir, acc = []) {
 
 function expand(spec) {
   if (/[*?[\]{}]/.test(spec)) {
-    if (!fs.globSync) die('glob patterns need Node 22+; pass a directory instead');
+    if (!fs.globSync) die('glob patterns need Node 22+; pass a directory instead', 2);
     return fs.globSync(spec, { exclude: (p) => IGNORE_DIRS.has(path.basename(p)) }).filter((f) => fs.statSync(f).isFile());
   }
-  if (!fs.existsSync(spec)) die(`no such file or directory: ${spec}`);
+  if (!fs.existsSync(spec)) die(`no such file or directory: ${spec}`, 2);
   const st = fs.statSync(spec);
   if (st.isFile()) return [spec];
   const tracked = gitFiles(spec);
@@ -225,7 +226,7 @@ function collect(pos, flags) {
     flags.lines ? pushLines(r, text) : push(r, text);
   }
   const limit = num(flags.limit, 5000);
-  if (items.length > limit) die(`${items.length} items exceeds --limit ${limit}. Narrow the input or raise --limit.`);
+  if (items.length > limit) die(`${items.length} items exceeds --limit ${limit}. Narrow the input or raise --limit.`, 2);
   return { items, skipped };
 }
 
@@ -283,7 +284,8 @@ const fmtK = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3
 function emit(flags, jsonObj, lines, foot) {
   if (flags.json) { process.stdout.write(JSON.stringify(jsonObj, null, 2) + '\n'); process.stderr.write(foot + '\n'); return; }
   const body = lines.join('\n');
-  process.stdout.write((body ? body + '\n' : '') + foot + '\n');
+  if (body) process.stdout.write(body + '\n');
+  process.stderr.write(foot + '\n');
 }
 
 function label(it, flags) {
@@ -292,7 +294,7 @@ function label(it, flags) {
 }
 
 function requireInputs(items, cmd) {
-  if (!items.length) die(`nothing to ${cmd}: pass files, directories, globs, --items FILE, or - for stdin`);
+  if (!items.length) die(`nothing to ${cmd}: pass files, directories, globs, --items FILE, or - for stdin`, 2);
 }
 
 // ---------- commands ----------
@@ -337,7 +339,7 @@ function save(flags, data) {
 
 async function cmdFilter({ pos, flags }) {
   const question = pos.shift();
-  if (!question) die('usage: filter "<yes/no question>" <paths...>');
+  if (!question) die('usage: filter "<yes/no question>" <paths...>', 2);
   const t0 = Date.now();
   const { items, skipped } = collect(pos, flags);
   requireInputs(items, 'filter');
@@ -366,7 +368,7 @@ function parseLabels(flags) {
     const raw = String(flags['labels-json']);
     return JSON.parse(raw.startsWith('@') ? fs.readFileSync(raw.slice(1), 'utf8') : raw);
   }
-  if (!flags.labels) die('classify needs --labels "a,b,c" or --labels-json \'{"a":"description"}\'');
+  if (!flags.labels) die('classify needs --labels "a,b,c" or --labels-json \'{"a":"description"}\'', 2);
   return Object.fromEntries(String(flags.labels).split(',').map((s) => s.trim()).filter(Boolean).map((l) => {
     const [k, ...d] = l.split(':');
     return [k.trim(), d.length ? d.join(':').trim() : null];
@@ -376,7 +378,7 @@ function parseLabels(flags) {
 async function cmdClassify({ pos, flags }) {
   const criteria = parseLabels(flags);
   const n = Object.keys(criteria).length;
-  if (n < 2 || n > 255) die('classify needs 2–255 labels');
+  if (n < 2 || n > 255) die('classify needs 2–255 labels', 2);
   const question = flags.question || 'Which label best describes this item?';
   const t0 = Date.now();
   const { items, skipped } = collect(pos, flags);
@@ -425,7 +427,7 @@ const RANK_LEVELS = [
 
 async function cmdRank({ pos, flags }) {
   const query = pos.shift();
-  if (!query) die('usage: rank "<query>" <paths...> [--top 10]');
+  if (!query) die('usage: rank "<query>" <paths...> [--top 10]', 2);
   const t0 = Date.now();
   const { items, skipped } = collect(pos, flags);
   requireInputs(items, 'rank');
@@ -444,7 +446,7 @@ async function cmdRank({ pos, flags }) {
 
 async function cmdFind({ pos, flags }) {
   const query = pos.shift();
-  if (!query || !pos.length) die('usage: find "<what you are looking for>" <files...> [--top 5]');
+  if (!query || !pos.length) die('usage: find "<what you are looking for>" <files...> [--top 5]', 2);
   const t0 = Date.now();
   const model = modelName(flags);
   const chunkLines = Math.min(num(flags.chunk, 150), 250);
@@ -509,16 +511,16 @@ async function cmdAsk({ pos, flags }) {
     body = JSON.parse(first === '-' ? readStdin() : fs.readFileSync(first, 'utf8'));
   } else {
     const question = pos.join(' ');
-    if (!question) die('usage: ask "<question>" --state @file|text|- [--choice "a,b" | --score "low|mid|high"]  or  ask spec.json');
+    if (!question) die('usage: ask "<question>" --state @file|text|- [--choice "a,b" | --score "low|mid|high"]  or  ask spec.json', 2);
     const state = readStateArg(flags.state);
-    if (state === undefined) die('ask needs --state (@file, literal text, or - for stdin)');
+    if (state === undefined) die('ask needs --state (@file, literal text, or - for stdin)', 2);
     let q = { type: 'noul', instructions: question };
     if (flags.choice) q = { type: 'choice', instructions: question, criteria: parseLabels({ labels: flags.choice }) };
     if (flags.score) q = { type: 'score', instructions: question, criteria: String(flags.score).split('|').map((s) => s.trim()) };
     body = { state, questions: { answer: q } };
   }
   body.model ||= modelName(flags);
-  if (!body.state || !body.questions) die('spec needs "state" and "questions"');
+  if (!body.state || !body.questions) die('spec needs "state" and "questions"', 2);
   const res = await decide(body, flags);
   const lines = Object.entries(res.answers).map(([id, a]) => fmtAnswer(id, a));
   const stateText = typeof body.state === 'string' ? body.state : JSON.stringify(body.state);
@@ -559,7 +561,7 @@ async function cmdSetup({ pos, flags }) {
     return console.log(`Removed saved ${p.name} key from ${CONFIG}`);
   }
   const key = (pos[0] || (await promptHidden(`Paste your ${p.name} API key (from ${p.keyUrl}): `))).trim();
-  if (!key) die(`no key given. Get one at ${p.keyUrl}`);
+  if (!key) die(`no key given. Get one at ${p.keyUrl}`, 2);
   const res = await checkKey(p, key).catch((e) => die(`network error: ${e.message}`));
   if (res.status === 401 || res.status === 403) die(`that key was rejected by ${p.name} (${res.status}). Double-check it at ${p.keyUrl}`, 3);
   if (!res.ok) die(`could not verify key: HTTP ${res.status}`);
@@ -611,7 +613,7 @@ const GLYPHS = {
 };
 
 function banner() {
-  const tty = process.stdout.isTTY && !process.env.NO_COLOR;
+  const tty = process.stdout.isTTY && !process.env.NO_COLOR && process.env.TERM !== 'dumb';
   const paint = (code) => (t) => (tty ? `\x1b[${code}m${t}\x1b[0m` : t);
   const gold = paint('38;5;179'), cream = paint('1;38;5;230'), dim = paint('38;5;245');
   const word = (r) => [...'FLASH'].map((c) => GLYPHS[c][r]).join('  ');
@@ -640,31 +642,103 @@ function cmdGain({ flags }) {
   show('last 7 days', groupBy(rows, (r) => r.ts.slice(0, 10)).sort().slice(-7));
 }
 
-const HELP = `flash — delegate bulk judgment calls to Jev
+const CMD_HELP = {
+  filter: `flash filter "<yes/no question>" <inputs> [--threshold 0.5] [--lines] [--fast]
+Keep only the items where Jev answers yes. Items between 0.35 and 0.65 are listed as borderline.
+  flash filter "Does this file handle authentication?" src
+  flash filter "Does this line report a failure?" app.log --lines`,
+  classify: `flash classify --labels "a,b,c" <inputs> [--question "..."] [--only a] [--min-confidence 0.6] [--verbose]
+Put each item in exactly one label. Labels can carry descriptions: --labels "bug:Something broken,feature:New behaviour"
+or --labels-json '{"bug":"Something broken"}'. Add a catch-all label such as "other" when nothing may fit.
+  flash classify --labels "bug,feature,question" --items tickets.jsonl`,
+  rank: `flash rank "<query>" <inputs> [--top 10 | --all]
+Order items by relevance to the query, best first.
+  flash rank "retry logic for HTTP calls" src --top 5`,
+  find: `flash find "<what you're looking for>" <files> [--top 5] [--chunk 150]
+Locate the lines in large files that match a description. Read around the hits with offset/limit afterwards.
+  flash find "where the session token is refreshed" src/auth.ts`,
+  ask: `flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
+flash ask spec.json     raw {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}
+One judgment over one document; the default answer is a yes/no probability.
+  flash ask "Does this contract allow termination without notice?" --state @contract.txt`,
+  setup: `flash setup [--provider typesafe|openrouter] [--remove]
+Verify a key, save it to ~/.flash/config.json (mode 0600) and make that provider the default.
+Reads the key from a hidden prompt, or from stdin when piped. Avoid passing it as an argument.
+  printenv OPENROUTER_API_KEY | flash setup --provider openrouter`,
+  status: `flash status [--provider P]
+Check that the key works and show lifetime savings. Exit 3 means the key is missing or rejected.`,
+  gain: `flash gain [--history [N]] [--plain] [--json]
+Tokens saved by command, project and day, read from ~/.flash/history.jsonl.
+--history lists the last N runs, --plain drops the banner, --json prints the raw history.`,
+  skill: `flash skill
+Print the agent instructions (SKILL.md) with this install's paths filled in.`,
+};
 
-  setup [KEY] [--provider P]           save + verify a key, make P the default (prompts if omitted)
-  status [--provider P]                check key, show lifetime savings
-  gain [--history [N]] [--json]        savings by command, project and day; --history lists runs; --plain drops the banner
-  filter "<yes/no question>" <inputs>  keep only items where the answer is yes
-  classify --labels "a,b,c" <inputs>   put each item in one bucket
-  rank "<query>" <inputs> [--top N]    order items by relevance
-  find "<what>" <files> [--top N]      locate the lines in large files that match
-  ask "<question>" --state @file       one-off yes/no (or --choice / --score)
-  ask spec.json                        raw {state, questions} request
+const HELP = `flash — hand Claude's bulk judgment calls to Jev, read only what survives
 
-inputs: files, directories (respects .gitignore), globs, - (stdin), --items FILE.jsonl
-common: --lines (each line is an item) --ext ts,tsx --json --threshold 0.5 --save FILE
-        --verbose (classify: one line per item) --no-collapse (lines: don't merge repeats)
-        --concurrency 16 --max-chars 60000 --limit 5000 --model jev-latest
-        --provider typesafe|openrouter (default: saved choice, else whichever has a key)
-        --fast (pack small items per request: faster, less accurate)`;
+Examples:
+  flash filter "Does this file handle authentication?" src
+  flash filter "Does this line report a failure?" app.log --lines
+  flash find "where the session token is refreshed" src/auth.ts
+  flash classify --labels "bug,feature,question" --items tickets.jsonl
 
-const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk };
+Commands:
+  filter    keep only items where the answer to a yes/no question is yes
+  classify  put each item in one label
+  rank      order items by relevance to a query
+  find      locate the matching lines inside large files
+  ask       one judgment over one document, or a raw spec.json request
+  setup     save and verify a key, pick the default provider
+  status    check the key, show lifetime savings
+  gain      savings by command, project and day
+  skill     print the agent instructions (SKILL.md)
+Run "flash help <command>" or "flash <command> --help" for flags and examples.
+
+Inputs: files, directories (respects .gitignore), globs, - for stdin, --items FILE.jsonl
+Common flags:
+  --lines            judge each line separately (logs, CSVs, lists)
+  --ext ts,tsx       only these file types
+  --json             machine-readable output on stdout
+  --save FILE        write every per-item result to FILE
+  --fast             pack small items per request: about 10x faster, less accurate
+  --provider P       typesafe or openrouter (default: FLASH_PROVIDER, then the saved choice, then whichever has a key)
+  --model M          override the provider's default model
+  --concurrency 16 --max-chars 60000 --limit 5000 --threshold 0.5
+Output: results on stdout; the summary footer, skipped files and errors on stderr.
+Environment: FLASH_PROVIDER, FLASH_HOME (default ~/.flash), JEV_API_KEY / TYPESAFE_API_KEY, OPENROUTER_API_KEY
+Exit codes: 0 ok · 1 error · 2 bad usage · 3 key missing or rejected · 4 Jev rejected the request · 5 network or unexpected error
+Issues: https://github.com/azamma/flash/issues`;
+
+function cmdSkill() {
+  const dir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+  const md = fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8').replace(/^---\n[\s\S]*?\n---\n+/, '');
+  process.stdout.write(md.replaceAll('<base directory of this skill>', dir));
+}
+
+// Levenshtein distance, only for "did you mean" on typos.
+function distance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] !== b[j - 1]));
+  return d[a.length][b.length];
+}
+
+const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk, skill: cmdSkill };
 
 process.on('unhandledRejection', (e) => die(`unexpected error: ${e?.stack || e}`, 5));
 process.on('uncaughtException', (e) => die(`unexpected error: ${e?.stack || e}`, 5));
 
 const [cmd, ...rest] = process.argv.slice(2);
-if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') { console.log(HELP); process.exit(0); }
-if (!COMMANDS[cmd]) die(`unknown command "${cmd}"\n\n${HELP}`);
+if (!cmd || cmd === '--help' || cmd === '-h') { console.log(HELP); process.exit(0); }
+if (cmd === 'help') {
+  if (!rest[0]) { console.log(HELP); process.exit(0); }
+  if (!CMD_HELP[rest[0]]) die(`no help for "${rest[0]}". Commands: ${Object.keys(COMMANDS).join(', ')}`, 2);
+  console.log(CMD_HELP[rest[0]]); process.exit(0);
+}
+if (!COMMANDS[cmd]) {
+  const near = Object.keys(COMMANDS).find((c) => distance(c, cmd) <= 2);
+  die(`unknown command "${cmd}".${near ? ` Did you mean "${near}"?` : ''} Run "flash --help" for the list.`, 2);
+}
+if (rest.includes('--help') || rest.includes('-h')) { console.log(CMD_HELP[cmd]); process.exit(0); }
 await COMMANDS[cmd](parseArgs(rest));

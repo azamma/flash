@@ -25,23 +25,28 @@ Needs Node 18+ (globs need Node 22+). There are no other dependencies.
 Run `flash status` first.
 
 - `ready` means go straight to the task.
-- `not configured` means ask the user for a key. Jev is reachable through two
+- `not configured` means the user needs a key. Jev is reachable through two
   providers with the same answers:
-  - **TypeSafe** (default): key from **https://console.typesafe.ai**
+  - **TypeSafe**: key from **https://console.typesafe.ai**
   - **OpenRouter**: key from **https://openrouter.ai/settings/keys**, add `--provider openrouter`
 
-  They can:
-  1. paste it in chat. Then run `flash setup <KEY> [--provider openrouter]` (it verifies
-     the key, saves it to `~/.flash/config.json` with user-only permissions,
-     and makes that provider the default), **or**
-  2. keep it out of the chat by running `node "<skill dir>/scripts/flash.mjs" setup [--provider openrouter]`
-     in their own terminal. It prompts for the key with hidden input.
+  Ask the user to run this in their own prompt, so the key never enters the chat:
+
+  ```
+  ! node "<base directory of this skill>/scripts/flash.mjs" setup --provider openrouter
+  ```
+
+  It prompts with hidden input, verifies the key, saves it to `~/.flash/config.json`
+  (user-only permissions) and makes that provider the default. If the key is already in
+  an environment variable or `~/.env`, pipe it in instead:
+  `printenv OPENROUTER_API_KEY | flash setup --provider openrouter`.
 
   Env keys also work and take precedence over saved ones: `JEV_API_KEY` or
   `TYPESAFE_API_KEY` for TypeSafe, `OPENROUTER_API_KEY` for OpenRouter.
   After setup, carry on with the original task. Don't stop at "configured".
 
-Exit code 3 means a key problem: missing, or rejected by the provider. Re-run setup.
+Exit codes: 2 bad usage (run `flash help <command>`), 3 key missing or rejected (re-run
+setup), 4 Jev rejected the request, 5 network error.
 
 ## When to delegate
 
@@ -75,6 +80,18 @@ shortlist, and check the `?` items yourself.
 - Content the user wouldn't want sent to a third-party API. Flash already
   skips `.env*`, keys, certs, and credentials files, and respects `.gitignore`.
 
+## When a Read is blocked
+
+Flash's hook refuses whole-file `Read`s of files over 600 lines or 60 KB. Don't work
+around it with `cat` or a huge `limit`. Locate what you need first, then read only there:
+
+```bash
+flash find "<what you need from the file>" path/to/big_file --top 5
+```
+
+Then `Read` with `offset`/`limit` around the hit lines. For logs, use
+`flash filter "<question>" app.log --lines` instead of `find`.
+
 ## Commands
 
 **Inputs** (for filter, classify, rank): files, directories (respects
@@ -92,9 +109,12 @@ flash find "<what you're looking for>" <files> [--top 5]
 flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
 flash ask spec.json        # {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}
 flash status               # key check, plus lifetime tokens saved
+flash gain                 # tokens saved by command, project and day
+flash help <command>       # flags and examples for one command
 ```
 
-Add `--json` to any command for machine-readable output. Summary lines go to stderr.
+Results go to stdout. The summary footer, skipped files and errors go to stderr, so
+`flash filter ... | xargs` gets only results. Add `--json` for machine-readable output.
 `--save FILE` writes every per-item result to FILE, while stdout stays compact.
 `--fast` packs small items into shared requests. It's about 10× faster on big logs, but
 less accurate on subtle judgments. Use it for obvious needles (crashes, OOMs) in very

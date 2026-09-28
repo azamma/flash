@@ -96,7 +96,12 @@ flash find     "the retry backoff logic" huge_module.py              # locate li
 flash ask      "Does this contract allow termination without notice?" --state @contract.txt
 flash status                                                          # key check + lifetime tokens saved
 flash gain                                                            # savings by command, project, day (--history N: per run)
+flash help find                                                       # flags and examples for one command
+flash skill                                                           # print the agent instructions (SKILL.md)
 ```
+
+Results go to stdout; the summary footer and errors go to stderr. Exit codes: 2 bad usage,
+3 key missing or rejected, 4 request rejected, 5 network error.
 
 The output is built for an LLM to read: one line per hit, repeated log patterns
 collapsed into line-number ranges, classify results as id lists, and a `?` on
