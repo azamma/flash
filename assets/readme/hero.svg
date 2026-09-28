@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-labelledby="title desc">
+  <title id="title">flash</title>
+  <desc id="desc">flash, a Claude Code skill that hands bulk judgment calls to Jev. A lightning bolt beside the name; a terminal card shows a real benchmark run: 187 files scanned, 4 kept, Claude tokens cut from 26.4k to 2.4k.</desc>
+
+  <defs>
+    <linearGradient id="bolt" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="0.5" stop-color="#ffc233"/>
+      <stop offset="1" stop-color="#ff8a00"/>
+    </linearGradient>
+    <linearGradient id="streak" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e5383b" stop-opacity="0"/>
+      <stop offset="1" stop-color="#e5383b" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="380" rx="26" fill="#140c0d"/>
+
+  <!-- speed streaks trailing the bolt -->
+  <g id="speed">
+    <rect x="0" y="96" width="120" height="6" rx="3" fill="url(#streak)"/>
+    <rect x="0" y="140" width="92" height="6" rx="3" fill="url(#streak)" opacity="0.7"/>
+    <rect x="0" y="184" width="132" height="6" rx="3" fill="url(#streak)"/>
+    <rect x="0" y="228" width="80" height="6" rx="3" fill="url(#streak)" opacity="0.6"/>
+  </g>
+
+  <!-- original angular bolt, no emblem ring -->
+  <path id="bolt-mark" d="M178 40 L112 160 L154 160 L126 252 L230 126 L186 126 L222 40 Z" fill="url(#bolt)" stroke="#e5383b" stroke-width="4" stroke-linejoin="round"/>
+
+  <g id="title-block">
+    <text x="250" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="136" font-weight="900" font-style="italic" letter-spacing="-4" fill="#fff4e6">flash</text>
+    <text x="64" y="300" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="32" font-weight="700" fill="#fff4e6">Claude thinks. Jev skims.</text>
+    <text x="64" y="340" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20" fill="#bfa9a2">Claude Code skill · Jev System One · zero deps</text>
+  </g>
+
+  <!-- real run: benchmark task 6, Hono codebase discovery -->
+  <g id="project-proof" transform="translate(724 44)">
+    <rect width="420" height="292" rx="18" fill="#1f1314" stroke="#4a3436" stroke-width="2"/>
+    <circle cx="28" cy="26" r="6" fill="#e5383b"/>
+    <circle cx="48" cy="26" r="6" fill="#ffc233"/>
+    <circle cx="68" cy="26" r="6" fill="#4a3436"/>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">
+      <text x="28" y="76" fill="#ffc233">$ <tspan fill="#fff4e6">flash filter "auth?" src</tspan></text>
+      <text x="28" y="112" fill="#bfa9a2">187 files scanned</text>
+      <text x="28" y="144" fill="#fff4e6">4 kept · F1 100%</text>
+    </g>
+    <text x="28" y="222" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="68" font-weight="900" font-style="italic" fill="#ffc233">−91%</text>
+    <text x="252" y="196" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20" fill="#fff4e6">Claude tokens</text>
+    <text x="252" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20" fill="#bfa9a2">26.4k → 2.4k</text>
+    <text x="28" y="266" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" fill="#bfa9a2">6s · $0.013 of Jev · hono repo</text>
+  </g>
+</svg>

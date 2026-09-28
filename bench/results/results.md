@@ -1,4 +1,4 @@
-| # | Situation | Metric | Claude alone | Quicksilver | Claude tokens (alone → QS) | Token cut | Time (alone → QS) | Speed-up | Jev cost |
+| # | Situation | Metric | Claude alone | Flash | Claude tokens (alone → Flash) | Token cut | Time (alone → Flash) | Speed-up | Jev cost |
 |---|---|---|---|---|---|---|---|---|---|
 | 01 | Real log triage | F1 | 54% | 23% | 84.4k → 12.5k | **85%** | 105s → 43.5s | 2.4× | $0.0325 |
 | 02 | Needles in a noisy service log | F1 | 100% | 100% | 53.5k → 2.5k | **95%** | 56s → 64.2s | 0.9× | $0.0436 |

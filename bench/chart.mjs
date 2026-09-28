@@ -29,27 +29,29 @@ rows.forEach((r, i) => {
   <text x="${W - 24}" y="${y + 18}" text-anchor="end" class="dim">${r.speedup >= 1.5 ? r.speedup.toFixed(0) + '×' : '≈'}</text>`;
 });
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+const svg = `<svg role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Claude tokens per task: alone vs with Flash</title>
+  <desc>Bar chart of Claude tokens for 12 benchmark tasks, Claude alone versus Claude with Flash, with token cut, quality and speed-up per task.</desc>
   <style>
-    .lbl { font-size: 13px; fill: #d6dbe4 }
-    .dim { font-size: 11px; fill: #7d8796 }
-    .qsl { font-size: 11px; fill: #9fe8ff; font-weight: 600 }
-    .cut { font-size: 14px; fill: #9fe8ff; font-weight: 700 }
+    .lbl { font-size: 13px; fill: #f3e9e1 }
+    .dim { font-size: 11px; fill: #a08c86 }
+    .qsl { font-size: 11px; fill: #ffc233; font-weight: 600 }
+    .cut { font-size: 14px; fill: #ffc233; font-weight: 700 }
     .ok { font-size: 12px; fill: #8ee6a6 }
     .warn { font-size: 12px; fill: #f2c46d }
-    .h { font-size: 11px; fill: #7d8796; letter-spacing: .06em; text-transform: uppercase }
-    .base { fill: #3a4252 }
+    .h { font-size: 11px; fill: #a08c86; letter-spacing: .06em; text-transform: uppercase }
+    .base { fill: #4a3436 }
     .qs { fill: url(#hg) }
   </style>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#161b26"/></linearGradient>
-    <linearGradient id="hg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8edf5"/><stop offset="1" stop-color="#5fd4ff"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#140c0d"/><stop offset="1" stop-color="#1f1314"/></linearGradient>
+    <linearGradient id="hg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffc233"/><stop offset="1" stop-color="#e5383b"/></linearGradient>
   </defs>
   <rect width="${W}" height="${H}" rx="14" fill="url(#bg)"/>
-  <text x="28" y="44" font-size="22" font-weight="700" fill="#f2f5fa">Claude tokens per task: alone vs with Quicksilver</text>
-  <text x="28" y="68" font-size="13" fill="#9aa4b2">12 benchmark tasks · measured Claude Code subagents vs Quicksilver · ${pct(all.tokenReduction)} fewer tokens overall · quality ${pct(all.baseScore)} → ${pct(all.qsScore)}</text>
+  <text x="28" y="44" font-size="22" font-weight="700" fill="#fff4e6">Claude tokens per task: alone vs with Flash</text>
+  <text x="28" y="68" font-size="13" fill="#bfa9a2">12 benchmark tasks · measured Claude Code subagents vs Flash · ${pct(all.tokenReduction)} fewer tokens overall · quality ${pct(all.baseScore)} → ${pct(all.qsScore)}</text>
   <rect x="${left}" y="86" width="12" height="8" rx="2" class="base"/><text x="${left + 18}" y="94" class="dim">Claude alone</text>
-  <rect x="${left + 110}" y="86" width="12" height="8" rx="2" class="qs"/><text x="${left + 128}" y="94" class="dim">Claude + Quicksilver</text>
+  <rect x="${left + 110}" y="86" width="12" height="8" rx="2" class="qs"/><text x="${left + 128}" y="94" class="dim">Claude + Flash</text>
   <text x="${left + barW + 110}" y="94" text-anchor="end" class="h">tokens</text>
   <text x="${left + barW + 200}" y="94" text-anchor="end" class="h">quality</text>
   <text x="${W - 24}" y="94" text-anchor="end" class="h">speed</text>

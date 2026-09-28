@@ -1,5 +1,5 @@
 {
-  "name": "quicksilver",
+  "name": "flash",
   "version": "0.1.0",
   "description": "Offload Claude's bulk judgment calls (filter, classify, rank, find) to Jev, TypeSafe's System One model. Fewer tokens, lower latency, more headroom on your limits.",
   "author": { "name": "Udit Akhouri" },

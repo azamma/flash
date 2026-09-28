@@ -1,17 +1,17 @@
-// Runs every situation through Quicksilver exactly as Claude would (human-readable output),
+// Runs every situation through Flash exactly as Claude would (human-readable output),
 // scores it against ground truth, and records Jev cost + the tokens Claude would have to read.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
-const QS = path.join(ROOT, '..', 'skills', 'quicksilver', 'scripts', 'qs.mjs');
-const SKILL_TOKENS = Math.ceil(fs.readFileSync(path.join(ROOT, '..', 'skills', 'quicksilver', 'SKILL.md'), 'utf8').length / 4);
+const QS = path.join(ROOT, '..', 'skills', 'flash', 'scripts', 'flash.mjs');
+const SKILL_TOKENS = Math.ceil(fs.readFileSync(path.join(ROOT, '..', 'skills', 'flash', 'SKILL.md'), 'utf8').length / 4);
 const TOOL_CALL_OVERHEAD = 40; // tokens for the tool-call wrapper around each command
 const tok = (s) => Math.ceil(s.length / 4);
 const only = process.argv.slice(2);
 
-const statsFile = path.join(process.env.QUICKSILVER_HOME || path.join(process.env.HOME || process.env.USERPROFILE, '.quicksilver'), 'stats.json');
+const statsFile = path.join(process.env.FLASH_HOME || path.join(process.env.HOME || process.env.USERPROFILE, '.flash'), 'stats.json');
 const jevTotal = () => { try { return JSON.parse(fs.readFileSync(statsFile, 'utf8')).jev_input_tokens; } catch { return 0; } };
 
 // withSave: also write full per-item results via --save so scoring doesn't depend on the display format.
@@ -28,7 +28,7 @@ function qs(dir, args, withSave = false) {
   }
   if (r.status !== 0) throw new Error(`qs ${args.join(' ')} failed: ${r.stderr}`);
   const out = r.stdout.replace(/\n— full results saved to .*/, '');
-  const cmd = `node qs.mjs ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`;
+  const cmd = `node flash.mjs ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`;
   const saved = withSave ? JSON.parse(fs.readFileSync(SAVE, 'utf8')) : null;
   return { out, saved, ms: Date.now() - t0, jev: jevTotal() - before, claudeTokens: tok(cmd) + tok(out) + TOOL_CALL_OVERHEAD };
 }
@@ -46,7 +46,7 @@ function prf(pred, truth, neutral = []) {
 }
 
 fs.mkdirSync(path.join(ROOT, 'results'), { recursive: true });
-const file = path.join(ROOT, 'results', 'quicksilver.json');
+const file = path.join(ROOT, 'results', 'flash.json');
 const results = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
 for (const id of fs.readdirSync(path.join(ROOT, 'data')).filter((d) => /^s\d+$/.test(d)).sort()) {
   if (only.length && !only.includes(id)) continue;

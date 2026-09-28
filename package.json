@@ -1,10 +1,10 @@
 {
-  "name": "quicksilver-skill",
+  "name": "flash-skill",
   "version": "0.2.0",
   "description": "Claude Code skill that hands bulk judgment calls (filter, classify, rank, find) to Jev: 86% fewer Claude tokens on benchmark, up to 20x faster.",
   "type": "module",
   "bin": {
-    "quicksilver": "bin/quicksilver.mjs"
+    "flash": "bin/flash.mjs"
   },
   "files": [
     "bin/",
@@ -21,7 +21,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/UditAkhourii/quicksilver.git"
+    "url": "git+https://github.com/azamma/flash.git"
   },
-  "homepage": "https://github.com/UditAkhourii/quicksilver#readme"
+  "homepage": "https://github.com/azamma/flash#readme"
 }

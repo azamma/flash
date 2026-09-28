@@ -1,14 +1,14 @@
 {
-  "name": "quicksilver",
+  "name": "flash",
   "owner": {
     "name": "Udit Akhouri"
   },
   "metadata": {
-    "description": "Quicksilver: offload Claude's bulk judgment calls to Jev."
+    "description": "Flash: offload Claude's bulk judgment calls to Jev."
   },
   "plugins": [
     {
-      "name": "quicksilver",
+      "name": "flash",
       "source": "./",
       "description": "Offload Claude's bulk judgment calls to Jev. Fewer tokens, lower latency, more headroom on your limits."
     }

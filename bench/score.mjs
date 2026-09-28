@@ -1,10 +1,10 @@
-// Scores the Claude-native baseline, merges it with the Quicksilver run, and writes results.md + results.json.
+// Scores the Claude-native baseline, merges it with the Flash run, and writes results.md + results.json.
 import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
 const R = path.join(ROOT, 'results');
-const qs = JSON.parse(fs.readFileSync(path.join(R, 'quicksilver.json'), 'utf8'));
+const qs = JSON.parse(fs.readFileSync(path.join(R, 'flash.json'), 'utf8'));
 const usage = JSON.parse(fs.readFileSync(path.join(R, 'baseline', 'usage.json'), 'utf8'));
 // Fixed floor every subagent pays (system prompt + tools), measured with a trivial control task.
 const FLOOR = usage.control;
@@ -81,7 +81,7 @@ const agg = (rs) => ({
 });
 const all = agg(rows), fit = agg(good);
 
-let md = `| # | Situation | Metric | Claude alone | Quicksilver | Claude tokens (alone → QS) | Token cut | Time (alone → QS) | Speed-up | Jev cost |\n|---|---|---|---|---|---|---|---|---|---|\n`;
+let md = `| # | Situation | Metric | Claude alone | Flash | Claude tokens (alone → QS) | Token cut | Time (alone → QS) | Speed-up | Jev cost |\n|---|---|---|---|---|---|---|---|---|---|\n`;
 for (const r of rows) {
   md += `| ${r.id.slice(1)} | ${r.title.split(' — ')[0]} | ${r.metric} | ${pct(r.baseScore)} | ${pct(r.qsScore)} | ${k(r.baseTokens)} → ${k(r.qsTokens)} | **${pct(r.tokenReduction)}** | ${r.baseSeconds.toFixed(0)}s → ${r.qsSeconds.toFixed(1)}s | ${r.speedup.toFixed(1)}× | $${r.jevUsd.toFixed(4)} |\n`;
 }

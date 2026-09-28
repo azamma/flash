@@ -1,9 +1,9 @@
 ---
-name: quicksilver
-description: Offload bulk judgment calls to Jev (TypeSafe's fast System One model) so Claude doesn't read, and pay for, content it only needs a verdict on. Use this BEFORE reading many files, long logs, or big lists just to decide which parts matter. That covers finding which files relate to a feature or bug, filtering log lines for errors, triaging or labelling many items (tickets, test failures, commits, TODOs, search hits), ranking candidates by relevance, locating the right lines in a huge file, or a yes/no check on a large document. Also use when the user says quicksilver, jev, "save tokens", "delegate", or "cheaper/faster". Skip it for generation, editing, multi-step reasoning, math, counting, or date comparison, and when the input is small enough to just read.
+name: flash
+description: Offload bulk judgment calls to Jev (TypeSafe's fast System One model) so Claude doesn't read, and pay for, content it only needs a verdict on. Use this BEFORE reading many files, long logs, or big lists just to decide which parts matter. That covers finding which files relate to a feature or bug, filtering log lines for errors, triaging or labelling many items (tickets, test failures, commits, TODOs, search hits), ranking candidates by relevance, locating the right lines in a huge file, or a yes/no check on a large document. Also use when the user says flash, jev, "save tokens", "delegate", or "cheaper/faster". Skip it for generation, editing, multi-step reasoning, math, counting, or date comparison, and when the input is small enough to just read.
 ---
 
-# Quicksilver: let Jev make the calls, Claude does the thinking
+# Flash: let Jev make the calls, Claude does the thinking
 
 Jev returns **typed judgments** (yes/no probability, one-of-N label, rubric score)
 in about a second, at $0.042 per million input tokens. It cannot write text or reason in
@@ -12,17 +12,17 @@ Every item Jev rules out is content that never enters Claude's context. That
 saves tokens, saves usage limits, and cuts wall-clock time, because Jev scans
 hundreds of items in parallel.
 
-In the commands below, `qs` stands for:
+In the commands below, `flash` stands for:
 
 ```bash
-node "<base directory of this skill>/scripts/qs.mjs"
+node "<base directory of this skill>/scripts/flash.mjs"
 ```
 
 Needs Node 18+ (globs need Node 22+). There are no other dependencies.
 
 ## First run: set the key once
 
-Run `qs status` first.
+Run `flash status` first.
 
 - `ready` means go straight to the task.
 - `not configured` means ask the user for a key. Jev is reachable through two
@@ -31,15 +31,15 @@ Run `qs status` first.
   - **OpenRouter**: key from **https://openrouter.ai/settings/keys**, add `--provider openrouter`
 
   They can:
-  1. paste it in chat. Then run `qs setup <KEY> [--provider openrouter]` (it verifies
-     the key, saves it to `~/.quicksilver/config.json` with user-only permissions,
+  1. paste it in chat. Then run `flash setup <KEY> [--provider openrouter]` (it verifies
+     the key, saves it to `~/.flash/config.json` with user-only permissions,
      and makes that provider the default), **or**
-  2. keep it out of the chat by running `node "<skill dir>/scripts/qs.mjs" setup [--provider openrouter]`
+  2. keep it out of the chat by running `node "<skill dir>/scripts/flash.mjs" setup [--provider openrouter]`
      in their own terminal. It prompts for the key with hidden input.
 
   Env keys also work and take precedence over saved ones: `JEV_API_KEY` or
   `TYPESAFE_API_KEY` for TypeSafe, `OPENROUTER_API_KEY` for OpenRouter.
-  Provider order: `--provider` flag, then `QUICKSILVER_PROVIDER` / `JEV_PROVIDER`,
+  Provider order: `--provider` flag, then `FLASH_PROVIDER` / `JEV_PROVIDER`,
   then the saved choice, then whichever provider has a key (TypeSafe first).
   After setup, carry on with the original task. Don't stop at "configured".
 
@@ -52,15 +52,15 @@ If yes, and each decision fits yes/no, pick-a-label, or rate-on-a-scale, delegat
 
 | Situation | Command |
 | --- | --- |
-| "Which files deal with X?" across a repo | `qs filter "Does this file implement or handle X?" src` |
-| Errors or anomalies in a big log | `qs filter "Does this line indicate a failure?" app.log --lines` |
-| Where in a 5k-line file is Y? | `qs find "Y" big_file.py --top 5` |
-| Sort 200 tickets, test failures, or TODOs into buckets | `qs classify --labels "bug,feature,question" --items items.jsonl` |
-| Best candidates for a query (search hits, docs, files) | `qs rank "query" docs/ --top 10` |
-| One yes/no over a large document | `qs ask "Does this contract allow termination without notice?" --state @contract.txt` |
-| Several questions over the same content | `qs ask spec.json` (raw request, see below) |
+| "Which files deal with X?" across a repo | `flash filter "Does this file implement or handle X?" src` |
+| Errors or anomalies in a big log | `flash filter "Does this line indicate a failure?" app.log --lines` |
+| Where in a 5k-line file is Y? | `flash find "Y" big_file.py --top 5` |
+| Sort 200 tickets, test failures, or TODOs into buckets | `flash classify --labels "bug,feature,question" --items items.jsonl` |
+| Best candidates for a query (search hits, docs, files) | `flash rank "query" docs/ --top 10` |
+| One yes/no over a large document | `flash ask "Does this contract allow termination without notice?" --state @contract.txt` |
+| Several questions over the same content | `flash ask spec.json` (raw request, see below) |
 
-**Benchmarked strengths** (12 real tasks, see the repo's `bench/`): Quicksilver matched Claude's
+**Benchmarked strengths** (12 real tasks, see the repo's `bench/`): Flash matched Claude's
 accuracy while cutting its tokens by 77–96% on needle-in-haystack log search, finding
 files across a repo, "where is X?" ranking, semantic search inside huge files, and bulk
 routing or classification with clear labels (support intents, CI failure causes,
@@ -74,7 +74,7 @@ shortlist, and check the `?` items yourself.
   auth" rather than the literal string `auth`.
 - Arithmetic, counting, date or time comparison. Do those in code.
 - Anything generative (writing, summarizing, editing) or needing a chain of reasoning.
-- Content the user wouldn't want sent to a third-party API. Quicksilver already
+- Content the user wouldn't want sent to a third-party API. Flash already
   skips `.env*`, keys, certs, and credentials files, and respects `.gitignore`.
 
 ## Commands
@@ -86,14 +86,14 @@ globs, `-` for stdin, or `--items FILE.jsonl` (one JSON object per line with
 separately (logs, CSVs, lists). Use `--ext ts,tsx` to limit file types.
 
 ```bash
-qs filter "<yes/no question>" <inputs> [--threshold 0.5] [--lines]
-qs classify --labels "a,b,c" <inputs> [--question "..."] [--only a] [--min-confidence 0.6]
-qs classify --labels-json '{"bug":"Something is broken","feature":"A request for new behaviour"}' <inputs>
-qs rank "<query>" <inputs> [--top 10 | --all]
-qs find "<what you're looking for>" <files> [--top 5]
-qs ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
-qs ask spec.json        # {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}
-qs status               # key check, plus lifetime tokens saved
+flash filter "<yes/no question>" <inputs> [--threshold 0.5] [--lines]
+flash classify --labels "a,b,c" <inputs> [--question "..."] [--only a] [--min-confidence 0.6]
+flash classify --labels-json '{"bug":"Something is broken","feature":"A request for new behaviour"}' <inputs>
+flash rank "<query>" <inputs> [--top 10 | --all]
+flash find "<what you're looking for>" <files> [--top 5]
+flash ask "<question>" --state @file|"text"|- [--choice "a,b,c" | --score "low|mid|high"]
+flash ask spec.json        # {"state": ..., "questions": {"id": {"type": "noul|choice|score", ...}}}
+flash status               # key check, plus lifetime tokens saved
 ```
 
 Add `--json` to any command for machine-readable output. Summary lines go to stderr.
@@ -158,14 +158,14 @@ Jev reads questions **literally**. Its accuracy comes from how precise the quest
 
 ## Patterns that pay off
 
-- **Funnel:** `qs filter` over the whole repo, then Claude reads the 5 survivors
+- **Funnel:** `flash filter` over the whole repo, then Claude reads the 5 survivors
   instead of 300 files.
-- **Log triage:** `qs filter ... --lines` over a 50k-line log, then Claude
+- **Log triage:** `flash filter ... --lines` over a 50k-line log, then Claude
   investigates only the failures.
 - **Two-pass precision:** a cheap broad `filter`, then `rank` the survivors
   against the specific question.
 - **Batch triage:** dump items to JSONL (issues, test output, grep hits),
-  `qs classify`, then act per bucket.
+  `flash classify`, then act per bucket.
 
-Jev handles 1,200 requests/min. Quicksilver packs small items into shared
+Jev handles 1,200 requests/min. Flash packs small items into shared
 requests, runs 8 in parallel, and retries rate limits (429/529) automatically.

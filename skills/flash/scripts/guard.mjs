@@ -1,26 +1,26 @@
 #!/usr/bin/env node
 // PreToolUse hook for Read: refuse whole-file reads of large text files so Claude goes through
-// quicksilver (find/filter/rank) first, then reads only the lines that matter with offset/limit.
-// PostToolUse hook for Bash: when a qs command ran, show its Jev footer (time, tokens, cost) to the user.
-// Set QUICKSILVER_GUARD=off to disable. Thresholds: QUICKSILVER_GUARD_LINES, QUICKSILVER_GUARD_BYTES.
+// flash (find/filter/rank) first, then reads only the lines that matter with offset/limit.
+// PostToolUse hook for Bash: when a flash command ran, show its Jev footer (time, tokens, cost) to the user.
+// Set FLASH_GUARD=off to disable. Thresholds: FLASH_GUARD_LINES, FLASH_GUARD_BYTES.
 
 import fs from 'node:fs';
 import path from 'node:path';
 
-const MAX_LINES = Number(process.env.QUICKSILVER_GUARD_LINES) || 600;
-const MAX_BYTES = Number(process.env.QUICKSILVER_GUARD_BYTES) || 60_000;
+const MAX_LINES = Number(process.env.FLASH_GUARD_LINES) || 600;
+const MAX_BYTES = Number(process.env.FLASH_GUARD_BYTES) || 60_000;
 const BINARY = /\.(png|jpe?g|gif|webp|svg|pdf|ipynb|ico|bmp|tiff?)$/i;
 
-// The footer qs prints last: "— 12 scanned · 0.6s · jev 2.1k tok ($0.0001) · ~9.8k Claude tokens not read".
+// The footer flash prints last: "— 12 scanned · 0.6s · jev 2.1k tok ($0.0001) · ~9.8k Claude tokens not read".
 export function jevSummary(input) {
-  if (input.tool_name !== 'Bash' || !/qs\.mjs|quicksilver/.test(input.tool_input?.command || '')) return null;
+  if (input.tool_name !== 'Bash' || !/flash/.test(input.tool_input?.command || '')) return null;
   const r = input.tool_response || {};
   const out = typeof r === 'string' ? r : `${r.stdout || ''}\n${r.stderr || ''}`;
   return out.split('\n').reverse().find((l) => /^— .*jev .* tok/.test(l)) || null;
 }
 
 export function verdict(input) {
-  if (process.env.QUICKSILVER_GUARD === 'off') return null;
+  if (process.env.FLASH_GUARD === 'off') return null;
   const t = input.tool_input || {};
   if (input.tool_name !== 'Read' || !t.file_path || t.offset || t.limit || BINARY.test(t.file_path)) return null;
   let size, lines;
@@ -29,10 +29,10 @@ export function verdict(input) {
     lines = size > MAX_BYTES ? Infinity : fs.readFileSync(t.file_path, 'utf8').split('\n').length;
   } catch { return null; }
   if (size <= MAX_BYTES && lines <= MAX_LINES) return null;
-  const qs = path.join(path.dirname(new URL(import.meta.url).pathname), 'qs.mjs');
+  const flash = path.join(path.dirname(new URL(import.meta.url).pathname), 'flash.mjs');
   const what = lines === Infinity ? `${Math.round(size / 1024)} KB` : `${lines} lines`;
-  return `Quicksilver guard: ${t.file_path} is ${what}. Don't read it whole. First locate what matters with ` +
-    `node "${qs}" find "<what you need>" "${t.file_path}" (or filter --lines for logs), ` +
+  return `Flash guard: ${t.file_path} is ${what}. Don't read it whole. First locate what matters with ` +
+    `node "${flash}" find "<what you need>" "${t.file_path}" (or filter --lines for logs), ` +
     `then Read with offset/limit around the hits. Only read it whole if you really need every line: use offset 1 and an explicit limit.`;
 }
 
@@ -43,11 +43,11 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
   try { input = JSON.parse(raw); } catch {}
   if (input.hook_event_name === 'PostToolUse') {
     const s = jevSummary(input);
-    if (s) process.stdout.write(JSON.stringify({ systemMessage: `☿ quicksilver → Jev ${s.slice(2)}` }));
+    if (s) process.stdout.write(JSON.stringify({ systemMessage: `⚡ flash → Jev ${s.slice(2)}` }));
   } else {
     const reason = verdict(input);
     if (reason) process.stdout.write(JSON.stringify({
-      systemMessage: `☿ quicksilver: blocked whole Read of ${path.basename(input.tool_input.file_path)}, routing Claude to Jev`,
+      systemMessage: `⚡ flash: blocked whole Read of ${path.basename(input.tool_input.file_path)}, routing Claude to Jev`,
       hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason },
     }));
   }

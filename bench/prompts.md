@@ -23,4 +23,4 @@ It was followed by the dataset path, the task, and the answer format:
 
 Control (overhead floor): "Read `data/s07/app/lib/math.ts`, write `{"ok": true}`." It measured 68,483 tokens and 5.6s.
 
-The question and label wording were identical to what Quicksilver received (see `truth/sNN.json`).
+The question and label wording were identical to what Flash received (see `truth/sNN.json`).

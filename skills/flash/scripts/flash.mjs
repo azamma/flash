@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Quicksilver: hand Claude's bulk judgment calls to Jev (TypeSafe System One).
+// Flash: hand Claude's bulk judgment calls to Jev (TypeSafe System One).
 // Zero dependencies. Node 18+.
 
 import fs from 'node:fs';
@@ -7,7 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 
-const HOME = process.env.QUICKSILVER_HOME || path.join(os.homedir(), '.quicksilver');
+const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
 const STATS = path.join(HOME, 'stats.json');
 const HISTORY = path.join(HOME, 'history.jsonl');
@@ -17,7 +17,7 @@ const PROVIDERS = {
     keyUrl: 'https://console.typesafe.ai', env: ['JEV_API_KEY', 'TYPESAFE_API_KEY'] },
   openrouter: { base: 'https://openrouter.ai/api', decide: '/alpha/decisions', check: '/v1/key', model: 'typesafe/jev-1.13',
     keyUrl: 'https://openrouter.ai/settings/keys', env: ['OPENROUTER_API_KEY'],
-    headers: { 'HTTP-Referer': 'https://github.com/UditAkhourii/quicksilver', 'X-Title': 'quicksilver' } },
+    headers: { 'HTTP-Referer': 'https://github.com/azamma/flash', 'X-Title': 'flash' } },
 };
 const PRICE_PER_TOKEN = 0.042 / 1e6;
 
@@ -45,7 +45,7 @@ function parseArgs(argv) {
   return { pos, flags };
 }
 
-const die = (msg, code = 1) => { process.stderr.write(`quicksilver: ${msg}\n`); process.exit(code); };
+const die = (msg, code = 1) => { process.stderr.write(`flash: ${msg}\n`); process.exit(code); };
 const num = (v, d) => (v === undefined || v === true ? d : Number(v));
 const estTokens = (s) => Math.ceil(s.length / 4);
 const rel = (p) => path.relative(process.cwd(), p).split(path.sep).join('/') || '.';
@@ -68,20 +68,20 @@ function writeJson(file, obj, mode) {
 const storedKey = (cfg, name) => cfg.keys?.[name] || (name === 'typesafe' ? cfg.api_key : '') || '';
 const envKey = (name) => PROVIDERS[name].env.find((v) => process.env[v]);
 
-// --provider > QUICKSILVER_PROVIDER / JEV_PROVIDER > saved choice > whichever provider has a key (TypeSafe first).
+// --provider > FLASH_PROVIDER / JEV_PROVIDER > saved choice > whichever provider has a key (TypeSafe first).
 function provider(flags = {}) {
   const cfg = readJson(CONFIG, {});
-  let name = flags.provider || process.env.QUICKSILVER_PROVIDER || process.env.JEV_PROVIDER || cfg.provider;
+  let name = flags.provider || process.env.FLASH_PROVIDER || process.env.JEV_PROVIDER || cfg.provider;
   if (!name) name = Object.keys(PROVIDERS).find((n) => envKey(n) || storedKey(cfg, n)) || 'typesafe';
   if (!PROVIDERS[name]) die(`unknown provider "${name}". Use: ${Object.keys(PROVIDERS).join(', ')}`);
   const p = PROVIDERS[name], env = envKey(name);
-  return { ...p, name, base: (process.env.QUICKSILVER_API_BASE || p.base).replace(/\/$/, ''),
+  return { ...p, name, base: (process.env.FLASH_API_BASE || p.base).replace(/\/$/, ''),
     key: env ? process.env[env] : storedKey(cfg, name), keySource: env ? `env ${env}` : CONFIG };
 }
 
 function modelName(flags) {
   const cfg = readJson(CONFIG, {}), p = provider(flags);
-  return flags.model || process.env.QUICKSILVER_MODEL || cfg.models?.[p.name] || (p.name === 'typesafe' && cfg.model) || p.model;
+  return flags.model || process.env.FLASH_MODEL || cfg.models?.[p.name] || (p.name === 'typesafe' && cfg.model) || p.model;
 }
 
 function recordStats(run) {
@@ -92,7 +92,7 @@ function recordStats(run) {
   s.jev_input_tokens += run.jevTokens;
   s.claude_tokens_saved += Math.max(0, run.saved);
   try { writeJson(STATS, s); } catch {}
-  // One line per run, for `qs gain`. Content never goes here, only counts.
+  // One line per run, for `flash gain`. Content never goes here, only counts.
   try {
     const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: path.basename(process.cwd()),
       provider: provider().name, items: run.items, requests: run.requests, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved) };
@@ -106,7 +106,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function decide(body, flags, { retries = 5 } = {}) {
   const p = provider(flags);
-  if (!p.key) die(`no ${p.name} API key. Get one at ${p.keyUrl}, then run: node qs.mjs setup --provider ${p.name}`, 3);
+  if (!p.key) die(`no ${p.name} API key. Get one at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`, 3);
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     let res;
@@ -124,7 +124,7 @@ async function decide(body, flags, { retries = 5 } = {}) {
     }
     if (res.ok) return res.json();
     const text = await res.text();
-    if (res.status === 401 || res.status === 403) die(`${p.name} rejected the API key (${res.status}). Get a new one at ${p.keyUrl} and run: node qs.mjs setup --provider ${p.name}`, 3);
+    if (res.status === 401 || res.status === 403) die(`${p.name} rejected the API key (${res.status}). Get a new one at ${p.keyUrl} and run: node flash.mjs setup --provider ${p.name}`, 3);
     if (res.status === 422 || res.status === 400) die(`Jev rejected the request (${res.status}): ${clip(text, 800)}`, 4);
     lastErr = `HTTP ${res.status}: ${clip(text, 300)}`;
     if (![408, 409, 429, 500, 502, 503, 504, 529].includes(res.status)) break;
@@ -576,12 +576,12 @@ async function cmdSetup({ pos, flags }) {
   cfg.provider = p.name;
   if (flags.model) cfg.models = { ...cfg.models, [p.name]: flags.model };
   writeJson(CONFIG, cfg, 0o600);
-  console.log(`✓ ${p.name} key verified and saved to ${CONFIG}. Quicksilver is ready (provider ${p.name}).`);
+  console.log(`✓ ${p.name} key verified and saved to ${CONFIG}. Flash is ready (provider ${p.name}).`);
 }
 
 async function cmdStatus({ flags }) {
   const p = provider(flags);
-  if (!p.key) { console.log(`not configured for ${p.name} — get a key at ${p.keyUrl}, then run: node qs.mjs setup --provider ${p.name}`); process.exit(3); }
+  if (!p.key) { console.log(`not configured for ${p.name} — get a key at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`); process.exit(3); }
   const res = await checkKey(p, p.key).catch(() => null);
   const s = readJson(STATS, null);
   if (!res) console.log(`key found (${p.keySource}) but ${p.name} is unreachable right now`);
@@ -617,7 +617,7 @@ function cmdGain({ flags }) {
       `${fmtK(r.items).padStart(6)} items  jev ${fmtK(r.jev_tokens).padStart(6)}  saved ~${fmtK(r.saved)}  ${r.provider || ''}`);
     return;
   }
-  console.log(`quicksilver since ${s.since.slice(0, 10)}: ${s.runs} runs · ${fmtK(s.items)} items · jev ${fmtK(s.jev_input_tokens)} tok (${cost(s.jev_input_tokens)}) · ~${fmtK(s.claude_tokens_saved)} Claude tokens not read`);
+  console.log(`flash since ${s.since.slice(0, 10)}: ${s.runs} runs · ${fmtK(s.items)} items · jev ${fmtK(s.jev_input_tokens)} tok (${cost(s.jev_input_tokens)}) · ~${fmtK(s.claude_tokens_saved)} Claude tokens not read`);
   if (!rows.length) return;
   const show = (title, entries) => { console.log(`\n${title}`); for (const [k, t] of entries) console.log(line(k, t)); };
   const bySaved = (e) => e.sort((a, b) => b[1].saved - a[1].saved);
@@ -626,7 +626,7 @@ function cmdGain({ flags }) {
   show('last 7 days', groupBy(rows, (r) => r.ts.slice(0, 10)).sort().slice(-7));
 }
 
-const HELP = `quicksilver — delegate bulk judgment calls to Jev
+const HELP = `flash — delegate bulk judgment calls to Jev
 
   setup [KEY] [--provider P]           save + verify a key, make P the default (prompts if omitted)
   status [--provider P]                check key, show lifetime savings
