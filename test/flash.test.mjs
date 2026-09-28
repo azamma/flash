@@ -336,6 +336,16 @@ test('status runs one real decision and maps failures to exit codes', async () =
   assert.match(r.stderr, /not configured for typesafe/);
 });
 
+test('fake Jev picks the option whose own criteria value contains MATCH, not the first key', async () => {
+  const spec = write('spec.json', JSON.stringify({
+    state: { irrelevant: 'text with no match here' },
+    questions: { answer: { type: 'choice', instructions: 'pick', criteria: { e1: { label: 'nope' }, e2: { label: 'MATCH button' } } } },
+  }));
+  const r = await flash(['ask', spec]);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /choice e2/);
+});
+
 test('setup verifies with the same probe and saves the key 0600', async () => {
   jev.force({ status: 200, body: { answers: { probe: { type: 'noul', noul: 0.97 } } } });
   const r = await flash(['setup', '--provider', 'openrouter'], { input: 'sk-or-new\n', env: { JEV_API_KEY: '' } });

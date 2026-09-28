@@ -17,8 +17,8 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 2: Test and history plumbing
 **Description:** (a) `test/fake-jev.mjs` learns object-valued criteria: for a choice whose criteria are objects keyed by ref, it picks the ref whose own fields contain MATCH, not the first key (today it always returns the first ref). (b) A `logRow(row)` helper in `flash.mjs`, shared with `recordStats`, so a command can append one history row per step.
 **Acceptance criteria:**
-- [ ] A test proves fake Jev picks `e2` when only `e2`'s name contains MATCH.
-- [ ] Existing history tests unchanged; `logRow` covered by a test.
+- [x] A test proves fake Jev picks `e2` when only `e2`'s name contains MATCH.
+- [x] Existing history tests unchanged; `logRow` covered by a test.
 **Verification:** `npm test`.
 **Dependencies:** None · **Files:** `test/fake-jev.mjs`, `skills/flash/scripts/flash.mjs`, `test/flash.test.mjs` · **Scope:** S
 

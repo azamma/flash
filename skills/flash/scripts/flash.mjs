@@ -102,16 +102,22 @@ function afterGuard(inputs) {
   return g?.ts;
 }
 
-function recordStats(run) {
+// One line appended to history.jsonl, the only stats store; shared by every command that logs a
+// row, one process-wide row from recordStats or one step-per-call row from `flash web`.
+function logRow(row) {
   try {
     fs.mkdirSync(HOME, { recursive: true });
-    const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: projectName(process.cwd()),
-      provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved),
-      ...audit, results: audit.results?.slice(0, 50) };
-    const g = afterGuard(audit.inputs);
-    if (g) row.after_guard = g;
     fs.appendFileSync(HISTORY, JSON.stringify(row) + '\n', { mode: 0o600 });
   } catch {}
+}
+
+function recordStats(run) {
+  const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: projectName(process.cwd()),
+    provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved),
+    ...audit, results: audit.results?.slice(0, 50) };
+  const g = afterGuard(audit.inputs);
+  if (g) row.after_guard = g;
+  logRow(row);
 }
 
 // ---------- HTTP ----------
