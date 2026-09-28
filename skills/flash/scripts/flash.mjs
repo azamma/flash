@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
+import { agentBrowser, pageFile, sessionName } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -945,9 +946,22 @@ function guardStats(rows) {
   return Object.entries(g).sort((a, b) => b[1].blocked - a[1].blocked);
 }
 
+// Per project: `flash web` command calls vs direct Reads of a captured page.json (guard.mjs logs
+// every such Read, blocked or ranged, as cmd "web-read"). Adoption metric for Task 11's gate.
+function webStats(rows) {
+  const g = {};
+  for (const r of rows) {
+    if (typeof r.cmd !== 'string' || !r.cmd.startsWith('web-')) continue;
+    const t = (g[r.project || '?'] ??= { calls: 0, reads: 0 });
+    if (r.cmd === 'web-read') t.reads++; else t.calls++;
+  }
+  return Object.entries(g).sort((a, b) => (b[1].calls + b[1].reads) - (a[1].calls + a[1].reads));
+}
+
 // One history row as a line: what was asked and where Jev pointed.
 function describeRun(r) {
   if (r.cmd === 'guard') return `blocked whole Read of ${r.file}`;
+  if (r.cmd === 'web-read') return `${r.blocked ? 'blocked whole' : 'allowed ranged'} Read of ${r.file}`;
   const top = (r.results || []).slice(0, 3).map((x) => (typeof x === 'string' ? x
     : `${x.id}${x.line ? ':' + x.line : ''}${x.label ? ' [' + x.label + ']' : ''}${x.picked?.length ? ' ' + x.picked[0] : ''} ${x.p ?? ''}`.trim()));
   return `${r.query ? JSON.stringify(clip(r.query, 70)) : ''}${top.length ? ' → ' + top.join(', ') : ''}${r.after_guard ? '  (after hook)' : ''}`;
@@ -994,6 +1008,8 @@ function gainMarkdown(rows) {
     ...table('By day', 'day', groupBy(rows, (r) => r.ts.slice(0, 10)).sort()),
     ...(guardStats(rows).length ? ['## Read hook', '', '| project | whole-file Reads blocked | followed by a flash run |', '|---|---:|---:|',
       ...guardStats(rows).map(([k, t]) => `| ${k} | ${t.blocked} | ${t.followed} |`), ''] : []),
+    ...(webStats(rows).length ? ['## flash web adoption', '', '| project | web calls | direct page.json reads |', '|---|---:|---:|',
+      ...webStats(rows).map(([k, t]) => `| ${k} | ${t.calls} | ${t.reads} |`), ''] : []),
     '_Claude tokens not read = estimated size of the content Jev judged (chars ÷ 4) minus what Flash printed back._'].join('\n');
 }
 
@@ -1021,6 +1037,11 @@ function cmdGain({ flags }) {
   if (hook.length) {
     console.log('\nhook: whole-file Reads blocked, and how many Claude followed with flash within 2 min');
     for (const [k, t] of hook) console.log(`  ${k.padEnd(16)} ${String(t.blocked).padStart(5)} blocked  ${String(t.followed).padStart(5)} followed`);
+  }
+  const web = webStats(rows);
+  if (web.length) {
+    console.log('\nweb: flash web calls vs direct Reads of a captured page.json');
+    for (const [k, t] of web) console.log(`  ${k.padEnd(16)} ${String(t.calls).padStart(5)} web calls  ${String(t.reads).padStart(5)} direct reads`);
   }
 }
 
@@ -1062,6 +1083,12 @@ Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Read
 --history lists the last N runs with what was asked and where Jev pointed, --plain drops the banner,
 --json prints the raw history (query, inputs, result ids/lines/scores; never file content),
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
+  web: `flash web <snapshot> [--session NAME]
+Drive a browser through an adapter (agent-browser today) so Claude never reads the raw page.
+  snapshot   capture the current page to ~/.flash/web/<session>/page.json, print one summary line
+Every call uses an isolated browser session, flash-<session> (default: this git project's name),
+never agent-browser's shared default session. Needs agent-browser on PATH, or FLASH_AGENT_BROWSER
+set to a command that runs it (e.g. "npx -y agent-browser").`,
   cache: `flash cache [clear]
 Show or delete the answer cache in ~/.flash/cache. Repeat runs over unchanged content are answered from it
 for free; edited content misses automatically. Answers only are stored, never content. Skip it per run with --no-cache.`,
@@ -1085,6 +1112,7 @@ Commands:
   find      locate the matching lines inside large files
   search    find the relevant files in a repo, folder by folder, with their source
   ask       one judgment over one document, or a raw spec.json request
+  web       drive a browser through an adapter (snapshot today; pick/check/click/run to come)
   setup     save and verify a key, pick the default provider
   status    check the key, show lifetime savings
   gain      savings by command, project and day
@@ -1120,6 +1148,43 @@ function cmdCache({ pos }) {
   console.log(`${n} cached answers · ${fmtK(bytes)}B in ${CACHE} · entries expire after 7 days`);
 }
 
+// ---------- web: drive a browser through an adapter, Jev makes the bulk decisions ----------
+
+const WEB_DRIVERS = { 'agent-browser': agentBrowser };
+
+// One driver today; a new one is one more entry here, commands never branch on it (plan.md).
+function webDriver() {
+  return WEB_DRIVERS['agent-browser'];
+}
+
+function requireDriver() {
+  const driver = webDriver();
+  const avail = driver.available();
+  if (avail !== true) die(avail, 3);
+  return driver;
+}
+
+async function cmdWebSnapshot({ flags }) {
+  const driver = requireDriver();
+  const session = sessionName(flags);
+  const t0 = Date.now();
+  const r = driver.snapshot(session);
+  if (!r.ok) die(`flash web snapshot failed: ${r.error}`, 5);
+  const file = pageFile(session);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(r.page, null, 2), { mode: 0o600 });
+  try { fs.chmodSync(file, 0o600); } catch {}
+  console.log(`snapshot saved: ${file} · ${r.page.url} · "${r.page.title}" · ${r.page.refs.length} elements`);
+  logRow({ ts: new Date().toISOString(), cmd: 'web-snapshot', project: projectName(process.cwd()), session,
+    items: r.page.refs.length, requests: 0, jev_tokens: 0, saved: 0, ms: Date.now() - t0 });
+}
+
+async function cmdWeb({ pos, flags }) {
+  const sub = pos.shift();
+  if (sub === 'snapshot') return cmdWebSnapshot({ pos, flags });
+  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot`, 2);
+}
+
 function cmdSkill() {
   const dir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
   const md = fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8').replace(/^---\n[\s\S]*?\n---\n+/, '');
@@ -1135,7 +1200,7 @@ function distance(a, b) {
   return d[a.length][b.length];
 }
 
-const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk, search: cmdSearch, skill: cmdSkill, cache: cmdCache };
+const COMMANDS = { setup: cmdSetup, status: cmdStatus, gain: cmdGain, filter: cmdFilter, classify: cmdClassify, rank: cmdRank, find: cmdFind, ask: cmdAsk, search: cmdSearch, web: cmdWeb, skill: cmdSkill, cache: cmdCache };
 
 process.on('unhandledRejection', (e) => die(`unexpected error: ${e?.stack || e}`, 5));
 process.on('uncaughtException', (e) => die(`unexpected error: ${e?.stack || e}`, 5));

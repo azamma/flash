@@ -48,6 +48,31 @@ function projectName(cwd) {
   } catch { return path.basename(cwd); }
 }
 
+function appendHistory(row) {
+  try {
+    fs.mkdirSync(HOME, { recursive: true });
+    fs.appendFileSync(path.join(HOME, 'history.jsonl'), JSON.stringify({ ts: new Date().toISOString(), ...row }) + '\n', { mode: 0o600 });
+  } catch {}
+}
+
+// `flash web snapshot` writes ~/.flash/web/<session>/page.json. Claude is meant to never read it
+// whole (use `flash web pick/check` instead); every Read of it, blocked or ranged, is logged so
+// `flash gain` can show web command calls against direct page reads.
+function isWebPageFile(file) {
+  const webDir = path.resolve(HOME, 'web') + path.sep;
+  const abs = path.resolve(file);
+  return abs.startsWith(webDir) && path.basename(abs) === 'page.json';
+}
+
+function webPageVerdict(input) {
+  const t = input.tool_input || {};
+  if (input.tool_name !== 'Read' || !t.file_path || !isWebPageFile(t.file_path)) return null;
+  const flash = path.join(path.dirname(fileURLToPath(import.meta.url)), 'flash.mjs');
+  return `Flash guard: ${t.file_path} is a captured web page. Claude isn't meant to read it whole — ask Jev instead: ` +
+    `node "${flash}" web pick "<what to click>" or node "${flash}" web check "<yes/no question>". ` +
+    `If Jev says it's unsure, Read this file with offset/limit around what it points at.`;
+}
+
 let raw = '';
 for await (const c of process.stdin) raw += c;
 let input = {};
@@ -56,15 +81,24 @@ if (input.hook_event_name === 'PostToolUse') {
   const s = jevSummary(input);
   if (s) process.stdout.write(JSON.stringify({ systemMessage: `⚡ flash → Jev ${s.slice(2)}` }));
 } else {
+  const t = input.tool_input || {};
+  if (process.env.FLASH_GUARD !== 'off' && input.tool_name === 'Read' && t.file_path && isWebPageFile(t.file_path)) {
+    const cwd = input.cwd || process.cwd();
+    const blocked = !t.offset && !t.limit;
+    appendHistory({ cmd: 'web-read', project: projectName(cwd), file: path.relative(cwd, t.file_path), blocked,
+      items: 1, requests: 0, jev_tokens: 0, saved: 0 });
+    if (blocked) process.stdout.write(JSON.stringify({
+      systemMessage: '⚡ flash: blocked whole Read of page.json, routing Claude to flash web pick/check',
+      hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: webPageVerdict(input) },
+    }));
+    process.exit(0);
+  }
   const reason = verdict(input);
   if (reason) {
     // One counts-only row in the same history `flash gain` reads, so blocked reads show up as cmd "guard".
-    const cwd = input.cwd || process.cwd(), home = HOME;
-    try {
-      fs.mkdirSync(home, { recursive: true });
-      fs.appendFileSync(path.join(home, 'history.jsonl'), JSON.stringify({ ts: new Date().toISOString(), cmd: 'guard',
-        project: projectName(cwd), file: path.relative(cwd, input.tool_input.file_path), items: 1, requests: 0, jev_tokens: 0, saved: 0 }) + '\n', { mode: 0o600 });
-    } catch {}
+    const cwd = input.cwd || process.cwd();
+    appendHistory({ cmd: 'guard', project: projectName(cwd), file: path.relative(cwd, input.tool_input.file_path),
+      items: 1, requests: 0, jev_tokens: 0, saved: 0 });
   }
   if (reason) process.stdout.write(JSON.stringify({
     systemMessage: `⚡ flash: blocked whole Read of ${path.basename(input.tool_input.file_path)}, routing Claude to Jev`,

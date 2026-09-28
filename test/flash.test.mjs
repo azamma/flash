@@ -437,3 +437,85 @@ test('history names the project after the git root, not the subfolder', async ()
   assert.equal(history().at(-1).project, path.basename(work));
   fs.rmSync(path.join(work, '.git'), { recursive: true, force: true });
 });
+
+// ---------- flash web ----------
+
+const WEB_FIXTURES = path.join(ROOT, 'test/fixtures/web');
+
+// A fake `agent-browser` on PATH, answering from env vars (see test/fixtures/web/fake-agent-browser.mjs).
+function agentBrowserEnv(snapshotFixture, extra = {}) {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'flash-ab-bin-'));
+  const wrapper = path.join(bin, 'agent-browser');
+  fs.copyFileSync(path.join(WEB_FIXTURES, 'fake-agent-browser.mjs'), wrapper);
+  fs.chmodSync(wrapper, 0o755);
+  return { PATH: bin + path.delimiter + process.env.PATH, FAKE_AB_SNAPSHOT: snapshotFixture, ...extra };
+}
+
+test('flash web snapshot writes the page file, prints one summary line, and logs a history row', async () => {
+  const env = agentBrowserEnv(path.join(WEB_FIXTURES, 'json-wikipedia.json'), {
+    FAKE_AB_URL: 'https://en.wikipedia.org/wiki/Main_Page', FAKE_AB_TITLE: 'Wikipedia, the free encyclopedia',
+  });
+  const r = await flash(['web', 'snapshot', '--session', 'unit-test'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /searchbox|Search Wikipedia/, 'the page itself is never printed');
+  const lines = r.stdout.trim().split('\n');
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /^snapshot saved: .*page\.json · https:\/\/en\.wikipedia\.org\/wiki\/Main_Page · "Wikipedia, the free encyclopedia" · \d+ elements$/);
+  const file = path.join(home, 'web', 'flash-unit-test', 'page.json');
+  assert.ok(fs.existsSync(file));
+  const page = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.equal(page.driver, 'agent-browser');
+  assert.ok(page.refs.length > 100);
+  if (process.platform !== 'win32') assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+  const rows = history();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].cmd, 'web-snapshot');
+  assert.equal(rows[0].session, 'flash-unit-test');
+  assert.ok(rows[0].items > 100);
+});
+
+test('flash web snapshot exits 3 with an install hint when agent-browser is missing', async () => {
+  const r = await flash(['web', 'snapshot']);
+  assert.equal(r.code, 3);
+  assert.match(r.stderr, /agent-browser not found/);
+  assert.match(r.stderr, /npm i -g agent-browser/);
+});
+
+test('flash web rejects an unknown subcommand', async () => {
+  const r = await flash(['web', 'nonsense']);
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /unknown "flash web nonsense"/);
+});
+
+test('guard blocks a whole Read of page.json with the web hint, allows and logs a ranged one', async () => {
+  const pageDir = path.join(home, 'web', 'flash-unit-test');
+  fs.mkdirSync(pageDir, { recursive: true });
+  const page = path.join(pageDir, 'page.json');
+  fs.writeFileSync(page, '{"driver":"agent-browser","refs":[]}');
+  const whole = await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', cwd: work, tool_input: { file_path: page } }) });
+  const out = JSON.parse(whole.stdout);
+  assert.equal(out.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(out.hookSpecificOutput.permissionDecisionReason, /web pick/);
+  assert.match(out.hookSpecificOutput.permissionDecisionReason, /web check/);
+  let rows = history();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].cmd, 'web-read');
+  assert.equal(rows[0].blocked, true);
+  const ranged = await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', cwd: work, tool_input: { file_path: page, offset: 1, limit: 20 } }) });
+  assert.equal(ranged.stdout, '', 'a ranged read is allowed, nothing printed');
+  rows = history();
+  assert.equal(rows.length, 2);
+  assert.equal(rows[1].cmd, 'web-read');
+  assert.equal(rows[1].blocked, false);
+});
+
+test('gain shows a web adoption line: flash web calls vs direct page.json reads', async () => {
+  const env = agentBrowserEnv(path.join(WEB_FIXTURES, 'json-wikipedia.json'));
+  await flash(['web', 'snapshot', '--session', 'unit-test'], { env });
+  const page = path.join(home, 'web', 'flash-unit-test', 'page.json');
+  await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', cwd: work, tool_input: { file_path: page } }) });
+  const g = (await flash(['gain', '--plain'])).stdout;
+  assert.match(g, /web: flash web calls vs direct Reads[\s\S]*1 web calls +1 direct reads/);
+  const md = (await flash(['gain', '--md'])).stdout;
+  assert.match(md, /## flash web adoption[\s\S]*\| 1 \| 1 \|/);
+});

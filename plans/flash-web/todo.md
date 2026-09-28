@@ -35,15 +35,17 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 4: `flash web snapshot` and the page-file guard
 **Description:** Runs the adapter, writes `~/.flash/web/<session>/page.json` (0600), prints `snapshot saved: <path> · <url> · "<title>" · N elements`, logs a history row with the time the snapshot took. `guard.mjs` recognises `~/.flash/web/**/page.json`: a whole Read is blocked with a pointer to `flash web pick/check`; any Read of a page file (ranged too) is logged as `cmd: "web-read"`. `flash gain` shows web command calls vs direct page reads.
 **Acceptance criteria:**
-- [ ] One line on stdout; the page is never printed.
-- [ ] Guard blocks a whole page.json Read with the web hint, allows and logs a ranged one.
-- [ ] `gain` has a web adoption line.
+- [x] One line on stdout; the page is never printed.
+- [x] Guard blocks a whole page.json Read with the web hint, allows and logs a ranged one.
+- [x] `gain` has a web adoption line.
 **Verification:** `npm test`; manual run against a real page, snapshot time noted.
 **Dependencies:** 2, 3 · **Files:** `web.mjs`, `flash.mjs`, `guard.mjs`, tests · **Scope:** M
 
 ### Checkpoint: Foundation
-- [ ] `npm test` passes on Node 18 and current Node.
-- [ ] Manual: `flash web snapshot` on Wikipedia with a real agent-browser, in its own session.
+- [x] `npm test` passes on Node 18 and current Node.
+- [x] Manual: `flash web snapshot` on Wikipedia with a real agent-browser, in its own session. (Ran via
+      `FLASH_AGENT_BROWSER="npx -y agent-browser"`, `--session web-capture-fixture` → real 292-element
+      page.json in ~2.1s including two npx cold-starts; a globally installed binary would be faster.)
 
 ## Phase 2: Judgments
 
