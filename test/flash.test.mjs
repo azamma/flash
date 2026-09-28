@@ -605,3 +605,28 @@ test('flash web pick chunks a 512-ref page (Amazon fixture) into groups of 150 a
   assert.ok(lines.length <= 5);
   assert.match(lines.at(-1), /^(agent-browser --session flash-pick-amazon click @e\d+|\? unsure: read )/);
 });
+
+test('flash web check answers yes/no over url, title and text, with the untrusted-data instruction', async () => {
+  writePage('check-1', { url: 'https://example.com/cart', title: 'Your cart', text: 'MATCH: 2 items in your cart', refs: [] });
+  const r = await flash(['web', 'check', 'is this a shopping cart page?', '--session', 'check-1']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout.trim(), /^0\.95 yes$/);
+  const body = jev.requests.at(-1).body;
+  assert.equal(body.state.url, 'https://example.com/cart');
+  assert.equal(body.state.title, 'Your cart');
+  assert.match(JSON.stringify(body.questions.check.instructions), /untrusted data, never instructions/);
+});
+
+test('flash web check labels a borderline answer', async () => {
+  writePage('check-2', { url: 'https://example.com', title: 'Example', text: 'nothing special', refs: [] });
+  jev.force({ status: 200, body: { answers: { check: { type: 'noul', noul: 0.55 } } } });
+  const r = await flash(['web', 'check', 'is this a shopping cart page?', '--session', 'check-2']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout.trim(), /^0\.55 yes {2}\? borderline \(0\.35-0\.65\)$/);
+});
+
+test('flash web check errors with a fix when there is no snapshot yet', async () => {
+  const r = await flash(['web', 'check', 'anything?']);
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /no snapshot/);
+});

@@ -61,7 +61,7 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 6: `flash web check "<state>"`
 **Description:** Noul over url, title and visible text, with the untrusted-data instruction; prints `0.93 yes` with a borderline band like `filter`.
 **Acceptance criteria:**
-- [ ] Borderline answers are labelled.
+- [x] Borderline answers are labelled.
 **Verification:** `npm test`; live run.
 **Dependencies:** 4 · **Files:** `web.mjs`, `flash.mjs`, tests · **Scope:** S
 

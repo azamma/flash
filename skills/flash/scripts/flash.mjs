@@ -1083,13 +1083,16 @@ Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Read
 --history lists the last N runs with what was asked and where Jev pointed, --plain drops the banner,
 --json prints the raw history (query, inputs, result ids/lines/scores; never file content),
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
-  web: `flash web <snapshot|pick> [--session NAME]
+  web: `flash web <snapshot|pick|check> [--session NAME]
 Drive a browser through an adapter (agent-browser today) so Claude never reads the raw page.
   snapshot            capture the current page to ~/.flash/web/<session>/page.json, one summary line
   pick "<intent>"     choose the one element that best satisfies intent; never acts
+  check "<question>"  yes/no judgement over the page's url, title and visible text
 Pick prints the top choice with its probability, up to two runner-ups, and either the exact driver
 command to act on it or "? unsure: read <page.json> lines a-b" when confidence is low (top p < 0.6
 or margin to the runner-up < 0.2) — read exactly those lines yourself rather than the whole file.
+Check prints "0.93 yes" (or "no"), labelled "? borderline" within --band of --threshold (defaults
+0.5/0.15, same as filter).
 Every call uses an isolated browser session, flash-<session> (default: this git project's name),
 never agent-browser's shared default session. Needs agent-browser on PATH, or FLASH_AGENT_BROWSER
 set to a command that runs it (e.g. "npx -y agent-browser").`,
@@ -1258,11 +1261,31 @@ async function cmdWebPick({ pos, flags }) {
   emit(flags, { intent, top: real.slice(0, 3).map(([id, p]) => ({ ref: id, p, ...byRef[id] })), unsure, command }, lines, foot);
 }
 
+async function cmdWebCheck({ pos, flags }) {
+  const question = pos.shift();
+  if (!question) die('usage: flash web check "<yes/no question>" [--session NAME]', 2);
+  const { session, page } = loadPage(flags);
+  const t0 = Date.now(), model = modelName(flags);
+  const thr = num(flags.threshold, 0.5), band = num(flags.band, 0.15);
+  const body = { model, state: { question, url: page.url, title: page.title, text: page.text },
+    questions: { check: { type: 'noul', instructions: { context: 'Answer `question`, judging only by `url`, `title` and `text`.', untrusted: UNTRUSTED_NOTE } } } };
+  const res = await decide(body, flags);
+  const stats = { requests: 1, jevTokens: res.usage?.input_tokens || 0 };
+  const p = res.answers.check.noul;
+  const answer = p >= thr ? 'yes' : 'no';
+  const borderline = Math.abs(p - thr) < band;
+  const line = `${f2(p)} ${answer}${borderline ? `  ? borderline (${f2(thr - band)}-${f2(thr + band)})` : ''}`;
+  audit = { query: question, session, results: [{ p: +f2(p) }] };
+  const foot = webFooter(t0, 'web-check', session, page, stats, line);
+  emit(flags, { question, p, answer, borderline }, [line], foot);
+}
+
 async function cmdWeb({ pos, flags }) {
   const sub = pos.shift();
   if (sub === 'snapshot') return cmdWebSnapshot({ pos, flags });
   if (sub === 'pick') return cmdWebPick({ pos, flags });
-  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot|pick`, 2);
+  if (sub === 'check') return cmdWebCheck({ pos, flags });
+  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot|pick|check`, 2);
 }
 
 function cmdSkill() {
