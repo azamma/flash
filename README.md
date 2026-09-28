@@ -3,9 +3,9 @@
 </p>
 
 <p align="center">
-  <a href="#install"><img src="https://img.shields.io/badge/install-npx%20one--liner-ffc233?style=flat-square" alt="install"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/install-npx%20one--liner-d4a94f?style=flat-square" alt="install"></a>
   <img src="https://img.shields.io/badge/Claude%20Code-skill%20%2B%20plugin-d97757?style=flat-square" alt="Claude Code skill">
-  <img src="https://img.shields.io/badge/tokens-%E2%88%9286%25-e5383b?style=flat-square" alt="-86% tokens">
+  <img src="https://img.shields.io/badge/tokens-%E2%88%9286%25-d4a94f?style=flat-square" alt="-86% tokens">
   <img src="https://img.shields.io/badge/deps-zero-lightgrey?style=flat-square" alt="zero deps">
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT">
 </p>
