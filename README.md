@@ -235,6 +235,16 @@ whole 12-task benchmark cost $0.45 of Jev.
 **Is this official?** No. It's an independent open-source project, not affiliated
 with Anthropic or TypeSafe AI.
 
+## Development
+
+```bash
+npm test
+```
+
+Runs `flash.mjs` and the hook against a local fake Jev server (`test/fake-jev.mjs`). It needs
+no network and no key, and it checks output streams, exit codes, retries, the secret-file skips
+and the footer format the hook depends on. Works on Node 18+.
+
 ## Credits
 
 - **[quicksilver](https://github.com/UditAkhourii/quicksilver)** by Udit Akhouri: the project Flash

@@ -16,12 +16,25 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["claude", "claude-code", "skill", "jev", "typesafe", "tokens", "llm", "cost", "agents"],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "skill",
+    "jev",
+    "typesafe",
+    "tokens",
+    "llm",
+    "cost",
+    "agents"
+  ],
   "author": "Agustín Zammarrelli (fork of quicksilver by Udit Akhouri)",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/azamma/flash.git"
   },
-  "homepage": "https://github.com/azamma/flash#readme"
+  "homepage": "https://github.com/azamma/flash#readme",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
 }

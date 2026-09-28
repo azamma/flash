@@ -15,7 +15,7 @@ Source: jevgrep v0.4.3 (`adbea4c`), MIT, © 2026 David Zhang. Code or prompt tex
 
 ## Implementation Steps
 
-### Step 1: Test harness with a fake Jev server
+### Step 1: Test harness with a fake Jev server ✅ done
 **Files:** `test/fake-jev.mjs` (new), `test/flash.test.mjs` (new), `package.json` (`"test": "node --test test/"`)
 **What:** `node:test` + `node:http` server that answers `{answers:{id:{type,…}}}` and records request bodies. Tests run `flash.mjs` as a subprocess with `FLASH_API_BASE` pointing at the server and `FLASH_HOME` in a temp dir. First tests cover current behavior: filter/classify/find output, footer format (the `guard.mjs` regex depends on it), retry on 429, exit 3 on 401, and history rows.
 **Testing:** `npm test` passes on Node 18 and 22 with no network.
