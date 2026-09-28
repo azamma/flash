@@ -185,6 +185,37 @@ test('cache: a repeat run makes no request, an edit misses, --no-cache always as
   assert.equal(jev.requests.length, 4);
 });
 
+test('status runs one real decision and maps failures to exit codes', async () => {
+  const yes = (p) => ({ status: 200, body: { answers: { probe: { type: 'noul', noul: p } } } });
+  jev.force(yes(0.97));
+  let r = await flash(['status']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /ready · provider typesafe .* decision check passed/);
+  assert.equal(jev.requests[0].body.questions.probe.type, 'noul');
+  jev.force(yes(0.1));
+  r = await flash(['status']);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /Jev looks wrong/);
+  jev.force({ status: 401, body: { error: 'bad key test-key' } });
+  r = await flash(['status']);
+  assert.equal(r.code, 3);
+  assert.doesNotMatch(r.stderr, /test-key/, 'the key must never be echoed');
+  r = await flash(['status'], { env: { FLASH_API_BASE: 'http://127.0.0.1:9' } });
+  assert.equal(r.code, 5);
+});
+
+test('setup verifies with the same probe and saves the key 0600', async () => {
+  jev.force({ status: 200, body: { answers: { probe: { type: 'noul', noul: 0.97 } } } });
+  const r = await flash(['setup', '--provider', 'openrouter'], { input: 'sk-or-new\n', env: { JEV_API_KEY: '' } });
+  assert.equal(r.code, 0, r.stderr);
+  const cfgFile = path.join(home, 'config.json');
+  const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+  assert.equal(cfg.keys.openrouter, 'sk-or-new');
+  assert.equal(cfg.provider, 'openrouter');
+  if (process.platform !== 'win32') assert.equal(fs.statSync(cfgFile).mode & 0o777, 0o600);
+  assert.equal(jev.requests[0].auth, 'Bearer sk-or-new');
+});
+
 test('each run appends one counts-only row to history, and gain reads it', async () => {
   write('a.txt', 'MATCH secret-content');
   await flash(['filter', 'q?', 'a.txt']);

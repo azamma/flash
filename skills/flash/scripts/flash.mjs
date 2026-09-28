@@ -16,9 +16,9 @@ const CACHE = path.join(HOME, 'cache');
 const CACHE_TTL_MS = 7 * 24 * 3600 * 1000;
 // Jev is served by TypeSafe directly and by OpenRouter's Decisions endpoint; same request/answer shape.
 const PROVIDERS = {
-  typesafe: { base: 'https://api.typesafe.ai', decide: '/v1/systemone', check: '/v1/models', model: 'jev-latest',
+  typesafe: { base: 'https://api.typesafe.ai', decide: '/v1/systemone', model: 'jev-latest',
     keyUrl: 'https://console.typesafe.ai', env: ['JEV_API_KEY', 'TYPESAFE_API_KEY'] },
-  openrouter: { base: 'https://openrouter.ai/api', decide: '/alpha/decisions', check: '/v1/key', model: 'typesafe/jev-1.13',
+  openrouter: { base: 'https://openrouter.ai/api', decide: '/alpha/decisions', model: 'typesafe/jev-1.13',
     keyUrl: 'https://openrouter.ai/settings/keys', env: ['OPENROUTER_API_KEY'],
     headers: { 'HTTP-Referer': 'https://github.com/azamma/flash', 'X-Title': 'flash' } },
 };
@@ -601,7 +601,22 @@ async function promptHidden(q) {
   });
 }
 
-const checkKey = (p, key) => fetch(p.base + p.check, { headers: { Authorization: `Bearer ${key}`, ...p.headers } });
+// Health check: one real decision with a known answer, the same way for every provider. It proves the
+// key, the decision endpoint and the model at once. Returns { ok, status, detail }; never throws.
+async function probe(p, key, model) {
+  const redact = (t) => String(t).split(key).join('***');
+  try {
+    const res = await fetch(p.base + p.decide, {
+      method: 'POST', signal: AbortSignal.timeout(30_000),
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...p.headers },
+      body: JSON.stringify({ model, state: { source: 'class Telemetry {\n  recordEvent(name) { this.events.push({ name, at: Date.now() }); }\n}' },
+        questions: { probe: { type: 'noul', instructions: 'Does `source` implement recording an event?' } } }),
+    });
+    if (!res.ok) return { ok: false, status: res.status, detail: redact(clip(await res.text(), 200)) };
+    const pYes = (await res.json()).answers?.probe?.noul;
+    return pYes > 0.5 ? { ok: true, status: 200 } : { ok: false, status: 200, detail: `known-yes probe answered ${pYes}` };
+  } catch (e) { return { ok: false, status: 0, detail: redact(e.message) }; }
+}
 
 async function cmdSetup({ pos, flags }) {
   const p = provider(flags);
@@ -613,9 +628,10 @@ async function cmdSetup({ pos, flags }) {
   }
   const key = (pos[0] || (await promptHidden(`Paste your ${p.name} API key (from ${p.keyUrl}): `))).trim();
   if (!key) die(`no key given. Get one at ${p.keyUrl}`, 2);
-  const res = await checkKey(p, key).catch((e) => die(`network error: ${e.message}`));
+  const res = await probe(p, key, flags.model || p.model);
   if (res.status === 401 || res.status === 403) die(`that key was rejected by ${p.name} (${res.status}). Double-check it at ${p.keyUrl}`, 3);
-  if (!res.ok) die(`could not verify key: HTTP ${res.status}`);
+  if (res.status === 0) die(`could not reach ${p.name}: ${res.detail}`, 5);
+  if (!res.ok) die(`could not verify key: ${res.status === 200 ? res.detail : `HTTP ${res.status} ${res.detail}`}`, res.status === 200 ? 1 : 5);
   cfg.keys = { ...cfg.keys, [p.name]: key };
   cfg.provider = p.name;
   if (flags.model) cfg.models = { ...cfg.models, [p.name]: flags.model };
@@ -626,11 +642,14 @@ async function cmdSetup({ pos, flags }) {
 async function cmdStatus({ flags }) {
   const p = provider(flags);
   if (!p.key) { console.log(`not configured for ${p.name} — get a key at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`); process.exit(3); }
-  const res = await checkKey(p, p.key).catch(() => null);
+  const model = modelName(flags);
+  const res = await probe(p, p.key, model);
+  if (res.status === 401 || res.status === 403) die(`key found (${p.keySource}) but rejected by ${p.name} (HTTP ${res.status}). Run setup with a fresh key from ${p.keyUrl}`, 3);
+  if (res.status === 0) die(`key found (${p.keySource}) but ${p.name} is unreachable: ${res.detail}`, 5);
+  if (!res.ok && res.status !== 200) die(`${p.name} answered HTTP ${res.status}: ${res.detail}`, 5);
+  if (!res.ok) die(`${p.name} is reachable but Jev looks wrong: ${res.detail}. Check --model (${model})`, 1);
+  console.log(`ready · provider ${p.name} · key from ${p.keySource} · model ${model} · decision check passed`);
   const rows = readHistory();
-  if (!res) console.log(`key found (${p.keySource}) but ${p.name} is unreachable right now`);
-  else if (!res.ok) { console.log(`key found (${p.keySource}) but rejected by ${p.name} (HTTP ${res.status}) — run setup with a fresh key from ${p.keyUrl}`); process.exit(3); }
-  else console.log(`ready · provider ${p.name} · key from ${p.keySource} · model ${modelName(flags)}`);
   if (rows.length) console.log(totalsLine(rows));
 }
 

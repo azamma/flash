@@ -31,7 +31,7 @@ Source: jevgrep v0.4.3 (`adbea4c`), MIT, © 2026 David Zhang. Code or prompt tex
 The cache is **on by default**, as in jevgrep.
 **Testing:** running the same `filter` twice makes one request to the fake server; editing the file makes a new request; `--no-cache` always calls; cache files are 0600 and contain no source text.
 
-### Step 4: Real provider health check
+### Step 4: Real provider health check ✅ done
 **Files:** `flash.mjs` (`PROVIDERS`, `cmdStatus`, `checkKey`), `test/flash.test.mjs`
 **What:** Keep the current providers and endpoints (TypeSafe `/v1/systemone` with `jev-latest`, OpenRouter `/api/alpha/decisions`), both verified live; add no new providers. Replace the per-provider key-check endpoints (`/v1/models`, `/v1/key`) with jevgrep's doctor approach: one real, synthetic decision call that must answer p > 0.5. This proves the key *and* the decision endpoint work, the same way for every provider. Redact the key from error text.
 **Testing:** `flash status --provider <p>` against the fake server (ok, 401, low probability); live `status` with the real TypeSafe and OpenRouter keys.
