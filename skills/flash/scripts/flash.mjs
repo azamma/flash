@@ -30,7 +30,7 @@ const LOCK_RE = /(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb?|Carg
 
 function parseArgs(argv) {
   const pos = [], flags = {};
-  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard']);
+  const bools = new Set(['lines', 'json', 'all', 'remove', 'help', 'fast', 'verbose', 'no-collapse', 'no-secrets-guard', 'plain']);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--') { pos.push(...argv.slice(i + 1)); break; }
@@ -604,9 +604,29 @@ function groupBy(rows, key) {
   return Object.entries(g);
 }
 
+// Banner for `flash gain`: a bolt and FLASH in block letters. Colored only on a TTY without NO_COLOR.
+const BOLT = ['    ▄▄▄▄', '   ███▀ ', '  ███   ', ' ██████▀', '   ▄██▀ ', '  ▄█▀   ', ' ▀▀     '];
+const GLYPHS = {
+  F: ['█████', '██   ', '████ ', '██   ', '██   '],
+  L: ['██   ', '██   ', '██   ', '██   ', '█████'],
+  A: [' ███ ', '██ ██', '█████', '██ ██', '██ ██'],
+  S: [' ████', '██   ', ' ███ ', '   ██', '████ '],
+  H: ['██ ██', '██ ██', '█████', '██ ██', '██ ██'],
+};
+
+function banner() {
+  const tty = process.stdout.isTTY && !process.env.NO_COLOR;
+  const paint = (code) => (t) => (tty ? `\x1b[${code}m${t}\x1b[0m` : t);
+  const gold = paint('38;5;179'), cream = paint('1;38;5;230'), dim = paint('38;5;245');
+  const word = (r) => [...'FLASH'].map((c) => GLYPHS[c][r]).join('  ');
+  const rows = BOLT.map((b, i) => `  ${gold(b)}   ${i >= 1 && i <= 5 ? cream(word(i - 1)) : ''}`.trimEnd());
+  return [...rows, `  ${gold('────────── ◆ ──────────')}  ${dim('CLAUDE THINKS · JEV SKIMS')}`, ''].join('\n');
+}
+
 function cmdGain({ flags }) {
   const rows = readHistory(), s = readJson(STATS, null);
   if (flags.json) return console.log(JSON.stringify({ totals: s, history: rows }, null, 2));
+  if (!flags.plain && !flags.history) console.log(banner());
   if (!s) return console.log('no runs yet');
   const cost = (t) => `$${(t * PRICE_PER_TOKEN).toFixed(4)}`;
   const line = (k, t) => `  ${k.padEnd(16)} ${String(t.runs).padStart(5)} runs  ${fmtK(t.items).padStart(7)} items  ` +
@@ -630,7 +650,7 @@ const HELP = `flash — delegate bulk judgment calls to Jev
 
   setup [KEY] [--provider P]           save + verify a key, make P the default (prompts if omitted)
   status [--provider P]                check key, show lifetime savings
-  gain [--history [N]] [--json]        savings by command, project and day; --history lists runs
+  gain [--history [N]] [--json]        savings by command, project and day; --history lists runs; --plain drops the banner
   filter "<yes/no question>" <inputs>  keep only items where the answer is yes
   classify --labels "a,b,c" <inputs>   put each item in one bucket
   rank "<query>" <inputs> [--top N]    order items by relevance

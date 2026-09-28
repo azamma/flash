@@ -29,6 +29,24 @@ you ─▶ Claude ──"which files handle auth?"──▶ flash ──▶ Jev 
        Claude ◀──── 4 file paths + confidence ─────┘       ~2.4k tokens instead of ~26k
 ```
 
+## What Flash adds
+
+Flash is a fork of [quicksilver](https://github.com/UditAkhourii/quicksilver). The judgment engine
+(`filter`, `classify`, `rank`, `find`, `ask`) comes from there. On top of it, Flash adds:
+
+| | What you get |
+|---|---|
+| **Two providers** | Reach Jev through [TypeSafe](https://console.typesafe.ai) or [OpenRouter](https://openrouter.ai/settings/keys). Keys are stored per provider; switch with `--provider` or `FLASH_PROVIDER`. |
+| **An enforcement hook** | A `PreToolUse` hook refuses whole-file `Read`s of large files and tells Claude to run `flash find` / `flash filter` first. The skill stops being optional. |
+| **Jev you can see** | After every run, the Claude Code UI shows `⚡ flash → Jev … tok ($…)`; a blocked read shows `⚡ flash: blocked whole Read of …`. |
+| **A local savings log** | `flash gain` breaks tokens saved down by command, project and day, from `~/.flash/history.jsonl` (counts only, never content). |
+| **Agent-ready setup** | [`AGENT-SETUP.md`](AGENT-SETUP.md) walks an agent through install, key, hooks and checks, one verifiable step at a time. |
+
+**Next up, inspired by [jevgrep](https://github.com/dzhng/jevgrep):** an answer cache, verbatim source
+excerpts with line ranges (`flash find --context`), and repo-scale code search that walks folders,
+files and declarations (`flash search`). The plan is in
+[`plans/jevgrep-in-flash/plan.md`](plans/jevgrep-in-flash/plan.md).
+
 ## Proof: the benchmark
 
 Twelve tasks a coding agent really runs into. Eight use real public data (a
@@ -60,6 +78,7 @@ scored against hidden ground truth.
 > **86%** (median 82%). It matches Claude's accuracy on **8 of 12** real-world tasks
 > and runs **up to 20× faster**, for a median of **$0.004 of Jev per task**.
 
+The benchmark was measured on the quicksilver engine, which Flash keeps unchanged.
 Numbers are measured, not estimated, and the benchmark is fully reproducible:
 see [`bench/`](bench/README.md). Claude-side tokens subtract the fixed
 per-agent overhead, measured with a control task. Flash is charged for
@@ -89,6 +108,31 @@ anything borderline. Every run ends with a receipt:
 
 ## Install
 
+**As a Claude Code plugin** (recommended: skill, hooks and slash commands in one step):
+
+```
+/plugin marketplace add azamma/flash
+/plugin install flash@flash
+```
+
+Then check it and save your key, keeping it out of the chat:
+
+```
+/flash:status
+```
+
+`/flash:status` prints the exact `! node … setup` command to run. The plugin ships:
+
+| Piece | What it does |
+|---|---|
+| `flash` skill | Claude delegates bulk judgment calls to Jev on its own |
+| `PreToolUse` hook on `Read` | refuses whole-file reads of large files and routes Claude through `flash find` / `flash filter` |
+| `PostToolUse` hook on `Bash` | shows `⚡ flash → Jev … tok ($…)` in the UI after every run |
+| `/flash:gain` | the savings banner, by command, project and day |
+| `/flash:status` | provider, key, model and lifetime savings |
+
+**Without the plugin system:**
+
 ```bash
 npx github:azamma/flash
 ```
@@ -109,10 +153,6 @@ npx github:azamma/flash install --key YOUR_JEV_KEY
 # same, through OpenRouter instead of TypeSafe
 npx github:azamma/flash install --provider openrouter --key YOUR_OPENROUTER_KEY
 
-# as a Claude Code plugin
-/plugin marketplace add azamma/flash
-/plugin install flash@flash
-
 # from a clone
 git clone https://github.com/azamma/flash && cd flash && ./install.sh   # or .\install.ps1
 ```
@@ -123,7 +163,10 @@ in your environment also works. With keys for both, pick one per call with
 No npm dependencies.
 </details>
 
-### Make it mandatory (optional)
+### Make it mandatory without the plugin (optional)
+
+The plugin already installs these hooks. Add them by hand only for an `npx` or clone install,
+and never both ways at once, or every hook runs twice.
 
 Having an agent set this up? Point it at [`AGENT-SETUP.md`](AGENT-SETUP.md): install, key, hooks and checks, step by step.
 
@@ -203,7 +246,12 @@ with Anthropic or TypeSafe AI.
 
 ## Credits
 
-Flash started as a fork of [quicksilver](https://github.com/UditAkhourii/quicksilver) by Udit Akhouri.
+- **[quicksilver](https://github.com/UditAkhourii/quicksilver)** by Udit Akhouri: the project Flash
+  forks. The CLI, the judgment commands and the benchmark come from it.
+- **[jevgrep](https://github.com/dzhng/jevgrep)** by David Zhang: the model for Flash's code-search
+  roadmap (hierarchical retrieval, answer cache, source excerpts, the accounting rules for benchmarks).
+- **[Jev](https://docs.typesafe.ai)** by TypeSafe: the System One model doing the judging.
+
 The lightning mark is original artwork for this project.
 
 ## License

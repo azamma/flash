@@ -6,6 +6,12 @@ Windows use `%USERPROFILE%` for `~`.
 
 `FLASH` below means `node ~/.claude/skills/flash/scripts/flash.mjs`.
 
+**Shortcut:** if the user can run `/plugin`, have them run `/plugin marketplace add azamma/flash`
+and `/plugin install flash@flash`. The plugin installs the skill and both hooks, so skip steps 1
+and 3; still do step 2 (key) and step 4 (standing rule). Never combine the plugin with the manual
+hooks of step 3, or every hook runs twice. With the plugin, `flash.mjs` lives in the plugin
+directory rather than `~/.claude/skills/flash`; `/flash:status` prints the full setup command.
+
 ## 1. Install the skill
 
 From a clone of this repo: `./install.sh` (Windows: `.\install.ps1`). Without a clone:

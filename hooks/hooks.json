@@ -1,0 +1,21 @@
+{
+  "description": "Flash: block whole-file Reads of large files and show Jev usage after each flash run",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Read$",
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/flash/scripts/guard.mjs\"", "timeout": 5, "statusMessage": "⚡ flash guard…" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/flash/scripts/guard.mjs\"", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}

@@ -1,7 +1,8 @@
 {
   "name": "flash",
   "owner": {
-    "name": "Udit Akhouri"
+    "name": "Agustín Zammarrelli",
+    "url": "https://github.com/azamma"
   },
   "metadata": {
     "description": "Flash: offload Claude's bulk judgment calls to Jev."
@@ -10,7 +11,8 @@
     {
       "name": "flash",
       "source": "./",
-      "description": "Offload Claude's bulk judgment calls to Jev. Fewer tokens, lower latency, more headroom on your limits."
+      "description": "Offload Claude's bulk judgment calls to Jev. Skill, large-file Read guard hook, and /flash:gain, /flash:status.",
+      "version": "0.2.0"
     }
   ]
 }
