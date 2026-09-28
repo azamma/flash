@@ -156,14 +156,30 @@ const post = (p, key, body, ms) => fetch(p.base + p.decide, {
 // Fail closed: every question must come back with an answer of its own type and in-range numbers.
 // A malformed body is never used and never cached. (Checks adapted from jev-mcp, MIT © Joey Kudish.)
 const unit = (x) => typeof x === 'number' && x >= 0 && x <= 1;
+
+// A choice answer must name one of the offered criteria, carry a probability for each of them and
+// no others, and that choice must actually be the argmax. (Ported from jev-ultrafast model.py:53-68,
+// MIT © 2026 Browser Use.) Needed before any answer can safely trigger a click.
+function validChoice(a, criteria) {
+  const ids = Object.keys(criteria || {});
+  if (!ids.includes(a.choice)) return false;
+  const ps = a.probabilities || {};
+  const keys = Object.keys(ps);
+  if (keys.length !== ids.length || !keys.every((k) => ids.includes(k))) return false;
+  const vals = Object.values(ps);
+  if (!vals.every(unit)) return false;
+  if (vals.length && Math.abs(vals.reduce((s, x) => s + x, 0) - 1) >= 0.02) return false;
+  return ps[a.choice] >= Math.max(...vals) - 1e-6;
+}
+
 function validAnswers(body, json) {
   return Object.entries(body.questions || {}).every(([id, q]) => {
     const a = json?.answers?.[id];
     if (!a || a.type !== q.type) return false;
     if (q.type === 'noul') return unit(a.noul);
     if (q.type === 'score') return Number.isFinite(a.score);
-    const ps = Object.values(a.probabilities || {});
-    return typeof a.choice === 'string' && ps.every(unit) && (!ps.length || Math.abs(ps.reduce((s, x) => s + x, 0) - 1) < 0.02);
+    if (q.type === 'choice') return typeof a.choice === 'string' && validChoice(a, q.criteria);
+    return false;
   });
 }
 

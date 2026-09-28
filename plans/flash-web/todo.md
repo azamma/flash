@@ -9,8 +9,8 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 1: Strict choice validation
 **Description:** `validAnswers` rejects a `choice` that isn't one of the offered criteria, probability keys that don't match them, or a choice that isn't the argmax (port of jev-ultrafast model.py:53-68). Needed before any answer can trigger a click.
 **Acceptance criteria:**
-- [ ] A choice outside the criteria, or mismatched probability keys, is malformed (retried, never cached).
-- [ ] Existing classify/find/search runs still pass.
+- [x] A choice outside the criteria, or mismatched probability keys, is malformed (retried, never cached).
+- [x] Existing classify/find/search runs still pass.
 **Verification:** `npm test` with a forced-malformed-choice case.
 **Dependencies:** None · **Files:** `skills/flash/scripts/flash.mjs`, `test/flash.test.mjs` · **Scope:** XS
 

@@ -194,6 +194,33 @@ test('a malformed answer is retried, never cached, and upstream text is never ec
   assert.doesNotMatch(r.stderr, /IGNORE PREVIOUS/);
 });
 
+test('a malformed choice answer is retried and never used to pick a label', async () => {
+  write('items.jsonl', '{"id":"T1","text":"crash: this is a bug"}\n');
+  const badChoice = (choice, probabilities) => ({ status: 200, body: { answers: { q_0: { type: 'choice', choice, confidence: 0.9, probabilities } } } });
+  // choice not among the offered criteria at all.
+  jev.force(...Array(6).fill(badChoice('other', { bug: 0.5, feature: 0.5 })));
+  let r = await flash(['classify', '--labels', 'bug,feature', '--items', 'items.jsonl']);
+  assert.equal(r.code, 5);
+  assert.match(r.stderr, /malformed answer/);
+  jev.reset();
+  // probabilities carry a key the criteria never offered.
+  jev.force(...Array(6).fill(badChoice('bug', { bug: 0.5, feature: 0.4, other: 0.1 })));
+  r = await flash(['classify', '--labels', 'bug,feature', '--items', 'items.jsonl']);
+  assert.equal(r.code, 5);
+  assert.match(r.stderr, /malformed answer/);
+  jev.reset();
+  // choice given is not the argmax of its own probabilities.
+  jev.force(...Array(6).fill(badChoice('bug', { bug: 0.3, feature: 0.7 })));
+  r = await flash(['classify', '--labels', 'bug,feature', '--items', 'items.jsonl']);
+  assert.equal(r.code, 5);
+  assert.match(r.stderr, /malformed answer/);
+  jev.reset();
+  // a well-formed choice still works.
+  r = await flash(['classify', '--labels', 'bug,feature', '--items', 'items.jsonl']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /\[bug\] T1/);
+});
+
 test('a rejected key exits 3 with a fix', async () => {
   write('a.txt', 'MATCH');
   jev.force({ status: 401 });
