@@ -62,7 +62,7 @@ The cache is **on by default**, as in jevgrep.
 Only the heuristic path is built. An exact Python `ast` pass through a system `python3` gets added only if the Step 8 bench shows the heuristic missing spans.
 **Testing:** unit tests on fixture Python/TS files with known declaration spans, including a decorator, a nested class, an arrow function, and a file that fails the heuristic and must fall back to text.
 
-### Step 8: Retrieval benchmark and jevgrep's accounting rules
+### Step 8: Retrieval benchmark and jevgrep's accounting rules ✅ done
 **Files:** `bench/truth/s13.json` (new), `bench/prompts.md`, `bench/run-flash.mjs`, `bench/score.mjs`, `bench/README.md`
 **What:** New situation on hono: truth = files + line ranges for a "where is X" question. Score file recall, range hit, and output tokens for `find` (old), `find --context` and `search`, against the Claude-alone baseline. Adopt jevgrep's accounting rules: freeze the baseline and never rerun it, keep failed runs, report Jev cost separately from Claude tokens, and treat missing cost as unknown rather than zero.
 **Testing:** `node bench/score.mjs` reproduces the numbers; results committed under `bench/results/`.

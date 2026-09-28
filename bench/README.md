@@ -31,3 +31,34 @@ node score.mjs            # writes results/results.md + results.json
 - For the huge-input situations (logs, repos, lodash), the baseline agent often greps first instead of reading everything. That's realistic, and it makes the baseline cheaper than "read it all".
 - S12 is a **negative control**: a numeric comparison, which Jev is documented to be bad at. It's included to show where *not* to use Flash. Plain `awk` wins there for free.
 - The synthetic sets (S02, S07, S08, S12) were written by the author. The real sets (S01, S03, S04, S05, S06, S09, S10, S11) come from public sources, listed in `truth/*.json`.
+
+## S13: code retrieval (`find`, `find --context`, `search`)
+
+A separate situation for the jevgrep-style features: four "where is X implemented?" questions on
+honojs/hono `src` at a pinned commit. Truth is files plus line ranges (`truth/s13.json`). Each arm
+is scored on **file recall** (truth files it names) and **range hit** (truth ranges it overlaps).
+
+```bash
+git clone https://github.com/honojs/hono && git -C hono checkout 18331a905e2415f7f73038357f2eec354123f7a6
+node retrieval.mjs path/to/hono   # Flash arms, appended to results/retrieval-runs.jsonl
+node retrieval.mjs --report       # writes results/retrieval.md
+```
+
+Results: [`results/retrieval.md`](results/retrieval.md). In short, `search` matched Claude alone
+(0.88 file recall and range hit) with 43% fewer Claude tokens and in 60% of the time, for $0.13 of
+Jev across the four questions. The saving comes from the hard question (JWT verification spread
+over two files): Claude alone spent 30k tokens there. On questions whose answer sits in an
+obviously named file (CORS, ETag), Claude's own Grep is as good and cheaper. `find` over a whole
+repo is the wrong tool: it costs more Jev and misses files that `search` finds.
+
+Accounting rules, adopted from jevgrep's eval:
+
+- **The baseline is frozen.** `results/baseline/s13.json` was run once and is never rerun. The
+  per-agent floor was measured in the same harness (a control agent that reads one file).
+- **Every run is kept**, failures included, in `results/retrieval-runs.jsonl`. The report uses the
+  latest successful run per question and arm, and says how many failed.
+- **Jev cost is reported separately** from Claude tokens and never folded into them. A run whose
+  cost can't be read counts as unknown, not zero.
+- **Flash arms pay for SKILL.md** on every question, as in the main benchmark. Plain `find` also
+  pays for a follow-up Read of ±20 lines around its top three hits.
+
