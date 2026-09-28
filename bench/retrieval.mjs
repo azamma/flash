@@ -11,7 +11,7 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FLASH = path.join(ROOT, '..', 'skills', 'flash', 'scripts', 'flash.mjs');
 const truth = JSON.parse(fs.readFileSync(path.join(ROOT, 'truth', 's13.json'), 'utf8'));
 const REPORT = process.argv[2] === '--report';
-const repo = path.resolve(REPORT ? '.' : process.argv[2] || path.join(ROOT, 'data', 'raw', 'hono'));
+const repo = path.resolve(process.argv[2] || path.join(ROOT, 'data', 'raw', 'hono'));
 if (!REPORT) {
   const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim();
   if (head !== truth.commit) throw new Error(`hono checkout is at ${head}, truth needs ${truth.commit}`);
@@ -42,7 +42,7 @@ function spans(mode, out) {
   return [...out.matchAll(/^\d\.\d\d {2}(\S+):(\d+) /gm)].slice(0, 3).map((m) => [m[1], +m[2] - READ_PAD, +m[2] + READ_PAD]);
 }
 
-export function score(found, want) {
+function score(found, want) {
   const overlaps = (t) => found.some(([f, a, b]) => f === t.file && a <= t.end && b >= t.start);
   const files = [...new Set(want.map((t) => t.file))];
   return {
@@ -92,7 +92,6 @@ if (REPORT) {
   console.log(md);
 } else {
   const log = path.join(ROOT, 'results', 'retrieval-runs.jsonl');
-  const rows = [];
   for (const { id, q, truth: want } of truth.questions) {
     for (const [mode, args] of Object.entries(MODES)) {
       const t0 = Date.now();
@@ -106,7 +105,6 @@ if (REPORT) {
         Object.assign(row, score(found, want), { claudeTokens: tok(r.stdout) + tok(r.stderr) + TOOL_CALL + followUp + (followUp ? TOOL_CALL * found.length : 0) });
       } else row.error = r.stderr.slice(-300);
       fs.appendFileSync(log, JSON.stringify(row) + '\n');
-      rows.push(row);
       console.error(`${id.padEnd(6)} ${mode.padEnd(15)} ${row.error ? 'FAILED' : `files ${row.fileRecall.toFixed(2)} ranges ${row.rangeHit.toFixed(2)} ~${row.claudeTokens} Claude tok`}  jev $${row.jevUsd ?? '?'}  ${(row.ms / 1000).toFixed(1)}s`);
     }
   }

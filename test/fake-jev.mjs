@@ -36,7 +36,7 @@ export async function startFakeJev() {
     req.on('data', (c) => (raw += c));
     req.on('end', () => {
       const body = JSON.parse(raw || '{}');
-      requests.push({ path: req.url, auth: req.headers.authorization, body });
+      requests.push({ auth: req.headers.authorization, body });
       const f = forced.shift();
       if (f) {
         res.writeHead(f.status, { 'content-type': 'application/json', ...f.headers });

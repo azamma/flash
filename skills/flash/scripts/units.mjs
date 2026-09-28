@@ -18,11 +18,10 @@ export function splitUnits(text, file) {
   if (/\.py$/i.test(file)) units = pythonUnits(lines);
   else if (JS_EXT.test(file)) units = jsUnits(lines);
   if (!units?.length) return textUnits(lines);
-  return units.flatMap((u) => (slice(lines, u).length > MAX_UNIT ? windows(lines, u) : [u]));
+  return units.flatMap((u) => (unitSource(lines, u).length > MAX_UNIT ? textUnits(lines, u.start, u.end, u.name) : [u]));
 }
 
-const slice = (lines, u) => lines.slice(u.start - 1, u.end).join('\n');
-export const unitSource = slice;
+export const unitSource = (lines, u) => lines.slice(u.start - 1, u.end).join('\n');
 
 // Leading comments and decorators belong to the declaration below them.
 function attachAbove(lines, start, isLead) {
@@ -77,14 +76,13 @@ function jsUnits(lines) {
   });
 }
 
-function textUnits(lines, from = 1, to = lines.length, name = 'text') {
+export function textUnits(lines, from = 1, to = lines.length, name = 'text', size = TEXT_CHUNK) {
   const out = [];
-  let start = from, size = 0;
+  let start = from, bytes = 0;
   for (let i = from; i <= to; i++) {
-    size += lines[i - 1].length + 1;
-    if (size >= TEXT_CHUNK || i === to) { out.push({ name, start, end: i }); start = i + 1; size = 0; }
+    bytes += lines[i - 1].length + 1;
+    if (bytes >= size || i === to) { out.push({ name, start, end: i }); start = i + 1; bytes = 0; }
   }
   return out;
 }
 
-const windows = (lines, u) => textUnits(lines, u.start, u.end, u.name);

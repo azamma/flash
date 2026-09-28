@@ -281,6 +281,10 @@ test('status runs one real decision and maps failures to exit codes', async () =
   assert.doesNotMatch(r.stderr, /test-key/, 'the key must never be echoed');
   r = await flash(['status'], { env: { FLASH_API_BASE: 'http://127.0.0.1:9' } });
   assert.equal(r.code, 5);
+  r = await flash(['status'], { env: { JEV_API_KEY: '' } });
+  assert.equal(r.code, 3);
+  assert.equal(r.stdout, '', 'the error goes to stderr');
+  assert.match(r.stderr, /not configured for typesafe/);
 });
 
 test('setup verifies with the same probe and saves the key 0600', async () => {

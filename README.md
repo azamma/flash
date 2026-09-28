@@ -52,7 +52,7 @@ From [jevgrep](https://github.com/dzhng/jevgrep), ported without its dependencie
 | **A real health check** | `flash status` and `setup` send one decision with a known answer, the same way for both providers. |
 | **Safer inputs** | Files holding a private key, binaries, symlinks, ignored paths and `~/.flash` never reach Jev. |
 
-On the retrieval benchmark (S13, below), `flash search` matched Claude alone's accuracy with 43%
+On the [retrieval benchmark (S13)](bench/README.md#s13-code-retrieval-find-find---context-search), `flash search` matched Claude alone's accuracy with 43%
 fewer Claude tokens.
 
 ## Proof: the benchmark

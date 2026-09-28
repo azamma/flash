@@ -8,7 +8,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { splitUnits, unitSource } from './units.mjs';
+import { splitUnits, unitSource, textUnits } from './units.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -119,11 +119,16 @@ function cacheGet(file) {
 function cachePut(file, res) {
   try {
     fs.mkdirSync(CACHE, { recursive: true, mode: 0o700 });
-    const tmp = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
+    const tmp = `${file}.${crypto.randomUUID()}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify({ model: res.model, answers: res.answers }), { mode: 0o600 });
     fs.renameSync(tmp, file);
   } catch {}
 }
+
+const post = (p, key, body, ms) => fetch(p.base + p.decide, {
+  method: 'POST', signal: AbortSignal.timeout(ms), body: JSON.stringify(body),
+  headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...p.headers },
+});
 
 async function decide(body, flags, { soft = false } = {}) {
   const p = provider(flags);
@@ -135,12 +140,7 @@ async function decide(body, flags, { soft = false } = {}) {
   for (let attempt = 0; attempt <= 5; attempt++) {
     let res;
     try {
-      res = await fetch(p.base + p.decide, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${p.key}`, 'Content-Type': 'application/json', ...p.headers },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(60_000),
-      });
+      res = await post(p, p.key, body, 60_000);
     } catch (e) {
       lastErr = `network error: ${e.message}`;
       await sleep(500 * 2 ** attempt);
@@ -288,37 +288,14 @@ function collect(pos, flags) {
 }
 
 // One item per request by default: packing items into a shared state measurably hurts accuracy
-// (bench: CI triage 76% packed vs 100% unpacked). --fast packs small items for throughput.
-function batches(items, flags) {
-  const budget = num(flags['pack-tokens'], 3000), maxN = num(flags['pack-items'], flags.fast ? 40 : 1);
-  const out = [];
-  let cur = [], tok = 0;
-  for (const it of items) {
-    const t = estTokens(it.text) + 20;
-    if (cur.length && (tok + t > budget || cur.length >= maxN)) { out.push(cur); cur = []; tok = 0; }
-    cur.push(it); tok += t;
-  }
-  if (cur.length) out.push(cur);
-  return out;
-}
-
-// Run one question per item. makeQ(ref, packed) builds the question; ref is how the item is addressed in state.
+// (bench: CI triage 76% packed vs 100% unpacked). --fast packs up to 40 small items (~12 KB).
+// makeQ(ref, packed) builds the question; ref is how the item is addressed in state.
 async function runPerItem(items, flags, makeQ) {
-  const model = modelName(flags);
-  const groups = batches(items, flags);
-  const stats = { requests: groups.length, jevTokens: 0 };
-  const results = await pool(groups.map((g) => async () => {
-    const packed = g.length > 1;
-    const state = packed
-      ? { items: Object.fromEntries(g.map((it, j) => [`i${j}`, { source: it.id, content: it.text }])) }
-      : { source: g[0].id, content: g[0].text };
-    const questions = Object.fromEntries(g.map((_, j) => [`q${j}`, makeQ(packed ? `\`items.i${j}\`` : '`content`', packed)]));
-    const res = await decide({ model, state, questions }, flags);
-    stats.jevTokens += res.usage?.input_tokens || 0;
-    stats.model = res.model;
-    return g.map((it, j) => ({ item: it, answer: res.answers[`q${j}`] }));
-  }), num(flags.concurrency, 16));
-  return { rows: results.flat(), stats };
+  const run = { requests: 0, jevTokens: 0, max: Infinity, failed: 0 };
+  const entries = items.map((it) => ({ state: { source: it.id, content: it.text },
+    questions: (r) => ({ q: makeQ(r ? `\`${r.slice(0, -1)}\`` : '`content`', Boolean(r)) }) }));
+  const answers = await askAll(entries, flags, run, { maxItems: flags.fast ? 40 : 1, maxBytes: 12_000, soft: false });
+  return { rows: items.map((item, k) => ({ item, answer: answers[k].q })), stats: run };
 }
 
 // ---------- output ----------
@@ -339,9 +316,8 @@ const cost = (t) => `$${(t * PRICE_PER_TOKEN).toFixed(4)}`;
 const fmtK = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n));
 
 function emit(flags, jsonObj, lines, foot) {
-  if (flags.json) { process.stdout.write(JSON.stringify(jsonObj, null, 2) + '\n'); process.stderr.write(foot + '\n'); return; }
-  const body = lines.join('\n');
-  if (body) process.stdout.write(body + '\n');
+  const out = flags.json ? JSON.stringify(jsonObj, null, 2) : lines.join('\n');
+  if (out) process.stdout.write(out + '\n');
   process.stderr.write(foot + '\n');
 }
 
@@ -559,19 +535,25 @@ function contextBlocks(hits, files, pad, maxBytes) {
     let a = Math.max(1, Number(h.line) - pad), b = Math.min(lines.length, Number(h.line) + pad);
     // Widen upward over the comment block (blank lines inside it included) that documents the hit.
     for (let i = a - 1; i >= 1 && (COMMENT_RE.test(lines[i - 1]) || (!lines[i - 1].trim() && COMMENT_RE.test(lines[i - 2] ?? ''))); i--) a = i;
-    const f = byFile.get(h.file) || byFile.set(h.file, { lines, ranges: [], best: h.score }).get(h.file);
+    const f = byFile.get(h.file) || byFile.set(h.file, { file: h.file, lines, ranges: [] }).get(h.file);
     f.ranges.push([a, b]);
   }
+  return sourceBlocks([...byFile.values()], maxBytes);
+}
+
+// files: [{ file, lines, ranges: [[start, end]] }]. Merges touching ranges per file and stops, with an
+// `omitted` marker, once the total source would pass maxBytes.
+function sourceBlocks(files, maxBytes) {
   const blocks = [];
   let bytes = 0;
-  for (const [file, f] of byFile) {
-    const merged = f.ranges.sort((x, y) => x[0] - y[0]).reduce((acc, r) => {
+  for (const { file, lines, ranges } of files) {
+    const merged = ranges.sort((x, y) => x[0] - y[0]).reduce((acc, r) => {
       const last = acc.at(-1);
       if (last && r[0] <= last[1] + 1) last[1] = Math.max(last[1], r[1]); else acc.push([...r]);
       return acc;
     }, []);
     for (const [a, b] of merged) {
-      const source = f.lines.slice(a - 1, b).join('\n');
+      const source = lines.slice(a - 1, b).join('\n');
       if (bytes + source.length > maxBytes) return [...blocks, { omitted: true, maxBytes }];
       bytes += source.length;
       blocks.push({ file, start: a, end: b, source });
@@ -605,17 +587,10 @@ function readStateArg(v) {
 
 // ---------- search: folder → file → chunk traversal (after jevgrep, MIT, David Zhang) ----------
 
-const CHUNK_BYTES = 12_000;
-
-// [{start, end, text}] cut at line boundaries, about CHUNK_BYTES each.
+// 12 KB chunks cut at line boundaries: [{ start, end, text }].
 function chunkLines(text) {
-  const lines = text.split(/\r?\n/), out = [];
-  let start = 0, size = 0;
-  lines.forEach((l, i) => {
-    size += l.length + 1;
-    if (size >= CHUNK_BYTES || i === lines.length - 1) { out.push({ start: start + 1, end: i + 1, text: lines.slice(start, i + 1).join('\n') }); start = i + 1; size = 0; }
-  });
-  return out;
+  const lines = text.split(/\r?\n/);
+  return textUnits(lines, 1, lines.length, 'chunk', 12_000).map((u) => ({ ...u, text: unitSource(lines, u) }));
 }
 
 function preview(dir) {
@@ -629,16 +604,16 @@ function preview(dir) {
 
 // Ask every entry its questions. Entry: { state, questions(ref) -> {id: question} } where ref prefixes
 // the state's fields. Returns one {id: answer} map per entry ({} when unanswered).
-// Unpacked by default (more accurate); --fast packs up to 128 entries or 38 KB per request and
-// splits a refused or failing pack in half. Stops sending past the request budget.
-async function askAll(entries, flags, run) {
+// Unpacked by default (more accurate); --fast packs up to maxItems entries or maxBytes per request.
+// soft: a refused or failing pack is split in half and a failing single scores {} (search);
+// otherwise any failure stops the run (filter, classify, rank). Stops sending past run.max requests.
+async function askAll(entries, flags, run, { maxItems = flags.fast ? 128 : 1, maxBytes = 38_000, soft = true } = {}) {
   const model = modelName(flags);
-  const pack = flags.fast ? 128 : 1;
   const groups = [];
   let cur = [], bytes = 0;
   for (const e of entries) {
     const b = JSON.stringify(e.state).length;
-    if (cur.length && (cur.length >= pack || bytes + b > 38_000)) { groups.push(cur); cur = []; bytes = 0; }
+    if (cur.length && (cur.length >= maxItems || bytes + b > maxBytes)) { groups.push(cur); cur = []; bytes = 0; }
     cur.push(e); bytes += b;
   }
   if (cur.length) groups.push(cur);
@@ -653,7 +628,7 @@ async function askAll(entries, flags, run) {
       state: packed ? { items: Object.fromEntries(g.map((e, j) => [`i${j}`, e.state])) } : g[0].state,
       questions: Object.fromEntries(qs.flatMap((q, j) => Object.entries(q).map(([id, spec]) => [`${id}_${j}`, spec]))),
     };
-    const res = await decide(body, flags, { soft: true });
+    const res = await decide(body, flags, { soft });
     if (!res && packed) { const h = Math.ceil(g.length / 2); await send(g.slice(0, h)); await send(g.slice(h)); return; }
     if (!res) { run.failed++; return; } // one unanswerable item scores 0 instead of sinking the search
     run.jevTokens += res.usage?.input_tokens || 0;
@@ -674,7 +649,7 @@ async function describeCandidates(query, cands, flags, run) {
   if (!cands.length) return { out: ['(no relevant files)'], json: [] };
   const entries = [];
   for (const c of cands) {
-    const lines = c.text.split(/\r?\n/);
+    const lines = (c.lines = c.text.split(/\r?\n/));
     c.units = splitUnits(c.text, c.id);
     entries.push({ file: c, state: { query, path: c.id, head: c.text.slice(0, 3000) },
       questions: (r) => ({ role: { type: 'choice', instructions: `What role does the file \`${r}path\` (it starts with \`${r}head\`) play for \`${r}query\`?`, criteria: ROLES } }) });
@@ -695,31 +670,21 @@ async function describeCandidates(query, cands, flags, run) {
   });
   const rank = Object.keys(ROLES);
   cands.sort((x, y) => rank.indexOf(x.role) - rank.indexOf(y.role) || y.score - x.score);
-  const out = [], blocks = [];
-  let bytes = 0;
-  const maxBytes = num(flags['max-source-bytes'], 20000);
+  const span = ({ name, start, end, value }) => ({ name, start, end, value });
+  const out = [];
   for (const c of cands) {
-    const picked = c.units.filter((u) => u.value > 0.5), leads = c.units.filter((u) => u.value > 0.25 && u.value <= 0.5);
-    out.push(`${f2(c.score)}  ${c.id}  ${c.role}${picked.length ? '' : '; locations only'}`);
-    for (const u of picked) out.push(`      ${f2(u.value)}  ${u.name}@${u.start}-${u.end}`);
-    if (leads.length) out.push(`      leads: ${leads.map((u) => `${u.name}@${u.start}-${u.end}`).join(', ')}`);
-    if (flags['no-source']) continue;
-    const lines = c.text.split(/\r?\n/);
-    const merged = picked.map((u) => [u.start, u.end]).sort((x, y) => x[0] - y[0])
-      .reduce((acc, r) => { const l = acc.at(-1); if (l && r[0] <= l[1] + 1) l[1] = Math.max(l[1], r[1]); else acc.push([...r]); return acc; }, []);
-    for (const [a, b] of merged) {
-      const source = lines.slice(a - 1, b).join('\n');
-      if (blocks.at(-1)?.omitted) break;
-      if (bytes + source.length > maxBytes) { blocks.push({ omitted: true, maxBytes }); break; }
-      bytes += source.length;
-      blocks.push({ file: c.id, start: a, end: b, source });
-    }
+    c.picked = c.units.filter((u) => u.value > 0.5);
+    c.leads = c.units.filter((u) => u.value > 0.25 && u.value <= 0.5);
+    out.push(`${f2(c.score)}  ${c.id}  ${c.role}${c.picked.length ? '' : '; locations only'}`);
+    for (const u of c.picked) out.push(`      ${f2(u.value)}  ${u.name}@${u.start}-${u.end}`);
+    if (c.leads.length) out.push(`      leads: ${c.leads.map((u) => `${u.name}@${u.start}-${u.end}`).join(', ')}`);
   }
+  const json = cands.map((c) => ({ id: c.id, score: c.score, role: c.role, selected: c.picked.map(span), leads: c.leads.map(span) }));
+  if (flags['no-source']) return { out, json };
+  const blocks = sourceBlocks(cands.map((c) => ({ file: c.id, lines: c.lines, ranges: c.picked.map((u) => [u.start, u.end]) })),
+    num(flags['max-source-bytes'], 20000));
   if (blocks.length) out.push('', ...blocks.flatMap(renderBlock), 'End context.');
-  const json = cands.map((c) => ({ id: c.id, score: c.score, role: c.role,
-    selected: c.units.filter((u) => u.value > 0.5).map(({ name, start, end, value }) => ({ name, start, end, value })),
-    leads: c.units.filter((u) => u.value > 0.25 && u.value <= 0.5).map(({ name, start, end, value }) => ({ name, start, end, value })) }));
-  return { out, json: flags['no-source'] ? json : { files: json, blocks } };
+  return { out, json: { files: json, blocks } };
 }
 
 async function cmdSearch({ pos, flags }) {
@@ -741,7 +706,6 @@ async function cmdSearch({ pos, flags }) {
   }
   const run = { requests: 0, jevTokens: 0, max: num(flags['max-requests'], 1000), incomplete: false, failed: 0 };
   const best = new Map(); // file id -> { score, start, end }
-  const relPath = (base, name) => (base ? `${base}/${name}` : name);
   // Level 0 and 1 are listed without asking; deeper folders must pass a preview check first.
   let frontier = [['', tree, 0]];
   while (frontier.length) {
@@ -754,7 +718,7 @@ async function cmdSearch({ pos, flags }) {
           questions: (r) => ({ rel: { type: 'noul', instructions: `Does \`${r}content\` (file \`${r}path\`, lines \`${r}lines\`) contain code or text that implements, defines or directly handles \`${r}query\`? Count code that is currently buggy.` } }) });
       }
       for (const [name, sub] of dir.dirs) {
-        const p = relPath(dirPath, name);
+        const p = dirPath ? `${dirPath}/${name}` : name;
         if (depth < 1) { next.push([p, sub, depth + 1]); continue; }
         entries.push({ kind: 'dir', dir: sub, path: p, depth,
           state: { query, folder: p, preview: preview(sub) },
@@ -831,12 +795,8 @@ async function promptHidden(q) {
 async function probe(p, key, model) {
   const redact = (t) => String(t).split(key).join('***');
   try {
-    const res = await fetch(p.base + p.decide, {
-      method: 'POST', signal: AbortSignal.timeout(30_000),
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...p.headers },
-      body: JSON.stringify({ model, state: { source: 'class Telemetry {\n  recordEvent(name) { this.events.push({ name, at: Date.now() }); }\n}' },
-        questions: { probe: { type: 'noul', instructions: 'Does `source` implement recording an event?' } } }),
-    });
+    const res = await post(p, key, { model, state: { source: 'class Telemetry {\n  recordEvent(name) { this.events.push({ name, at: Date.now() }); }\n}' },
+      questions: { probe: { type: 'noul', instructions: 'Does `source` implement recording an event?' } } }, 30_000);
     if (!res.ok) return { ok: false, status: res.status, detail: redact(clip(await res.text(), 200)) };
     const pYes = (await res.json()).answers?.probe?.noul;
     return pYes > 0.5 ? { ok: true, status: 200 } : { ok: false, status: 200, detail: `known-yes probe answered ${pYes}` };
@@ -866,7 +826,7 @@ async function cmdSetup({ pos, flags }) {
 
 async function cmdStatus({ flags }) {
   const p = provider(flags);
-  if (!p.key) { console.log(`not configured for ${p.name} — get a key at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`); process.exit(3); }
+  if (!p.key) die(`not configured for ${p.name} — get a key at ${p.keyUrl}, then run: node flash.mjs setup --provider ${p.name}`, 3);
   const model = modelName(flags);
   const res = await probe(p, p.key, model);
   if (res.status === 401 || res.status === 403) die(`key found (${p.keySource}) but rejected by ${p.name} (HTTP ${res.status}). Run setup with a fresh key from ${p.keyUrl}`, 3);
@@ -1022,9 +982,8 @@ Issues: https://github.com/azamma/flash/issues`;
 
 function cmdCache({ pos }) {
   if (pos[0] === 'clear') {
-    const trash = `${CACHE}.clearing-${process.pid}`;
-    try { fs.renameSync(CACHE, trash); } catch { return console.log('cache already empty'); }
-    fs.rmSync(trash, { recursive: true, force: true });
+    if (!fs.existsSync(CACHE)) return console.log('cache already empty');
+    fs.rmSync(CACHE, { recursive: true, force: true });
     return console.log(`cleared ${CACHE}`);
   }
   if (pos[0]) die(`unknown cache action "${pos[0]}". Use: flash cache [clear]`, 2);
