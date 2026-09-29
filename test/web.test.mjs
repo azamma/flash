@@ -306,3 +306,9 @@ test('pageFile and sessionName build the ~/.flash/web/<session>/page.json path',
   assert.match(p, /\.flash[\\/]web[\\/]flash-quicksilver[\\/]page\.json$/);
   assert.equal(sessionName({ session: 'abc' }), 'flash-abc');
 });
+
+test('riskyBackstop: a nav link does not inherit a risky word from its sibling links', () => {
+  const link = { ref: 'n3', role: 'link', name: 'new', value: null, state: [], context: 'Hacker Newsnew | past | comments | ask | show | jobs | submit\tlogin' };
+  assert.equal(riskyBackstop(link), false);
+  assert.equal(riskyBackstop({ ...link, ref: 'n9', name: 'submit' }), true);
+});

@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, browserHarness, bhInit, bhSnapshot, bhResolve, bhDispatch, bhClose, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, unsureThresholds, risky, riskyBackstop, RISKY_NOUL_THRESHOLD, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
+import { agentBrowser, browserHarness, bhInit, bhSnapshot, bhResolve, bhDispatch, bhClose, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, unsureThresholds, isPlainNav, risky, riskyBackstop, RISKY_NOUL_THRESHOLD, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1451,6 +1451,9 @@ async function cmdWebClick({ pos, flags }) {
 
 const MAX_STEPS_DEFAULT = 8;
 const NO_CHANGE_LIMIT = 3;
+// run keeps one fan-out request up to jev-ultrafast's own candidate cap: chunking splits "the first
+// story" from its position and loses the next-step framing. pick keeps PICK_CHUNK (benchmarked).
+const RUN_FLAT_MAX = 250;
 
 // One `run` step's fan-out (plan.md's speculative pattern): `operation` (click|type|done|stuck) and
 // `target` (which ref to act on, if any) are asked in the SAME request whenever the page fits in one
@@ -1458,26 +1461,32 @@ const NO_CHANGE_LIMIT = 3;
 // pickRanked's own chunked merge (one extra small request for `operation` alone — it doesn't need
 // chunking). Jev is never asked for the text itself (plan.md: Jev never writes text) — only which
 // field to type into; the value comes from `--resume`'s stdin (Task 11).
-async function runStep(page, goal, flags) {
+async function runStep(page, goal, flags, log = []) {
   const model = modelName(flags);
   const stats = { requests: 0, jevTokens: 0 };
+  // The operation head must see where it is and what already happened, or a multi-hop goal reads as
+  // `stuck`/`done` at random (same state shape as jev-ultrafast's model.py: page + recent actions).
+  const state = { goal, page: { url: page.url, title: page.title, text: (page.text || '').slice(0, 6000) }, recent_actions: log.slice(-10) };
   const operationQ = { type: 'choice',
-    instructions: { question: 'Choose the next step toward `goal` on this page: `click` an element that makes progress, `type` to enter text into a field (do not invent the text, only choose the field), `done` if the goal is already achieved here, or `stuck` if nothing on this page can make progress.', untrusted: UNTRUSTED_NOTE },
+    instructions: { question: 'Choose the next step toward `goal` on this page: `click` an element that makes progress, `type` to enter text into a field (do not invent the text, only choose the field), `done` only if this page (its url and title) already is what the goal asks for and every step the goal names is in `recent_actions` — a page the goal says to open or reach is not done until it was clicked, or `stuck` if nothing on this page can make progress.', untrusted: UNTRUSTED_NOTE },
     criteria: { click: 'Click an element that makes progress toward the goal.', type: 'Enter text into a field to make progress toward the goal.',
       done: 'The goal is already achieved on this page.', stuck: 'Nothing on this page can make progress toward the goal.' } };
-  if (page.refs.length <= PICK_CHUNK) {
-    const body = { model, state: { goal }, questions: { operation: operationQ,
-      target: { type: 'choice', instructions: { question: 'If the operation is `click` or `type`, the single element to act on. Choose `none` otherwise.', untrusted: UNTRUSTED_NOTE }, criteria: pickCriteria(page.refs) } } };
+  if (page.refs.length <= RUN_FLAT_MAX) {
+    const body = { model, state, questions: { operation: operationQ,
+      target: { type: 'choice', instructions: { question: 'If the operation is `click` or `type`, the single element for the NEXT action only: the first step of `goal` that `recent_actions` does not show done yet, never an element for a later step. Choose `none` otherwise.', untrusted: UNTRUSTED_NOTE }, criteria: pickCriteria(page.refs) } } };
     const res = await decide(body, flags);
     stats.requests = 1; stats.jevTokens = res.usage?.input_tokens || 0;
     const ranked = Object.entries(res.answers.target.probabilities).sort((a, b) => b[1] - a[1]);
-    return { operation: res.answers.operation.choice, ranked, real: ranked.filter(([id]) => id !== 'none'), stats };
+    if (process.env.FLASH_WEB_DEBUG) process.stderr.write(`[debug] op ${JSON.stringify(res.answers.operation.probabilities)} target ${JSON.stringify(ranked.slice(0, 4))}\n`);
+    return { operation: res.answers.operation.choice, opP: res.answers.operation.probabilities[res.answers.operation.choice], ranked, real: ranked.filter(([id]) => id !== 'none'), stats };
   }
-  const opRes = await decide({ model, state: { goal }, questions: { operation: operationQ } }, flags);
+  const opRes = await decide({ model, state, questions: { operation: operationQ } }, flags);
   stats.requests++; stats.jevTokens += opRes.usage?.input_tokens || 0;
-  const { ranked, real, stats: pickStats } = await pickRanked(page, goal, flags);
+  // pickRanked only takes an intent string, so the chunked path carries progress inside it.
+  const intent = log.length ? `${goal}\nAlready done: ${log.slice(-10).join(' | ')}\nChoose the element for the next step only.` : goal;
+  const { ranked, real, stats: pickStats } = await pickRanked(page, intent, flags);
   stats.requests += pickStats.requests; stats.jevTokens += pickStats.jevTokens;
-  return { operation: opRes.answers.operation.choice, ranked, real, stats };
+  return { operation: opRes.answers.operation.choice, opP: opRes.answers.operation.probabilities[opRes.answers.operation.choice], ranked, real, stats };
 }
 
 const runFooter = (ctx) => `— ${stepsLine(ctx.steps)} · ${((Date.now() - ctx.t0) / 1000).toFixed(1)}s · jev ${fmtK(ctx.stats.jevTokens)} tok (${cost(ctx.stats.jevTokens)})`;
@@ -1513,18 +1522,24 @@ function pauseRun(ctx, log, acted, noChangeStreak, i, topId, target) {
 // The loop proper, entered fresh (i=1) or from --resume (i = the paused step, possibly redone).
 async function runLoop(ctx, { page, i, acted, noChangeStreak, log }) {
   for (; i <= ctx.maxSteps; i++) {
-    const r = await ctx.time('run-step', () => runStep(page, ctx.goal, ctx.flags));
+    const r = await ctx.time('run-step', () => runStep(page, ctx.goal, ctx.flags, log));
     ctx.stats.requests += r.stats.requests; ctx.stats.jevTokens += r.stats.jevTokens;
 
+    // Before any action, `done` means the start page already is the goal. Jev conflates a list page
+    // with its target (HN front page vs "newest"), so accept it only when nothing on the page fits.
+    if (r.operation === 'done' && acted === 0 && r.ranked[0]?.[0] !== 'none') r.operation = 'click';
     if (r.operation === 'done') { log.push(`${i}. done`); return finishRun(ctx, log, acted, 'done'); }
     if (r.operation === 'stuck') { log.push(`${i}. stuck`); return finishRun(ctx, log, acted, 'stuck'); }
 
     const match = !!r.real.length && r.ranked[0][0] !== 'none';
     if (!match) { log.push(`${i}. ${r.operation}: no element matches the goal`); return finishRun(ctx, log, acted, 'no-match'); }
     const [topId, topP] = r.real[0];
-    const p2 = r.ranked[1]?.[1] ?? 0;
     const target = page.refs.find((x) => x.ref === topId);
     const thr = unsureThresholds(target, r.operation);
+    // When Jev is sure the step is a click and the target is a plain nav link, `none` competing only
+    // means "is the right element here at all?" — the answer we already have. Compare real refs only.
+    const navSure = r.operation === 'click' && (r.opP ?? 0) >= 0.9 && isPlainNav(target, 'click');
+    const p2 = navSure ? (r.real[1]?.[1] ?? 0) : (r.ranked[1]?.[1] ?? 0);
     if (topP < thr.p1 || topP - p2 < thr.margin) { log.push(`${i}. ? unsure @${topId}`); return finishRun(ctx, log, acted, 'unsure'); }
 
     const page2 = await ctx.time('freshness-snapshot', ctx.snap);
@@ -1561,18 +1576,24 @@ async function runLoop(ctx, { page, i, acted, noChangeStreak, log }) {
 // in web.mjs). Every stop reason from the loop above is preserved.
 async function runLoopFast(ctx, { page, i, acted, noChangeStreak, log }) {
   for (; i <= ctx.maxSteps; i++) {
-    const r = await ctx.time('run-step', () => runStep(page, ctx.goal, ctx.flags));
+    const r = await ctx.time('run-step', () => runStep(page, ctx.goal, ctx.flags, log));
     ctx.stats.requests += r.stats.requests; ctx.stats.jevTokens += r.stats.jevTokens;
 
+    // Before any action, `done` means the start page already is the goal. Jev conflates a list page
+    // with its target (HN front page vs "newest"), so accept it only when nothing on the page fits.
+    if (r.operation === 'done' && acted === 0 && r.ranked[0]?.[0] !== 'none') r.operation = 'click';
     if (r.operation === 'done') { log.push(`${i}. done`); return finishRun(ctx, log, acted, 'done'); }
     if (r.operation === 'stuck') { log.push(`${i}. stuck`); return finishRun(ctx, log, acted, 'stuck'); }
 
     const match = !!r.real.length && r.ranked[0][0] !== 'none';
     if (!match) { log.push(`${i}. ${r.operation}: no element matches the goal`); return finishRun(ctx, log, acted, 'no-match'); }
     const [topId, topP] = r.real[0];
-    const p2 = r.ranked[1]?.[1] ?? 0;
     const target = page.refs.find((x) => x.ref === topId);
     const thr = unsureThresholds(target, r.operation);
+    // When Jev is sure the step is a click and the target is a plain nav link, `none` competing only
+    // means "is the right element here at all?" — the answer we already have. Compare real refs only.
+    const navSure = r.operation === 'click' && (r.opP ?? 0) >= 0.9 && isPlainNav(target, 'click');
+    const p2 = navSure ? (r.real[1]?.[1] ?? 0) : (r.ranked[1]?.[1] ?? 0);
     if (topP < thr.p1 || topP - p2 < thr.margin) { log.push(`${i}. ? unsure @${topId}`); return finishRun(ctx, log, acted, 'unsure'); }
 
     if (r.operation === 'type') return pauseRun(ctx, log, acted, noChangeStreak, i, topId, target);
