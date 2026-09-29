@@ -865,6 +865,20 @@ test('flash web run stops "? unsure" on low confidence without acting', async ()
   assert.deepEqual(bhOps(env), ['init', 'snapshot', 'close'], 'never resolves/dispatches once unsure');
 });
 
+test('flash web run acts on the argmax for a plain nav link even when Jev is split (no unsure stop)', async () => {
+  // cinemalaplata home: Jev split between "CARTELERA" (0.44) and none/scroll -- a wrong link costs one step.
+  const refs = [clickRef('n4', 'CARTELERA', { role: 'link' }), clickRef('n12', 'VER PELICULA', { role: 'link' })];
+  const env = bhEnv([{ refs }, { refs, url: 'https://example.com/cartelera', title: 'Cartelera' }]);
+  jev.force({ status: 200, body: { answers: {
+    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.56, scroll: 0.36, done: 0, stuck: 0.08 } },
+    click_target: { type: 'choice', choice: 'n4', confidence: 0.4, probabilities: { n4: 0.44, none: 0.34, n12: 0.22 } },
+  } } });
+  forceRisky(0.05);
+  const r = await flash(['web', 'run', 'open the coyote movie', '--session', 'run-nav', '--driver', 'bh', '--max-steps', '1', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(JSON.parse(r.stdout).log[0], /^1\. clicked @n4 link "CARTELERA"/);
+});
+
 test('flash web run stops on a stale target (guard changed) without dispatching', async () => {
   const refs1 = [clickRef('n2', 'Continue')];
   const refs2 = [{ ...clickRef('n2', 'Continue'), guard: 'g-n2-changed' }]; // guard moved on before acting

@@ -1641,12 +1641,14 @@ async function runLoopFast(ctx, { page, i, acted, noChangeStreak, log, history =
     if (!match) { log.push(`${i}. ${r.operation}: no element matches the goal`); return finishRun(ctx, log, acted, 'no-match'); }
     const [topId, topP] = r.real[0];
     const target = page.refs.find((x) => x.ref === topId);
-    const thr = unsureThresholds(target, r.operation);
-    // When Jev is sure the step is a click and the target is a plain nav link, `none` competing only
-    // means "is the right element here at all?" — the answer we already have. Compare real refs only.
-    const navSure = r.operation === 'click' && (r.opP ?? 0) >= 0.9 && isPlainNav(target, 'click');
-    const p2 = navSure ? (r.real[1]?.[1] ?? 0) : (r.ranked[1]?.[1] ?? 0);
-    if (topP < thr.p1 || topP - p2 < thr.margin) { log.push(`${i}. ? unsure @${topId}`); return finishRun(ctx, log, acted, 'unsure'); }
+    // A plain navigation click acts on Jev's argmax, as jev-ultrafast always does: a wrong link costs
+    // one step, and the history, no-change stop and risky gate catch it. Only form/select/button
+    // targets keep the unsure stop, where a wrong guess is expensive to walk back.
+    if (!isPlainNav(target, r.operation)) {
+      const thr = unsureThresholds(target, r.operation);
+      const p2 = r.ranked[1]?.[1] ?? 0;
+      if (topP < thr.p1 || topP - p2 < thr.margin) { log.push(`${i}. ? unsure @${topId}`); return finishRun(ctx, log, acted, 'unsure'); }
+    }
 
     if (r.operation === 'type') return pauseRun(ctx, log, history, acted, noChangeStreak, i, topId, target);
 
