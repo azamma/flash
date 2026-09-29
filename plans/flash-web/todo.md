@@ -345,5 +345,12 @@ Claude turns, driver time, Jev time, tokens, cost, written into `bench/web/E2E.m
 Task 13 table.
 **Acceptance criteria:**
 - [ ] Gate computed (not decided): success not lower, median wall time lower, no harmful action.
+      Partial: `bench/web/e2e-bh.mjs` (+ `bh-shim.mjs`) built with the 8+4 tasks and both arms,
+      verified working end to end against the real browser-harness daemon, but the full 72-run
+      sweep was not run — a 6-run smoke sample (3 tasks x 1 run x 2 arms) is in `bench/web/E2E.md`
+      instead, real but far too small to compute the gate honestly. Estimated ~35-60 min and
+      ~$15-20 Claude cost for the full sweep, sequential against the one real Chrome the daemon
+      controls; not spent unsupervised in this session. User must decide whether to run
+      `node bench/web/e2e-bh.mjs 3` before trusting a real result.
 **Verification:** run it; review `bench/web/E2E.md` with the user.
 **Dependencies:** 18 · **Files:** `bench/web/*` · **Scope:** M

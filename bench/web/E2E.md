@@ -78,3 +78,60 @@ the table above is left as the historical record of the run that was actually re
 success for this run: **A 24/24 (100%), B 24/24 (100%)** — still tied, so this does not change the
 A-vs-B comparison, only the absolute success-rate reading. The wall-time, driver-call-count, token
 and cost numbers above are unaffected (they don't depend on the outcome check).
+
+## Task 19 (bh driver): smoke sample, 2026-09-29 — NOT the full gate
+
+`bench/web/e2e-bh.mjs` (Arm A: `claude -p` driving `browser-harness` directly via `bh-shim.mjs`;
+Arm B: the same Claude calling `flash web run "<goal>" --driver bh` once, only answering pauses) was
+written and works end to end, but the full sweep specified in todo.md (12 tasks x 3 runs x 2 arms =
+72 real `claude -p` calls against the live daemon-managed Chrome) was not run: at roughly 20-55s
+wall and ~$0.19-0.31 Claude cost per call observed below, 72 calls is ~35-60 minutes and ~$15-20 in
+Claude cost alone (not counting Jev), sequential, against the one real Chrome profile this machine's
+browser-harness daemon controls — outside what was safe to spend unsupervised in this session. What
+follows is a 3-task, 1-run-each smoke sample (6 runs) that exercises the real harness end to end and
+is reported honestly, not the statistically powered comparison Task 19 asks for.
+
+| arm | task | success | wall | turns | bh calls/ms | Jev ms/tok | Claude tok/$ |
+|---|---|---|---:|---:|---:|---:|---:|
+| A | hn-newest (short) | OK | 15983ms | 2 | 1 / 1730ms | 0/0 | 94398 / $0.1870 |
+| B | hn-newest (short) | OK | 37638ms | 8 | 11 / 3391ms | 0/23224 | 429239 / $0.2819 |
+| A | wiki-search (short) | OK | 44837ms | 10 | 9 / 11358ms | 0/0 | 529758 / $0.2922 |
+| B | wiki-search (short) | FAIL* | 37349ms | 9 | 18 / 3631ms | 0/5403 | 482590 / $0.2892 |
+| A | hn-long (long, 4 steps) | OK | 45461ms | 10 | 9 / 9898ms | 0/0 | 541090 / $0.3083 |
+| B | hn-long (long, 4 steps) | FAIL | 54240ms | 10 | 11 / 3158ms | 0/21241 | 542641 / $0.3136 |
+
+\* wiki-search/B's FAIL is a benchmark-script bug, not a product failure: the outcome checker built
+the session path without the `flash-` prefix `sessionName()` always adds, so it read no page.json at
+all. Caught and fixed on the very next run (hn-newest/B run 2, above, reads `flash-<session>/
+page.json` correctly and succeeds) — wiki-search/B's own wall time is still valid, its success
+column is not; not re-run given cost.
+
+hn-long/B is a real result, not a script bug: `flash web run` reached only the HN front page
+("newest" never got clicked), while arm A completed the full 4-hop chain correctly. On this one
+sample, the fast path was also slower (54240ms vs 45461ms) on the one task where it failed — some
+combination of Jev's per-step operation/target choice being wrong on this page, and/or Claude
+spending extra turns re-reading `flash web run`'s own step log before giving up, rather than the
+`--driver bh` protocol itself being slow (its own driver time, 3158ms, was far below arm A's
+9898ms, consistent with Tasks 15-17's design goal).
+
+No harmful action in any of the 6 runs (all read-only navigation/search tasks; no buy/pay/delete/
+submit goal was in scope).
+
+### What this sample does and doesn't show
+- Directionally consistent with Tasks 15-17's actual goal (bh's own driver time per acting step is
+  much lower than arm A's raw browser-harness driving, confirming the collapsed resolve+dispatch
+  design measurably cuts driver round trips) — but total wall time was NOT lower for `flash web run`
+  in 2 of these 3 tasks, and it failed outright on the one longer, more failure-prone task.
+- 6 runs is far too small to compute the gate honestly; PASS/FAIL below is descriptive of this
+  sample only, not a verdict.
+- **User must decide:** run the full `node bench/web/e2e-bh.mjs 3` sweep (72 calls, ~35-60 min,
+  ~$15-20 Claude cost) before trusting a real gate result, or accept this smoke sample plus the
+  qualitative finding (bh's own driver time is fast; the fan-out's operation/target choice on a
+  multi-hop task is the open risk, not the driver) as sufficient to decide whether to keep Phase 5.
+
+### Gate on this sample only (not the real gate — see above)
+- success rate not lower (B vs A): short 100%→50% (1 script-bug FAIL), long 100%→0% — sample too
+  small and one FAIL is a script bug, not decidable from this.
+- median wall time lower (B vs A): short 44837/40837→30345/37638 mixed (B faster on hn-newest,
+  slower on wiki-search), long 45461→54240 (B slower) — not decidable from this sample.
+- no harmful action: PASS (0/6).
