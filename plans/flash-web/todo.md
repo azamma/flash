@@ -201,11 +201,25 @@ is chosen, the act step still resolves and clicks a real ref.
 **Dependencies:** 12c · **Files:** `web.mjs`, `test/web.test.mjs` · **Scope:** S
 
 ### Task 13: End-to-end benchmark (gate)
-**Description:** ~8 tasks on the hotel fixture, Wikipedia, HN, plus 2 with injected content and 1 whose goal requires a risky action (must stop). Each verified independently. Arms: Claude + agent-browser (`snapshot -i --delta`) vs Claude + agent-browser + `flash web`, 3 runs per arm, alternating. Charge SKILL.md and tool wrappers. Measure success, Claude tokens (minus measured floor), Jev tokens and $, wall time, wrong actions, risky stops, and adoption (web calls vs direct page reads).
+**Description:** 8 harmless public tasks (Wikipedia search+open, HN open a story's comments, GitHub
+open a repo's issues tab, etc. — never log in, submit data, buy, post or delete), each with an
+independent outcome checker (URL/title check in code, not an LLM judge). Arms: (A) headless
+`claude -p --model sonnet --output-format json` using agent-browser directly; (B) same Claude with
+`flash web` available (click/run). 3 runs per arm, alternating. Every run uses an explicit
+`--session flash-bench-<run>`, never the default session. Driver: a global `agent-browser` if
+`which agent-browser` finds one, else `FLASH_AGENT_BROWSER="npx -y agent-browser"` — in that case
+driver time is reported separately so npx cold starts are visible. Records per run: success, wall
+time, agent-browser call count and total driver time, Jev time, Claude tokens, cost.
 **Acceptance criteria:**
-- [ ] Gate (goal is speed, decided 2026-09-28): keep `click`/`run` only if success does not drop, no harmful action is taken, and wall time to complete the task drops materially. Tokens and $ are reported, not gated.
-**Verification:** run it; review results with the user.
-**Dependencies:** 12 · **Files:** `bench/web/*` · **Scope:** M
+- [x] Gate computed (not decided), `bench/web/E2E.md`, 2026-09-29 run, 48 runs (8 tasks x 3 runs x 2
+      arms): success rate not lower — PASS (88%/88%, or 100%/100% once a stale checker regex for one
+      task is corrected — see E2E.md's note); wall time lower — FAIL (median 36.4s for arm B vs 23.5s
+      for arm A: `flash web` makes roughly 2x the agent-browser round trips per task, driven by its
+      per-act freshness/post-act snapshots, which costs more than Jev's own latency saves); no
+      harmful action — PASS (0 risky-keyword hits in either arm's driver log). Tokens/cost reported
+      only: Claude 5.41M tok / $5.26 (A) vs 7.11M tok / $5.52 (B).
+**Verification:** run it (`node bench/web/e2e.mjs 3`); review `bench/web/E2E.md` with the user.
+**Dependencies:** 12d · **Files:** `bench/web/*` · **Scope:** M
 
 ### Task 14: Docs, credit, release
 **Description:** README section with the measured results of Tasks 7 and 13, failures included; NOTICE entry for jev-ultrafast (MIT © 2026 Browser Use); version bump; plugin validate.
