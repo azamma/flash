@@ -176,6 +176,9 @@ stopped, in one line:
   text field. Jev never writes text; decide the value yourself and pipe it in exactly as shown,
   never as a bare `--value` argument for anything sensitive (it would land in shell history).
   `needs secret input` means a password field — don't ask the user for it in chat.
+- `needs login: sign in yourself in the open browser tab (<url>), then: flash web run --resume <id>` —
+  a sign-in wall (bh). Tell the user to sign in in that tab; never ask for credentials in chat. Once
+  they say they're in, run the printed `--resume` and the run continues from where they landed.
 - `done` / `stuck` — the goal is already met, or nothing on the page can make progress toward it
   (this currently also covers goals that need a dropdown `select`, not implemented yet).
 

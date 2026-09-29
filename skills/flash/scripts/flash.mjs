@@ -1520,6 +1520,19 @@ function pauseRun(ctx, log, acted, noChangeStreak, i, topId, target) {
   return 'paused';
 }
 
+// A sign-in wall: Flash never types credentials (bh doesn't even see password fields). Keep the tab
+// open, hand back, and let the person sign in themselves; --resume continues from wherever they land.
+function pauseLogin(ctx, log, acted, noChangeStreak, i, page) {
+  const id = saveRunState({ kind: 'login', goal: ctx.goal, session: ctx.session, maxSteps: ctx.maxSteps, acted, noChangeStreak, log, i, driver: ctx.driver.name });
+  audit = { query: ctx.goal, session: ctx.session };
+  logRow({ ts: new Date().toISOString(), cmd: 'web-run', project: projectName(process.cwd()), session: ctx.session, provider: provider().name,
+    requests: ctx.stats.requests, jev_tokens: ctx.stats.jevTokens, saved: 0, steps: acted, stop: 'needs-login', ms: Date.now() - ctx.t0, ...audit });
+  const line = `needs login: sign in yourself in the open browser tab (${page.url}), then: flash web run --resume ${id}`;
+  log.push(`${i}. ${line}`);
+  emit(ctx.flags, { goal: ctx.goal, session: ctx.session, stop: 'needs-login', url: page.url, resumeId: id, acted, log }, [...log], runFooter(ctx));
+  return 'paused';
+}
+
 // The loop proper, entered fresh (i=1) or from --resume (i = the paused step, possibly redone).
 async function runLoop(ctx, { page, i, acted, noChangeStreak, log }) {
   for (; i <= ctx.maxSteps; i++) {
@@ -1581,6 +1594,7 @@ async function runLoopFast(ctx, { page, i, acted, noChangeStreak, log }) {
     // bh pages come from dispatch/scroll, not webSnap: keep page.json on the page run stops on, so
     // Claude can pick/check or read lines from where it was handed back.
     if (ctx.file) writePageFile(ctx.file, page);
+    if (page.login) return pauseLogin(ctx, log, acted, noChangeStreak, i, page);
     const r = await ctx.time('run-step', () => runStep(page, ctx.goal, ctx.flags, log));
     ctx.stats.requests += r.stats.requests; ctx.stats.jevTokens += r.stats.jevTokens;
 
@@ -1725,6 +1739,13 @@ async function resumeWebRun(id, flags) {
 async function resumeWebRunFast(ctx, st, flags) {
   let outcome = 'terminal';
   try {
+    if (st.kind === 'login') {
+      const r = await ctx.time('snapshot', () => bhSnapshot(st.session));
+      if (!r.ok) die(`flash web run failed: ${r.error}`, 5);
+      const log = r.page.login ? [...st.log] : [...st.log, `${st.i}. signed in by the user`];
+      outcome = await runLoopFast(ctx, { page: r.page, i: r.page.login ? st.i : st.i + 1, acted: st.acted, noChangeStreak: 0, log });
+      return;
+    }
     const target = { role: st.role, name: st.name, context: st.context };
     const resolved = await ctx.time('resolve', () => bhResolve(st.session, st.ref, target));
     if (!resolved.ok || resolved.stale) {

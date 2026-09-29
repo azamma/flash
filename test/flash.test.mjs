@@ -993,9 +993,9 @@ test('flash web run sweeps expired run-state files (past the 1h TTL) on the next
 // fake-browser-harness.mjs) — no real Python or Chrome. `round` (a plain counter file) is "the
 // current page": snapshot/resolve read it, a non-stale dispatch advances it and returns the next
 // page, mirroring the real driver's one-call resolve+dispatch+post-snapshot.
-function bhPage(dir, n, { url = 'https://example.com', title = 'Example', text = '', refs }) {
+function bhPage(dir, n, { url = 'https://example.com', title = 'Example', text = '', refs, login = false }) {
   const f = path.join(dir, `page-${n}.json`);
-  fs.writeFileSync(f, JSON.stringify({ url, title, text, refs }));
+  fs.writeFileSync(f, JSON.stringify({ url, title, text, refs, login }));
   return f;
 }
 
@@ -1112,4 +1112,25 @@ test('flash web check errors with a fix when there is no snapshot yet', async ()
   const r = await flash(['web', 'check', 'anything?']);
   assert.equal(r.code, 2);
   assert.match(r.stderr, /no snapshot/);
+});
+
+test('flash web run --driver bh: a sign-in wall pauses without asking Jev, --resume continues after the user signs in', async () => {
+  const refs = [{ ref: 'n1', role: 'textbox', name: 'Documento', value: '', state: [], context: '' }];
+  const env = bhEnv([{ url: 'https://cine.example/Usuarios/Ingresar', refs, login: true }]);
+  const before = jev.requests.length;
+  const r = await flash(['web', 'run', 'buy 2 tickets', '--session', 'bh-login', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'needs-login');
+  assert.match(out.log.join('\n'), /sign in yourself in the open browser tab \(https:\/\/cine\.example\/Usuarios\/Ingresar\)/);
+  assert.equal(jev.requests.length, before, 'no Jev call on a login wall');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot'], 'the tab stays open for --resume');
+
+  fs.writeFileSync(env.FAKE_BH_PAGE_1, JSON.stringify({ url: 'https://cine.example/checkout', title: 'Checkout', text: '', refs: [], login: false }));
+  forceRun('done', 'none', ['none']);
+  const r2 = await flash(['web', 'run', '--resume', out.resumeId, '--json'], { env });
+  assert.equal(r2.code, 0, r2.stderr);
+  const out2 = JSON.parse(r2.stdout);
+  assert.equal(out2.stop, 'done');
+  assert.match(out2.log.join('\n'), /signed in by the user/);
 });

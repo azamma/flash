@@ -501,7 +501,9 @@ export const BH_SNAPSHOT_JS = `(() => {
       words.push(value); length += value.length;
     }
   }
-  return { url: location.href, title: document.title, text: words.join('\\n').slice(0, 6000), refs };
+  // Password inputs never enter refs; this flag alone tells run a sign-in wall is up.
+  const login = [...document.querySelectorAll('input[type=password]')].some((e) => visible(e));
+  return { url: location.href, title: document.title, text: words.join('\\n').slice(0, 6000), refs, login };
 })()`;
 
 // One fixed Python program, piped to `browser-harness` on every call (its helpers — new_tab, js,
@@ -679,7 +681,7 @@ function runBh(session, cmd, opts = {}) {
 
 function toBhPage(raw) {
   return { driver: 'browser-harness', url: raw?.url || '', title: raw?.title || '', text: raw?.text || '',
-    refs: raw?.refs || [], taken: new Date().toISOString() };
+    refs: raw?.refs || [], login: !!raw?.login, taken: new Date().toISOString() };
 }
 
 // Isolated tab, created once per session per process (the daemon keeps it attached across our
