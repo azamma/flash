@@ -22,7 +22,12 @@ function run(script, args, { input = '', env = {} } = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [script, ...args], {
       cwd: work,
-      env: { ...clean, FLASH_HOME: home, FLASH_API_BASE: jev.url, FLASH_PROVIDER: 'typesafe', JEV_API_KEY: 'test-key', ...env },
+      // FLASH_BROWSER_HARNESS defaults to a path that can never resolve, so `bh` is never the
+      // machine-dependent silent default in a test (whatever happens to be installed at
+      // ~/.local/bin on the box running these tests must never change test behavior) — bh-specific
+      // tests override it explicitly with their own fake driver.
+      env: { ...clean, FLASH_HOME: home, FLASH_API_BASE: jev.url, FLASH_PROVIDER: 'typesafe', JEV_API_KEY: 'test-key',
+        FLASH_BROWSER_HARNESS: '/nonexistent/flash-test-no-bh', ...env },
     });
     let stdout = '', stderr = '';
     child.stdout.on('data', (c) => (stdout += c));
@@ -746,10 +751,13 @@ test('flash web click reports "no element matches" and never acts', async () => 
 function forceRun(operation, targetChoice, ids, targetProbs) {
   const OPS = ['click', 'type', 'done', 'stuck'];
   const opProbs = Object.fromEntries(OPS.map((o) => [o, o === operation ? 0.9 : 0.1 / (OPS.length - 1)]));
+  // A single-candidate `ids` (e.g. a page with no refs, just `none`) must get probability 1, not
+  // 0.9 — the map below has nothing else to spread the remaining 0.1 across, which would fail
+  // validChoice's sum-to-1 check.
+  const targetP = targetProbs || Object.fromEntries(ids.map((id) => [id, id === targetChoice ? (ids.length === 1 ? 1 : 0.9) : 0.1 / (ids.length - 1)]));
   jev.force({ status: 200, body: { answers: {
     operation: { type: 'choice', choice: operation, confidence: 0.9, probabilities: opProbs },
-    target: { type: 'choice', choice: targetChoice, confidence: 0.9,
-      probabilities: targetProbs || Object.fromEntries(ids.map((id) => [id, id === targetChoice ? 0.9 : 0.1 / (ids.length - 1)])) },
+    target: { type: 'choice', choice: targetChoice, confidence: 0.9, probabilities: targetP },
   } } });
 }
 

@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, unsureThresholds, risky, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
+import { agentBrowser, browserHarness, bhInit, bhSnapshot, bhResolve, bhDispatch, bhClose, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, unsureThresholds, risky, riskyBackstop, RISKY_NOUL_THRESHOLD, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1083,13 +1083,17 @@ Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Read
 --history lists the last N runs with what was asked and where Jev pointed, --plain drops the banner,
 --json prints the raw history (query, inputs, result ids/lines/scores; never file content),
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
-  web: `flash web <snapshot|pick|check|click|run> [--session NAME]
-Drive a browser through an adapter (agent-browser today) so Claude never reads the raw page.
+  web: `flash web <snapshot|pick|check|click|run> [--session NAME] [--driver agent-browser|bh]
+Drive a browser through an adapter so Claude never reads the raw page. \`bh\` (browser-harness) is
+the default for \`run\` when installed — no Claude in the loop between steps (Phase 5); agent-browser
+is the default everywhere else and always available via --driver.
   snapshot            capture the current page to ~/.flash/web/<session>/page.json, one summary line
   pick "<intent>"     choose the one element that best satisfies intent; never acts
   check "<question>"  yes/no judgement over the page's url, title and visible text
   click "<intent>"    pick, verify it's still there and not risky, click it, report what changed
-  run "<goal>"        a click/type loop toward goal, up to --max-steps (default 8)
+  run "<goal>" [--url START_URL]   a click/type loop toward goal, up to --max-steps (default 8).
+                       On bh, --url seeds the run's own fresh isolated tab (it never inherits a page
+                       from anywhere else); without it the tab starts blank.
   run --resume ID     continue a run paused on a text field (value from stdin)
 Pick prints the top choice with its probability, up to two runner-ups, and either the exact driver
 command to act on it or "? unsure: read <page.json> lines a-b" when confidence is low (top p < 0.85
@@ -1115,7 +1119,12 @@ from scratch, never typed into blind), then continues the loop. Resume state liv
 ~/.flash/web/runs/<id>.json (0600), is deleted once used, and expired files are swept automatically.
 Every call uses an isolated browser session, flash-<session> (default: this git project's name),
 never agent-browser's shared default session. Needs agent-browser on PATH, or FLASH_AGENT_BROWSER
-set to a command that runs it (e.g. "npx -y agent-browser").`,
+set to a command that runs it (e.g. "npx -y agent-browser").
+bh needs browser-harness on PATH, ~/.local/bin, or FLASH_BROWSER_HARNESS; always opens its own tab
+(never the user's) and closes it when the run ends. Its run loop does 2 driver calls per acting
+step instead of agent-browser's 3 (freshness+occlusion check and dispatch collapsed into one),
+and excludes password/file/hidden fields entirely rather than masking them, so bh's run can't pause
+on a password field the way agent-browser's does.`,
   cache: `flash cache [clear]
 Show or delete the answer cache in ~/.flash/cache. Repeat runs over unchanged content are answered from it
 for free; edited content misses automatically. Answers only are stored, never content. Skip it per run with --no-cache.`,
@@ -1177,15 +1186,24 @@ function cmdCache({ pos }) {
 
 // ---------- web: drive a browser through an adapter, Jev makes the bulk decisions ----------
 
-const WEB_DRIVERS = { 'agent-browser': agentBrowser };
+const WEB_DRIVERS = { 'agent-browser': agentBrowser, bh: browserHarness };
 
 // One driver today; a new one is one more entry here, commands never branch on it (plan.md).
-function webDriver() {
+// `bh` (browser-harness) is the default for `run` when it's available (Task 17) — that's the loop
+// Phase 5 sped up. Every other command keeps defaulting to agent-browser, unchanged behavior.
+// `--driver <name>` always wins over the default, for either command.
+function webDriver(flags, cmd) {
+  if (flags.driver) {
+    const d = WEB_DRIVERS[flags.driver];
+    if (!d) die(`unknown driver "${flags.driver}". Use: ${Object.keys(WEB_DRIVERS).join(', ')}`, 2);
+    return d;
+  }
+  if (cmd === 'run' && browserHarness.available() === true) return browserHarness;
   return WEB_DRIVERS['agent-browser'];
 }
 
-function requireDriver() {
-  const driver = webDriver();
+function requireDriver(flags, cmd) {
+  const driver = webDriver(flags, cmd);
   const avail = driver.available();
   if (avail !== true) die(avail, 3);
   return driver;
@@ -1198,7 +1216,7 @@ function writePageFile(file, page) {
 }
 
 async function cmdWebSnapshot({ flags }) {
-  const driver = requireDriver();
+  const driver = requireDriver(flags, 'snapshot');
   const session = sessionName(flags);
   const t0 = Date.now();
   const r = driver.snapshot(session);
@@ -1300,7 +1318,11 @@ async function cmdWebPick({ pos, flags }) {
       const span = refLineSpan(fs.readFileSync(file, 'utf8'), topId);
       lines.push(`? unsure: read ${file}${span ? ` lines ${span[0]}-${span[1]}` : ''}`);
     } else {
-      command = `${agentBrowser.name} --session ${session} click @${topId}`;
+      // bh isn't a raw CLI Claude can invoke directly (its click protocol is internal, Task 15) —
+      // point at `flash web click` instead; agent-browser pages keep the direct driver command.
+      command = page.driver === 'browser-harness'
+        ? `flash web click "${intent}" --session ${session.replace(/^flash-/, '')} --driver bh`
+        : `${agentBrowser.name} --session ${session} click @${topId}`;
       lines.push(command);
     }
   }
@@ -1376,7 +1398,7 @@ function webSnap(driver, session, file, cmd) {
 async function cmdWebClick({ pos, flags }) {
   const intent = pos.shift();
   if (!intent) die('usage: flash web click "<intent>" [--session NAME]', 2);
-  const driver = requireDriver();
+  const driver = requireDriver(flags, 'click');
   const session = sessionName(flags);
   const file = pageFile(session);
   const t0 = Date.now();
@@ -1460,19 +1482,23 @@ async function runStep(page, goal, flags) {
 
 const runFooter = (ctx) => `— ${stepsLine(ctx.steps)} · ${((Date.now() - ctx.t0) / 1000).toFixed(1)}s · jev ${fmtK(ctx.stats.jevTokens)} tok (${cost(ctx.stats.jevTokens)})`;
 
+// Return value ('terminal' | 'paused') lets a driver that owns a live resource per run (bh's tab,
+// Task 17) know whether to release it now or keep it alive for `--resume`. agent-browser ignores it.
 function finishRun(ctx, log, acted, reason) {
   audit = { query: ctx.goal, session: ctx.session };
   logRow({ ts: new Date().toISOString(), cmd: 'web-run', project: projectName(process.cwd()), session: ctx.session, provider: provider().name,
     requests: ctx.stats.requests, jev_tokens: ctx.stats.jevTokens, saved: 0, steps: acted, stop: reason, ms: Date.now() - ctx.t0, ...audit });
   emit(ctx.flags, { goal: ctx.goal, session: ctx.session, stop: reason, acted, log }, [...log, `stopped: ${reason}`], runFooter(ctx));
+  return 'terminal';
 }
 
 // Pauses on `type`: saves just enough to re-verify freshness and resume the loop from this exact
 // step (Task 11) — never the typed value, which doesn't exist yet. Password fields never echo their
-// name either, only the generic "needs secret input".
+// name either, only the generic "needs secret input". Also saves which driver was running (Task 17:
+// `--resume` must come back on the same driver/loop, not fall through to the process-time default).
 function pauseRun(ctx, log, acted, noChangeStreak, i, topId, target) {
   const id = saveRunState({ goal: ctx.goal, session: ctx.session, maxSteps: ctx.maxSteps, acted, noChangeStreak, log, i,
-    ref: topId, role: target.role, name: target.name, context: target.context });
+    ref: topId, role: target.role, name: target.name, context: target.context, driver: ctx.driver.name });
   audit = { query: ctx.goal, session: ctx.session };
   logRow({ ts: new Date().toISOString(), cmd: 'web-run', project: projectName(process.cwd()), session: ctx.session, provider: provider().name,
     requests: ctx.stats.requests, jev_tokens: ctx.stats.jevTokens, saved: 0, steps: acted, stop: 'needs-input', ms: Date.now() - ctx.t0, ...audit });
@@ -1481,6 +1507,7 @@ function pauseRun(ctx, log, acted, noChangeStreak, i, topId, target) {
     : `needs input: @${topId} ${refLabel(target)} · resume: echo "<text>" | flash web run --resume ${id}`;
   log.push(`${i}. ${line}`);
   emit(ctx.flags, { goal: ctx.goal, session: ctx.session, stop: 'needs-input', ref: topId, secret, resumeId: id, acted, log }, [...log], runFooter(ctx));
+  return 'paused';
 }
 
 // The loop proper, entered fresh (i=1) or from --resume (i = the paused step, possibly redone).
@@ -1523,6 +1550,61 @@ async function runLoop(ctx, { page, i, acted, noChangeStreak, log }) {
   finishRun(ctx, log, acted, 'max-steps');
 }
 
+// Fast loop on `bh` (Task 17): the operation+target fan-out (runStep) is unchanged. What collapses
+// is the driver side: the old loop above makes 3 driver calls per acting step (freshness-snapshot,
+// act, post-act-snapshot); this makes 2 — `bhResolve` (a fresh in-page snapshot + the same
+// role/name/context freshness check as `freshRef`, plus the occlusion/visible/enabled check, but no
+// dispatch) run concurrently with the risky noul call, since neither depends on the other; then
+// `bhDispatch` (re-checks freshness once more right before touching the DOM, dispatches, and
+// returns the post-act snapshot in the same call) only once both are clear. The code backstop is
+// checked first and, if it already fires, the noul call is skipped entirely (same rule as `risky()`
+// in web.mjs). Every stop reason from the loop above is preserved.
+async function runLoopFast(ctx, { page, i, acted, noChangeStreak, log }) {
+  for (; i <= ctx.maxSteps; i++) {
+    const r = await ctx.time('run-step', () => runStep(page, ctx.goal, ctx.flags));
+    ctx.stats.requests += r.stats.requests; ctx.stats.jevTokens += r.stats.jevTokens;
+
+    if (r.operation === 'done') { log.push(`${i}. done`); return finishRun(ctx, log, acted, 'done'); }
+    if (r.operation === 'stuck') { log.push(`${i}. stuck`); return finishRun(ctx, log, acted, 'stuck'); }
+
+    const match = !!r.real.length && r.ranked[0][0] !== 'none';
+    if (!match) { log.push(`${i}. ${r.operation}: no element matches the goal`); return finishRun(ctx, log, acted, 'no-match'); }
+    const [topId, topP] = r.real[0];
+    const p2 = r.ranked[1]?.[1] ?? 0;
+    const target = page.refs.find((x) => x.ref === topId);
+    const thr = unsureThresholds(target, r.operation);
+    if (topP < thr.p1 || topP - p2 < thr.margin) { log.push(`${i}. ? unsure @${topId}`); return finishRun(ctx, log, acted, 'unsure'); }
+
+    if (r.operation === 'type') return pauseRun(ctx, log, acted, noChangeStreak, i, topId, target);
+
+    const backstop = riskyBackstop(target);
+    const noulP = backstop ? Promise.resolve(null) : ctx.time('risky-check', () => riskyAsk(ctx.flags, ctx.stats)(page, target));
+    const resolveP = ctx.time('resolve', () => bhResolve(ctx.session, topId, target));
+    const [noul, resolved] = await Promise.all([noulP, resolveP]);
+
+    if (!resolved.ok || resolved.stale) { log.push(`${i}. stale @${topId}`); return finishRun(ctx, log, acted, 'stale'); }
+    if (backstop || (noul != null && noul >= RISKY_NOUL_THRESHOLD)) {
+      log.push(`${i}. risky @${topId} ${refLabel(target)} (${backstop ? 'keyword/role backstop' : 'jev noul'})`);
+      return finishRun(ctx, log, acted, 'risky');
+    }
+
+    const act = await ctx.time('act', () => bhDispatch(ctx.session, topId, 'click', null, target));
+    if (!act.ok) {
+      log.push(`${i}. click failed: ${act.stale ? 'stale — page changed just before acting' : (act.error || 'error')}`);
+      return finishRun(ctx, log, acted, act.stale ? 'stale' : 'act-failed');
+    }
+
+    const page3 = act.page;
+    const changed = page3.url !== page.url || page3.title !== page.title || page3.refs.length !== page.refs.length;
+    noChangeStreak = changed ? 0 : noChangeStreak + 1;
+    acted++;
+    log.push(`${i}. clicked @${topId} ${refLabel(target)} · page changed: ${changed ? 'yes' : 'no'}`);
+    if (noChangeStreak >= NO_CHANGE_LIMIT) return finishRun(ctx, log, acted, 'no-change');
+    page = page3;
+  }
+  return finishRun(ctx, log, acted, 'max-steps');
+}
+
 function runCtx(flags, goal, session, maxSteps, driver, file, cmdName) {
   const snap = webSnap(driver, session, file, cmdName);
   const { steps, time } = stepper();
@@ -1533,10 +1615,32 @@ async function cmdWebRun({ pos, flags }) {
   cleanupExpiredRuns(); // "expires after 1h, expired files removed on the next run" (plan.md) -- every run, not just ones that pause
   if (flags.resume) return resumeWebRun(String(flags.resume), flags);
   const goal = pos.shift();
-  if (!goal) die('usage: flash web run "<goal>" [--session NAME] [--max-steps 8] | flash web run --resume ID', 2);
-  const driver = requireDriver();
+  if (!goal) die('usage: flash web run "<goal>" [--session NAME] [--max-steps 8] [--url START_URL] | flash web run --resume ID', 2);
+  const driver = requireDriver(flags, 'run');
   const session = sessionName(flags);
   const ctx = runCtx(flags, goal, session, num(flags['max-steps'], MAX_STEPS_DEFAULT), driver, pageFile(session), 'run');
+  if (driver.name === 'bh') {
+    // bh always starts from its own fresh, isolated tab (never the user's) — unlike agent-browser's
+    // persistent named session, there's nothing already loaded in it. `--url` seeds the first
+    // navigation; without it the tab opens on about:blank, which is a legitimate starting point for
+    // a goal that itself names a destination `run` can't reach by clicking (nothing to click from
+    // blank) — `run` will correctly stop `stuck` on step 1 in that case, not silently fail.
+    const init = bhInit(session, flags.url ? String(flags.url) : undefined);
+    if (!init.ok) die(`flash web run failed: ${init.error || 'browser-harness init failed'}`, 5);
+    let outcome = 'terminal';
+    try {
+      const page = await ctx.time('snapshot', () => {
+        const r = bhSnapshot(session);
+        if (!r.ok) die(`flash web run failed: ${r.error}`, 5);
+        writePageFile(ctx.file, r.page);
+        return r.page;
+      });
+      outcome = await runLoopFast(ctx, { page, i: 1, acted: 0, noChangeStreak: 0, log: [] });
+    } finally {
+      if (outcome !== 'paused') bhClose(session); // paused: keep the tab alive for --resume
+    }
+    return;
+  }
   const page = await ctx.time('snapshot', ctx.snap);
   await runLoop(ctx, { page, i: 1, acted: 0, noChangeStreak: 0, log: [] });
 }
@@ -1544,12 +1648,15 @@ async function cmdWebRun({ pos, flags }) {
 // `--resume`: re-verifies the paused target is still fresh before typing anything (plan.md: "resume
 // on a changed field re-picks instead of typing blind"). The value is read from stdin by default
 // (`--value -`), never from argv, so it never lands in shell history; `--value <text>` is available
-// for scripts/tests that accept that trade-off.
+// for scripts/tests that accept that trade-off. Resumes on whichever driver paused the run
+// (Task 17's `driver` field on the saved state), not this process's own default.
 async function resumeWebRun(id, flags) {
   const st = loadRunState(id);
   if (!st) die(`no pending run "${id}" — it never existed, was already resumed, or expired after 1h. Start over: flash web run "<goal>"`, 2);
-  const driver = requireDriver();
+  const driver = WEB_DRIVERS[st.driver] || requireDriver(flags, 'run');
   const ctx = runCtx(flags, st.goal, st.session, st.maxSteps, driver, pageFile(st.session), 'run');
+  if (driver.name === 'bh') return resumeWebRunFast(ctx, st, flags);
+
   const page = await ctx.time('snapshot', ctx.snap);
   const fresh = freshRef({ role: st.role, name: st.name, context: st.context }, page.refs.find((x) => x.ref === st.ref));
 
@@ -1570,6 +1677,49 @@ async function resumeWebRun(id, flags) {
   log.push(`${st.i}. typed @${st.ref} ${refLabel(fresh)} · page changed: ${changed ? 'yes' : 'no'}`);
   if (noChangeStreak >= NO_CHANGE_LIMIT) return finishRun(ctx, log, acted, 'no-change');
   return runLoop(ctx, { page: page2, i: st.i + 1, acted, noChangeStreak, log });
+}
+
+// bh side of --resume: bhResolve replaces the snapshot+freshRef pair (one call, in-page check), and
+// a successful type goes straight through bhDispatch (types + returns the post-act page in one
+// call). No bhInit here: the tab the original `run` created is still alive (that call kept it open
+// on pause, never calling close), and browser-harness's daemon keeps a tab attached across separate
+// CLI invocations on its own (confirmed live) — calling bhInit again would create a SECOND tab and
+// abandon the first, a real leak an earlier version of this code had. This closes the one tab once
+// the run reaches a terminal stop, or keeps it open again on another pause.
+async function resumeWebRunFast(ctx, st, flags) {
+  let outcome = 'terminal';
+  try {
+    const target = { role: st.role, name: st.name, context: st.context };
+    const resolved = await ctx.time('resolve', () => bhResolve(st.session, st.ref, target));
+    if (!resolved.ok || resolved.stale) {
+      const page = resolved.page || await ctx.time('snapshot', () => {
+        const r = bhSnapshot(st.session);
+        if (!r.ok) die(`flash web run failed: ${r.error}`, 5);
+        return r.page;
+      });
+      outcome = await runLoopFast(ctx, { page, i: st.i, acted: st.acted, noChangeStreak: st.noChangeStreak, log: st.log });
+      return;
+    }
+
+    const value = flags.value && flags.value !== '-' ? String(flags.value) : readStdin().replace(/\r?\n$/, '');
+    const act = await ctx.time('act', () => bhDispatch(st.session, st.ref, 'fill', value, target));
+    const log = [...st.log];
+    if (!act.ok) {
+      log.push(`${st.i}. type failed: ${act.stale ? 'stale — page changed just before typing' : (act.error || 'error')}`);
+      outcome = finishRun(ctx, log, st.acted, act.stale ? 'stale' : 'act-failed');
+      return;
+    }
+
+    const page2 = act.page;
+    const changed = page2.url !== resolved.page.url || page2.title !== resolved.page.title || page2.refs.length !== resolved.page.refs.length;
+    const noChangeStreak = changed ? 0 : st.noChangeStreak + 1;
+    const acted = st.acted + 1;
+    log.push(`${st.i}. typed @${st.ref} ${refLabel(target)} · page changed: ${changed ? 'yes' : 'no'}`);
+    if (noChangeStreak >= NO_CHANGE_LIMIT) { outcome = finishRun(ctx, log, acted, 'no-change'); return; }
+    outcome = await runLoopFast(ctx, { page: page2, i: st.i + 1, acted, noChangeStreak, log });
+  } finally {
+    if (outcome !== 'paused') bhClose(st.session);
+  }
 }
 
 async function cmdWeb({ pos, flags }) {

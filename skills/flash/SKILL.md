@@ -130,22 +130,34 @@ large logs, not for classification.
 
 ## Browser (`flash web`)
 
-Drives a real browser (agent-browser today) so Claude never reads a full page snapshot just to
-find one element. Needs `agent-browser` on PATH, or `FLASH_AGENT_BROWSER="npx -y agent-browser"`.
+Drives a real browser so Claude never reads a full page snapshot just to find one element. Two
+adapters: `agent-browser` (needs it on PATH, or `FLASH_AGENT_BROWSER="npx -y agent-browser"`) and
+`bh` (browser-harness — needs it on PATH, `~/.local/bin`, or `FLASH_BROWSER_HARNESS`). `bh` is the
+default for `run` when installed (Phase 5: no Claude in the loop between steps — call `run` once
+with the whole goal, only answer pauses); agent-browser is the default everywhere else and always
+available via `--driver agent-browser`/`--driver bh`.
 
 ```bash
 flash web snapshot [--session NAME]            # capture the current page; page.json is never printed
 flash web pick "<intent>" [--session NAME]     # choose the one element that matches; never acts
 flash web check "<question>" [--session NAME]  # yes/no over the page's url, title, visible text
 flash web click "<intent>" [--session NAME]    # pick, verify, click, report what changed
-flash web run "<goal>" [--max-steps 8]         # a multi-step click/type loop toward a goal
+flash web run "<goal>" [--max-steps 8] [--url START_URL]  # a multi-step click/type loop toward a goal
 flash web run --resume ID                      # continue a run paused on a text field
 ```
 
 Use `pick`/`check` when you're driving the page yourself with your own browser tool and just need
 one answer. Use `click`/`run` when you want Flash to act: they finish faster than reading a raw
 snapshot to pick an element yourself, because the page's full accessibility tree never enters your
-context — only a one-line result does.
+context — only a one-line result does. `run "<goal>"` is the fast path: pass the whole task once
+and only come back to Flash when it pauses.
+
+**`bh`'s own tab.** Unlike agent-browser's persistent named session, `bh`'s `run` always opens a
+fresh, isolated tab it owns for that run alone (never the user's other tabs) and closes it when the
+run ends. `--url` seeds the first navigation; without it the tab starts on about:blank, and a goal
+that needs to go somewhere will correctly stop `stuck` on step 1 rather than click nothing. `bh`
+excludes password/file/hidden fields entirely (agent-browser masks them instead), so a `bh` run
+can't pause on a password field.
 
 **Session isolation.** Every call uses `flash-<session>` (default: this git project's name), never
 agent-browser's own default session, which other agents and conversations may share. Pass
