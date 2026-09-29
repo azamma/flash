@@ -1578,6 +1578,9 @@ async function runLoop(ctx, { page, i, acted, noChangeStreak, log }) {
 // in web.mjs). Every stop reason from the loop above is preserved.
 async function runLoopFast(ctx, { page, i, acted, noChangeStreak, log }) {
   for (; i <= ctx.maxSteps; i++) {
+    // bh pages come from dispatch/scroll, not webSnap: keep page.json on the page run stops on, so
+    // Claude can pick/check or read lines from where it was handed back.
+    if (ctx.file) writePageFile(ctx.file, page);
     const r = await ctx.time('run-step', () => runStep(page, ctx.goal, ctx.flags, log));
     ctx.stats.requests += r.stats.requests; ctx.stats.jevTokens += r.stats.jevTokens;
 
