@@ -288,3 +288,11 @@ test('riskyBackstop: a nav link does not inherit a risky word from its sibling l
   assert.equal(riskyBackstop(link), false);
   assert.equal(riskyBackstop({ ...link, ref: 'n9', name: 'submit' }), true);
 });
+
+test('risky: a link with a real href skips the noul (navigation only); keyword links and buttons still stop', async () => {
+  const showtime = { ...ref('22:50', 'link'), href: '/Venta/Venta/766046' };
+  assert.equal((await risky({}, showtime, refuseAsk)).risky, false, 'showtime link: no noul call, not risky');
+  assert.equal((await risky({}, { ...ref('Pagar', 'link'), href: '/checkout/pay' }, refuseAsk)).risky, true, 'keyword backstop still fires on links');
+  assert.equal((await risky({}, ref('22:50', 'link'), async () => 0.62)).risky, true, 'href-less link still asks Jev');
+  assert.equal((await risky({}, ref('Continue'), async () => 0.35)).risky, true, 'buttons still ask Jev');
+});

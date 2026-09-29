@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, browserHarness, bhInit, bhSnapshot, bhResolve, bhDispatch, bhScroll, bhMarker, bhClose, pageFile, sessionName, UNTRUSTED_NOTE, NONE_CRITERION, pickCriteria, refLabel, refLineSpan, unsureThresholds, isPlainNav, risky, riskyBackstop, RISKY_NOUL_THRESHOLD, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
+import { agentBrowser, browserHarness, bhInit, bhSnapshot, bhResolve, bhDispatch, bhScroll, bhMarker, bhClose, pageFile, sessionName, UNTRUSTED_NOTE, NONE_CRITERION, pickCriteria, refLabel, refLineSpan, unsureThresholds, isPlainNav, risky, riskyBackstop, navLink, RISKY_NOUL_THRESHOLD, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1653,7 +1653,7 @@ async function runLoopFast(ctx, { page, i, acted, noChangeStreak, log, history =
     if (r.operation === 'type') return pauseRun(ctx, log, history, acted, noChangeStreak, i, topId, target);
 
     const backstop = riskyBackstop(target);
-    const noulP = backstop ? Promise.resolve(null) : ctx.time('risky-check', () => riskyAsk(ctx.flags, ctx.stats)(page, target));
+    const noulP = backstop || navLink(target) ? Promise.resolve(null) : ctx.time('risky-check', () => riskyAsk(ctx.flags, ctx.stats)(page, target));
     const resolveP = ctx.time('resolve', () => bhResolve(ctx.session, topId, target));
     const [noul, resolved] = await Promise.all([noulP, resolveP]);
 

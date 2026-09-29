@@ -370,8 +370,15 @@ export const RISKY_NOUL_THRESHOLD = 0.3;
 // machinery — the real caller (`flash web click`, Task 9) wires it to decide() with the
 // untrusted-data instruction; tests can pass a stub directly. The backstop is checked first and,
 // if it already fires, `ask` is never called (saves a step's worth of latency and a Jev call).
+// A link with a real href only navigates (a GET): it can open a checkout, never complete one. Jev's
+// risky noul over-fires on purchase-funnel links ("ENTRADAS" 0.32, a showtime to /Venta/... 0.62,
+// measured live on cinemalaplata), so such links rely on the keyword backstop alone; buttons, form
+// controls, menuitems and href-less links still get the noul.
+export const navLink = (ref) => ref?.role === 'link' && !!ref.href && !riskyBackstop(ref);
+
 export async function risky(page, ref, ask) {
   if (riskyBackstop(ref)) return { risky: true, reason: 'keyword/role backstop', noul: null };
+  if (navLink(ref)) return { risky: false, reason: null, noul: null };
   const noul = await ask(page, ref);
   return { risky: noul >= RISKY_NOUL_THRESHOLD, reason: noul >= RISKY_NOUL_THRESHOLD ? 'jev noul' : null, noul };
 }
