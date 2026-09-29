@@ -193,3 +193,42 @@ export function sanitizeRef(r) {
   if (FILE_VALUE_RE.test(r.value)) return { ...r, value: null };
   return r;
 }
+
+// ---------- risky-action gate (plan.md: two independent checks, either one stops) ----------
+
+// Keyword/role backstop, English and Spanish forms, checked against the target's own name, role
+// and its enclosing container's text (a mutating action often hides in a generic "button" whose
+// name alone is bland, e.g. a checkout footer's lone "Continue" inside a "Confirmar pago" section).
+// Independent of Jev: fires even if the noul call is skipped, unavailable, or wrong.
+const RISKY_WORDS = [
+  // English
+  'buy', 'pay', 'purchase', 'checkout', 'order', 'delete', 'remove', 'cancel', 'unsubscribe',
+  'send', 'submit', 'post', 'publish', 'share', 'transfer', 'confirm', 'sign', 'accept terms',
+  // Spanish
+  'comprar', 'pagar', 'pago', 'pedido', 'eliminar', 'borrar', 'quitar', 'cancelar', 'anular',
+  'darse de baja', 'desuscrib\\w*', 'enviar', 'publicar', 'compartir', 'transferir', 'confirmar',
+  'firmar', 'aceptar t[ée]rminos', 'aceptar condiciones',
+];
+const RISKY_RE = new RegExp(`\\b(${RISKY_WORDS.join('|')})\\b`, 'i');
+
+export function riskyBackstop(ref) {
+  const text = [ref.name, ref.role, ref.context].filter(Boolean).join(' ');
+  return RISKY_RE.test(text);
+}
+
+// A separate Jev noul call, never the fan-out that picks the target: "is acting on this one element
+// risky (a purchase, payment, deletion, or anything hard to undo)?" p >= this stops even a
+// benign-looking label the backstop's keyword list doesn't cover.
+export const RISKY_NOUL_THRESHOLD = 0.3;
+
+// risky(page, ref, ask): true if the code backstop fires on `ref`, or a separate noul call about
+// this one target says p >= RISKY_NOUL_THRESHOLD. `ask(page, ref)` is an injected async
+// (page, ref) => Promise<number> callback so this stays free of flash.mjs's decide()/HTTP/cache
+// machinery — the real caller (`flash web click`, Task 9) wires it to decide() with the
+// untrusted-data instruction; tests can pass a stub directly. The backstop is checked first and,
+// if it already fires, `ask` is never called (saves a step's worth of latency and a Jev call).
+export async function risky(page, ref, ask) {
+  if (riskyBackstop(ref)) return { risky: true, reason: 'keyword/role backstop', noul: null };
+  const noul = await ask(page, ref);
+  return { risky: noul >= RISKY_NOUL_THRESHOLD, reason: noul >= RISKY_NOUL_THRESHOLD ? 'jev noul' : null, noul };
+}

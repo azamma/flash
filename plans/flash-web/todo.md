@@ -92,8 +92,8 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 8: Risky-action gate
 **Description:** `risky(page, ref)` = code backstop (keyword/role list from plan.md, English and Spanish, on name, role and container text) OR a separate Jev noul ≥ 0.3. Unit tested on its own before any caller exists.
 **Acceptance criteria:**
-- [ ] Backstop stops "Comprar ahora", "Delete", "Confirmar pago" even when fake Jev says 0.0.
-- [ ] Jev ≥ 0.3 stops a benign-looking label.
+- [x] Backstop stops "Comprar ahora", "Delete", "Confirmar pago" even when fake Jev says 0.0.
+- [x] Jev ≥ 0.3 stops a benign-looking label.
 **Verification:** `npm test`.
 **Dependencies:** 7b · **Files:** `web.mjs`, tests · **Scope:** S
 

@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName } from '../skills/flash/scripts/web.mjs';
+import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName, risky, riskyBackstop } from '../skills/flash/scripts/web.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const FIXTURES = path.join(ROOT, 'test/fixtures/web');
@@ -142,6 +142,46 @@ test('act() rejects an unsupported action kind without calling the driver', () =
   const r = agentBrowser.act('flash-test-session', { kind: 'nope', ref: 'e1' });
   assert.equal(r.ok, false);
   assert.equal(fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim() : '', '');
+});
+
+// ---------- risky-action gate ----------
+
+const ref = (name, role = 'button', context = null) => ({ ref: 'e1', role, name, value: null, state: [], context });
+const refuseAsk = async () => { throw new Error('ask should not be called when the backstop already fires'); };
+
+test('risky: the keyword/role backstop stops "Comprar ahora", "Delete" and "Confirmar pago" even when Jev says 0.0', async () => {
+  for (const r of [ref('Comprar ahora'), ref('Delete'), ref('Confirmar pago')]) {
+    const zeroAsk = async () => 0.0;
+    const result = await risky({}, r, zeroAsk);
+    assert.equal(result.risky, true);
+    assert.equal(result.reason, 'keyword/role backstop');
+  }
+});
+
+test('risky: the backstop never calls `ask` once it already fires', async () => {
+  const result = await risky({}, ref('Delete'), refuseAsk);
+  assert.equal(result.risky, true);
+});
+
+test('risky: a Jev noul >= 0.3 stops a benign-looking label the backstop misses', async () => {
+  const benign = ref('Continue');
+  assert.equal(riskyBackstop(benign), false, 'sanity: "Continue" alone is not in the keyword list');
+  const result = await risky({}, benign, async () => 0.35);
+  assert.equal(result.risky, true);
+  assert.equal(result.reason, 'jev noul');
+  assert.equal(result.noul, 0.35);
+});
+
+test('risky: a benign label under the noul threshold is not risky', async () => {
+  const result = await risky({}, ref('Continue'), async () => 0.1);
+  assert.equal(result.risky, false);
+  assert.equal(result.reason, null);
+});
+
+test('riskyBackstop also matches on role and on the enclosing container text, not just the name', () => {
+  assert.equal(riskyBackstop(ref('OK', 'button', 'dialog "Confirm purchase"')), true, 'container text carries the risky word');
+  assert.equal(riskyBackstop({ ref: 'e2', role: 'button', name: 'Unsubscribe', value: null, state: [], context: null }), true);
+  assert.equal(riskyBackstop(ref('View details')), false);
 });
 
 test('pageFile and sessionName build the ~/.flash/web/<session>/page.json path', () => {
