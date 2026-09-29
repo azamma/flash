@@ -354,3 +354,124 @@ Task 13 table.
       `node bench/web/e2e-bh.mjs 3` before trusting a real result.
 **Verification:** run it; review `bench/web/E2E.md` with the user.
 **Dependencies:** 18 · **Files:** `bench/web/*` · **Scope:** M
+
+## Phase 6: ultrafast-faithful run
+
+`flash web run` rewritten to follow jev-ultrafast's design (jev_ultrafast/{snapshot.js,browser.py,
+agent.py,model.py,questions.py}, MIT © 2026 Browser Use, NOTICE) more closely, while keeping Flash's
+own product shape (Claude passes only the goal, run drives alone, hands back only for typed value,
+risky action, login wall, unsure, done/stuck/no-change/max-steps) and its own fixes ultrafast lacks
+(swallowed-click link fallback, login pause). One commit per task on `main`, pushed.
+
+### Task 20: `run` becomes browser-harness only
+**Description:** Delete the agent-browser run loop (`runLoop`) and `resumeWebRun`'s agent-browser
+branch, and their tests. `run --driver agent-browser` (or any driver but `bh`) is a usage error.
+`snapshot`/`pick`/`check`/`click` keep agent-browser as a driver choice, unchanged.
+**Acceptance criteria:**
+- [x] `runLoop` and its call sites are gone; `webDriver`'s dead `cmd === 'run'` branch removed too.
+- [x] `flash web run --driver agent-browser` exits 2 with a message pointing at click/pick/check/snapshot.
+**Verification:** `npm test`.
+**Dependencies:** 19 · **Files:** `flash.mjs`, `test/flash.test.mjs` · **Scope:** S
+
+### Task 21: Per-operation target heads
+**Description:** Port jev_ultrafast/model.py's `action_space`/`choose` (model.py:71-176): one request
+with an `operation` choice (`click | type | select | scroll | done | stuck`, click/type/select offered
+only when the page has a matching candidate) plus `click_target`/`type_target`/`select_target`, each
+scoped to only that operation's own refs. Only the head matching the chosen operation is read.
+**Acceptance criteria:**
+- [x] A select option only appears in `select_target` (keyed `n<node>:<optIndex>`); an editable field
+      only in `type_target`.
+- [x] Criteria objects match `{element, current_value, role, checked?, selected?, expanded?}` (+ href).
+**Verification:** `npm test` (operation-scoped-heads test asserts the criteria split directly).
+**Dependencies:** 20 · **Files:** `flash.mjs` · **Scope:** M
+
+### Task 22: Instructions ported verbatim
+**Description:** `NEXT_ACTION`/`TARGET` ported near-verbatim from jev_ultrafast/questions.py:3-19,
+adapted only where Flash's own operations differ (`scroll` in place of ultrafast's dynamic
+SCROLL_DOWN/SCROLL_UP/WAIT; TYPE spelled out as choosing the field only). Untrusted-data line kept.
+**Acceptance criteria:**
+- [x] Both constants read as a direct adaptation of questions.py's own text, not a rewrite.
+**Verification:** review against jev_ultrafast/jev_ultrafast/questions.py.
+**Dependencies:** 21 · **Files:** `flash.mjs` · **Scope:** XS
+
+### Task 23: Guard tuple, select options and page marker in `BH_SNAPSHOT_JS`
+**Description:** Port `guard(e)` (snapshot.js:47-54) and a page marker onto `window.__jevFast`, kept
+callable later via one cheap single-node eval. Native `<select>` elements emit one candidate per
+non-selected, non-disabled option (snapshot.js:68-71), sharing their select's own guard.
+**Acceptance criteria:**
+- [x] Every ref carries `kind: 'click'|'type'|'select'` and a `guard` tuple.
+- [x] A `<select>` with N eligible options produces N refs, none for the select itself.
+**Verification:** `npm test`.
+**Dependencies:** 21 · **Files:** `web.mjs` · **Scope:** M
+
+### Task 24: Guard-based freshness in the bh Python glue
+**Description:** `resolve`/`dispatch` compare the guard tuple via one cheap `_guard_js` eval instead
+of a full BH_SNAPSHOT_JS re-run; only fall back to a full snapshot when that check reports stale, or
+the op is a plain `resolve`. The plain adapter contract (click/pick, no `guard` sent) keeps its own
+existence/visibility-only check.
+**Acceptance criteria:**
+- [x] `bhResolve`/`bhDispatch` send `guard` instead of role/name/context.
+- [x] A changed guard stops before dispatching; an occluded-but-unchanged-guard element still stops
+      at the dispatch-time geometry/occlusion check.
+**Verification:** `npm test` (fake-browser-harness.mjs updated to the guard protocol).
+**Dependencies:** 23 · **Files:** `web.mjs`, `test/fixtures/web/fake-browser-harness.mjs` · **Scope:** M
+
+### Task 25: Done/stuck freshness recheck
+**Description:** Before accepting `done`/`stuck`, one cheap in-page marker eval (`bhMarker`,
+agent.py:93-97) re-verifies the page in hand still matches what Jev decided against; a mismatch
+re-snapshots and re-decides the SAME step number (bounded retries, not ultrafast's 120-decision cap).
+**Acceptance criteria:**
+- [x] A marker mismatch triggers exactly one extra `snapshot` + re-decide, never advancing the step number.
+- [x] A matching marker skips the extra snapshot (one `marker` op only).
+**Verification:** `npm test`.
+**Dependencies:** 24 · **Files:** `web.mjs`, `flash.mjs` · **Scope:** M
+
+### Task 26: Structured history
+**Description:** `recent_actions` sent to Jev becomes structured entries (`{action, kind,
+page_changed}`, model.py:136-138) plus the destination `url`/`title` after each step and, for a typed
+step, the field's own label only (never the value) -- separate from `log`, the human-readable lines.
+**Acceptance criteria:**
+- [x] A run's second step's request body shows structured `recent_actions`, not formatted strings.
+- [x] A typed step's history entry carries `field`, never the typed value, anywhere (stdout, stderr, history.jsonl).
+**Verification:** `npm test`.
+**Dependencies:** 21 · **Files:** `flash.mjs` · **Scope:** S
+
+### Task 27: `select` operation wired end to end
+**Description:** Dispatch a chosen select option with the DOM option's own value (not its display
+label); the risky gate applies to it exactly like a click; a no-op scroll still counts toward the
+3-no-change limit (unchanged from Phase 5, confirmed still true under the new loop).
+**Acceptance criteria:**
+- [x] A select dispatch call carries `kind: 'select'` and the option's DOM value.
+**Verification:** `npm test`.
+**Dependencies:** 23, 24 · **Files:** `flash.mjs`, `web.mjs` · **Scope:** S
+
+### Task 28: Background-tab focus emulation
+**Description:** Try `Emulation.setFocusEmulationEnabled(true)` at `bh` init (browser.py:26-27); test
+live whether trusted mouse clicks/dispatches still land without `Page.bringToFront` on every
+dispatch/scroll call (kept once, at init, for the tab's first paint).
+**Acceptance criteria:**
+- [x] Live-tested; result recorded in plan.md's Decisions and this task.
+- [x] RESULT: holds. `Page.bringToFront` dropped from dispatch/scroll (kept once, at init); every
+      live click still landed (cinemalaplata showtime click reaching the real login wall; two
+      Wikipedia click chains at p=0.97-1.0 each, ending in a correct `done`).
+**Verification:** live run (see final report for both transcripts).
+**Dependencies:** 24 · **Files:** `web.mjs`, `plan.md` · **Scope:** S
+
+### Task 29: Delete `deriveRegions`
+**Description:** Dead code (Task 12c's untaken two-step-pick building block, no caller) and its tests,
+cleared out while touching web.mjs/its tests for this rewrite.
+**Acceptance criteria:**
+- [x] `deriveRegions`, `MIN_REGIONS`, `MAX_REGION_SHARE` and their tests are gone.
+**Verification:** `npm test`.
+**Dependencies:** none · **Files:** `web.mjs`, `test/web.test.mjs` · **Scope:** XS
+
+### Task 30: Tests, docs and SKILL.md
+**Description:** Update the fake browser-harness fixture and `flash.test.mjs`'s run suite for the new
+wire shape (operation-scoped heads, select, guard-based staleness, done recheck, structured history);
+update `plan.md`'s Decisions, this Phase, and `SKILL.md`'s run section.
+**Acceptance criteria:**
+- [x] `npm test` green end to end.
+- [x] SKILL.md's run section reflects bh-only `run`, select support, and `needs login` replacing
+      `needs secret input` (bh never surfaces a password ref, so that pause path is unreachable there).
+**Verification:** `npm test`; read SKILL.md/plan.md/todo.md.
+**Dependencies:** 20-29 · **Files:** `test/*`, `plan.md`, `todo.md`, `SKILL.md` · **Scope:** M

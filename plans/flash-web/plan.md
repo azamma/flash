@@ -153,3 +153,55 @@ A new driver = one new object; commands never branch on the driver.
   "last attached tab." Acceptable for now (flash web's real use is one active browsing task at a
   time); noted as a known limitation rather than solved, since solving it means either a
   browser-harness feature request (named local daemons) or building the isolation ourselves.
+
+## Decisions (Phase 6: ultrafast-faithful `run`, 2026-09-29)
+
+- **`run` is browser-harness only.** The agent-browser run loop (`runLoop`, and `resumeWebRun`'s
+  agent-browser branch) is deleted along with its tests. `run --driver agent-browser` is a usage
+  error pointing at `click`/`pick`/`check`/`snapshot`. Those four commands keep agent-browser as a
+  driver choice; only `run` needed bh's isolated tab, in-page guard freshness and select support.
+- **Per-operation target heads**, ported from jev_ultrafast/model.py's `action_space`/`choose`
+  (model.py:71-176): one request with an `operation` choice over `click | type | select | scroll |
+  done | stuck` (click/type/select offered only when the page has a matching candidate) plus
+  `click_target`/`type_target`/`select_target`, each scoped to only that operation's own refs — a
+  select option only in `select_target` (keyed `n<node>:<optIndex>`), an editable field only in
+  `type_target`. Only the head matching the chosen operation is read. Criteria objects mirror
+  ultrafast's `{element, current_value, role, checked?, selected?, expanded?}` (+ `href`).
+- **Instructions** (`NEXT_ACTION`/`TARGET` in flash.mjs) are ported near-verbatim from
+  jev_ultrafast/questions.py:3-19, adapted only where Flash's own operations differ: `scroll` stands
+  in for ultrafast's dynamic `SCROLL_DOWN`/`SCROLL_UP`/`WAIT` controls, and `TYPE` is spelled out as
+  choosing the field only (Jev never writes text — an existing Flash rule, kept).
+- **`BH_SNAPSHOT_JS` now also carries the guard tuple and a page marker** (jev_ultrafast/
+  snapshot.js:44,47-54), assigned onto `window.__jevFast` so a later single-node eval can re-invoke
+  `cache.guard`/`cache.marker` cheaply without re-running the whole snapshot. Native `<select>`
+  elements emit one candidate per non-selected, non-disabled option (snapshot.js:68-71), sharing
+  their select's own guard (matching ultrafast: a select action's freshness is checked against the
+  select's own node, not a per-option one).
+- **Freshness is the full guard tuple, checked in-page**, not web.mjs's old role/name/context diff.
+  `bhResolve`/`bhDispatch` send the ref's own `guard` (captured at snapshot time); the bh Python glue
+  compares it against one cheap `cache.guard(node)` re-eval before acting, only falling back to a
+  full re-snapshot when that check reports stale (or the op is a plain `resolve`). The plain adapter
+  contract (click/pick, no `guard` sent) keeps its own existence/visibility-only check.
+- **Before accepting done/stuck**, one cheap in-page marker eval (`bhMarker`, url/title/text-length)
+  re-verifies the page in hand still matches what Jev decided against (agent.py:93-97, ported); a
+  mismatch re-snapshots and re-decides the SAME step number, bounded at 3 retries (ponytail: not
+  ultrafast's own 120-decision budget).
+- **History sent to Jev (`recent_actions`) is structured** (`{action, kind, page_changed}`, model.py:
+  136-138) plus the destination `url`/`title` after each step and, for a typed step, the field's own
+  label only — never the value. Kept separate from `log`, the human-readable stop lines.
+- **`select` is wired end to end**: dispatch carries the DOM option's own `value` (not its display
+  label), the risky gate applies to it exactly like a click, and a no-op scroll still counts toward
+  the 3-no-change limit (unchanged from Phase 5).
+- **Dropped**, not ported: the old single-shared-target-question override that reinterpreted an
+  unacted `done` as `click` when a non-`none` target also ranked highly. That heuristic depended on
+  every operation sharing one target ranking (the old design); operation-scoped heads give `done` no
+  target head to check at all, and ultrafast itself has no such override — it trusts `DONE` outright,
+  backed only by the freshness recheck above.
+- **`deriveRegions`** (Task 12c's untaken two-step-pick building block) and its tests are deleted —
+  dead code with no caller, unrelated to this rewrite but cleared out while touching this file.
+- **Focus emulation** (browser.py:26-27's `Emulation.setFocusEmulationEnabled(true)`): live-tested —
+  holds. `Page.bringToFront` was dropped from every dispatch/scroll call (kept only once, at `init`,
+  for the tab's first paint) and trusted mouse clicks still landed correctly across every live run: a
+  cinemalaplata.com.ar showtime click (reaching the real `/Usuarios/Ingresar` login wall) and two
+  Wikipedia click chains (English-edition link at p=0.97, then an article link at p=0.97, ending in a
+  correct `done`). No click silently failed to land in the background tab in any of these runs.
