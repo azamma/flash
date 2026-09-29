@@ -77,9 +77,17 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 **Dependencies:** 5 · **Files:** `bench/web/*` · **Scope:** M
 
 ### Checkpoint: Judgments — STOP, review with user
-- [ ] Gate from Task 7 passed, or the feature is dropped here.
+- [x] Gate from Task 7 passed (top-1 79.8% vs 89.9%, CIs overlap; 0/18 injected hijacks). User chose to continue: the goal is speed, not cost.
 
 ## Phase 3: Acting
+
+### Task 7b: Tune the unsure rule on the saved pick runs
+**Description:** Before acting on picks, use the Task 7 runs already saved in `bench/web/` (no new Jev calls): for each wrong top-1, was it flagged `? unsure` by the rule (top p < 0.6 or margin < 0.2)? Pick thresholds so that almost every wrong pick is flagged while right picks mostly are not; report the trade-off table and set the new defaults.
+**Acceptance criteria:**
+- [ ] Table: threshold vs share of wrong picks flagged vs share of right picks flagged.
+- [ ] Chosen defaults written in plan.md and used by `pick`.
+**Verification:** `npm test`.
+**Dependencies:** 7 · **Files:** `bench/web/*`, `web.mjs`, `plan.md` · **Scope:** S
 
 ### Task 8: Risky-action gate
 **Description:** `risky(page, ref)` = code backstop (keyword/role list from plan.md, English and Spanish, on name, role and container text) OR a separate Jev noul ≥ 0.3. Unit tested on its own before any caller exists.
@@ -87,7 +95,7 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 - [ ] Backstop stops "Comprar ahora", "Delete", "Confirmar pago" even when fake Jev says 0.0.
 - [ ] Jev ≥ 0.3 stops a benign-looking label.
 **Verification:** `npm test`.
-**Dependencies:** 7 · **Files:** `web.mjs`, tests · **Scope:** S
+**Dependencies:** 7b · **Files:** `web.mjs`, tests · **Scope:** S
 
 ### Task 9: `flash web click "<intent>"`
 **Description:** pick → re-snapshot → per-element freshness (ref, role, name, container text unchanged) → risky gate → act → re-snapshot → `clicked @e852 link "…" · page changed: url|title|elements`. Unsure, stale or risky returns to Claude without acting. Never retries. One history row per action via `logRow`.
@@ -130,7 +138,7 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 13: End-to-end benchmark (gate)
 **Description:** ~8 tasks on the hotel fixture, Wikipedia, HN, plus 2 with injected content and 1 whose goal requires a risky action (must stop). Each verified independently. Arms: Claude + agent-browser (`snapshot -i --delta`) vs Claude + agent-browser + `flash web`, 3 runs per arm, alternating. Charge SKILL.md and tool wrappers. Measure success, Claude tokens (minus measured floor), Jev tokens and $, wall time, wrong actions, risky stops, and adoption (web calls vs direct page reads).
 **Acceptance criteria:**
-- [ ] Gate: keep `click`/`run` only if success does not drop, no harmful action is taken, and Claude tokens and time drop materially.
+- [ ] Gate (goal is speed, decided 2026-09-28): keep `click`/`run` only if success does not drop, no harmful action is taken, and wall time to complete the task drops materially. Tokens and $ are reported, not gated.
 **Verification:** run it; review results with the user.
 **Dependencies:** 12 · **Files:** `bench/web/*` · **Scope:** M
 

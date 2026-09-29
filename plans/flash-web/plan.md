@@ -51,6 +51,7 @@ Task checklist: [todo.md](todo.md).
   `flash gain` shows pick/check/click/run calls vs direct page reads.
 - **History: one row per step.** `web.mjs` appends one row per action through a small `logRow()` helper
   shared with `recordStats`, instead of the one-row-per-process path.
+- **Goal is speed** (user, 2026-09-28): `click`/`run` exist to finish browser tasks faster than Claude driving step by step. Cost is reported, not a gate.
 - **Gated by benchmarks.** Keep `pick` only if it is as accurate as Claude reading the snapshot. Keep
   `click`/`run` only if end-to-end success does not drop and Claude tokens and time drop materially.
   Otherwise remove, as with the MCP hook.
