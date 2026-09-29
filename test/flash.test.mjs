@@ -988,6 +988,107 @@ test('flash web run sweeps expired run-state files (past the 1h TTL) on the next
   assert.ok(!fs.existsSync(staleFile), 'a run-state file older than 1h is swept automatically');
 });
 
+// ---------- flash web run --driver bh (Task 17-18): the fast loop ----------
+// A fake `browser-harness` speaking the exact file protocol runBh uses (test/fixtures/web/
+// fake-browser-harness.mjs) — no real Python or Chrome. `round` (a plain counter file) is "the
+// current page": snapshot/resolve read it, a non-stale dispatch advances it and returns the next
+// page, mirroring the real driver's one-call resolve+dispatch+post-snapshot.
+function bhPage(dir, n, { url = 'https://example.com', title = 'Example', text = '', refs }) {
+  const f = path.join(dir, `page-${n}.json`);
+  fs.writeFileSync(f, JSON.stringify({ url, title, text, refs }));
+  return f;
+}
+
+function bhEnv(pages, extra = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'flash-bh-'));
+  const bin = path.join(dir, 'fake-browser-harness.mjs');
+  fs.copyFileSync(path.join(WEB_FIXTURES, 'fake-browser-harness.mjs'), bin);
+  fs.chmodSync(bin, 0o755);
+  const env = { FLASH_BROWSER_HARNESS: bin, FAKE_BH_ROUND_FILE: path.join(dir, 'round'), FAKE_BH_LOG: path.join(dir, 'log.jsonl'), ...extra };
+  pages.forEach((p, i) => { env[`FAKE_BH_PAGE_${i + 1}`] = bhPage(dir, i + 1, p); });
+  return env;
+}
+
+const bhOps = (env) => fs.readFileSync(env.FAKE_BH_LOG, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l).op);
+
+// A page file for FAKE_BH_RESOLVE_PAGE: what resolve/dispatch see, decoupled from the round
+// snapshot() reads — simulates the live DOM having already moved on from what Jev decided against.
+function bhResolvePage(refs) {
+  const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'flash-bh-resolve-')), 'page.json');
+  fs.writeFileSync(f, JSON.stringify({ url: 'https://example.com', title: 'Example', text: '', refs }));
+  return f;
+}
+
+test('flash web run --driver bh: pause on a text field, resume types it and continues (2 driver calls per step)', async () => {
+  const refs = [{ ref: 'n5', role: 'textbox', name: 'Origin', value: '', state: [], context: '' }];
+  const env = bhEnv([
+    { refs }, // round 1: initial snapshot
+    { url: 'https://example.com/confirmed', title: 'Confirmed', refs: [] }, // round 2: after typing (resume's dispatch)
+  ]);
+  forceRun('type', 'n5', ['n5', 'none']);
+  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'bh-pause', '--driver', 'bh', '--json'], { env });
+  assert.equal(r1.code, 0, r1.stderr);
+  const out1 = JSON.parse(r1.stdout);
+  assert.equal(out1.stop, 'needs-input');
+  assert.equal(out1.ref, 'n5');
+  assert.ok(out1.resumeId);
+  assert.deepEqual(bhOps(env), ['init', 'snapshot'], 'a type pause never resolves/dispatches, no risky call either');
+  assert.equal(jev.requests.length, 1, 'only the run-step fan-out');
+
+  forceRun('done', 'none', ['none']); // round 2's page has no refs at all
+  const r2 = await flash(['web', 'run', '--resume', out1.resumeId, '--json'], { env, input: 'Paris\n' });
+  assert.equal(r2.code, 0, r2.stderr);
+  const out2 = JSON.parse(r2.stdout);
+  assert.equal(out2.stop, 'done');
+  assert.equal(out2.acted, 1);
+  assert.match(out2.log[0], /^1\. typed @n5 textbox "Origin" · page changed: yes$/);
+  assert.doesNotMatch(r2.stdout, /Paris/);
+  assert.doesNotMatch(fs.readFileSync(path.join(home, 'history.jsonl'), 'utf8'), /Paris/);
+  // resume: no `init` (that would open a SECOND tab and abandon the first -- a real leak an
+  // earlier version had) -- just `resolve` (the freshness re-check before typing), `dispatch`
+  // (the actual type), on the same tab run 1 left open, then `close` once the run is done.
+  assert.deepEqual(bhOps(env).slice(2), ['resolve', 'dispatch', 'close'], 'bh --resume: resolve + dispatch, not init + a full re-snapshot');
+});
+
+test('flash web run --driver bh: risky backstop stops before any driver dispatch call', async () => {
+  const refs = [{ ref: 'n2', role: 'button', name: 'Delete', value: null, state: [], context: '' }];
+  const env = bhEnv([{ refs }]);
+  forceRun('click', 'n2', ['n2', 'none']);
+  const r = await flash(['web', 'run', 'remove the item', '--session', 'bh-risky', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'risky');
+  assert.match(out.log.join('\n'), /risky @n2 button "Delete" \(keyword\/role backstop\)/);
+  assert.equal(jev.requests.length, 1, 'the backstop fires without ever calling the risky noul');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'resolve runs (to check staleness) but dispatch never does');
+});
+
+test('flash web run --driver bh: a stale node (role/name/context changed) stops without dispatching', async () => {
+  const refs1 = [{ ref: 'n2', role: 'button', name: 'Continue', value: null, state: [], context: 'Details' }];
+  const refs2 = [{ ref: 'n2', role: 'button', name: 'Continue', value: null, state: [], context: 'Payment' }]; // context changed
+  const env = bhEnv([{ refs: refs1 }], { FAKE_BH_RESOLVE_PAGE: bhResolvePage(refs2) });
+  forceRun('click', 'n2', ['n2', 'none']);
+  forceRisky(0.05);
+  const r = await flash(['web', 'run', 'continue', '--session', 'bh-stale', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'stale');
+  assert.equal(jev.requests.length, 2, 'the risky noul still ran in parallel with resolve; only the dispatch never happens');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'never reaches dispatch once resolve reports stale');
+});
+
+test('flash web run --driver bh: an occluded element (covered by something else) refuses like any other stale node', async () => {
+  const refs = [{ ref: 'n7', role: 'button', name: 'Continue', value: null, state: [], context: '' }];
+  const env = bhEnv([{ refs }], { FAKE_BH_RESOLVE_PAGE: bhResolvePage(refs), FAKE_BH_COVERED: 'n7' });
+  forceRun('click', 'n7', ['n7', 'none']);
+  forceRisky(0.05);
+  const r = await flash(['web', 'run', 'continue', '--session', 'bh-occluded', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'stale', 'role/name/context all match -- only the in-page occlusion check failed');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'never dispatches onto a covered element');
+});
+
 test('flash web check answers yes/no over url, title and text, with the untrusted-data instruction', async () => {
   writePage('check-1', { url: 'https://example.com/cart', title: 'Your cart', text: 'MATCH: 2 items in your cart', refs: [] });
   const r = await flash(['web', 'check', 'is this a shopping cart page?', '--session', 'check-1']);
