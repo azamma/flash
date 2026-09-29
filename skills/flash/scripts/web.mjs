@@ -528,6 +528,15 @@ def _resolve_js(node):
         "return {x:x,y:y}; })()"
     ) % node
 
+def _link_fallback_js(node):
+    return (
+        "(() => { const e=window.__jevFast && window.__jevFast.nodes.get(%d); "
+        "if (!e || !e.isConnected || e.tagName!=='A') return false; "
+        "const h=e.getAttribute('href')||''; "
+        "if (!h || h.startsWith('#') || /^javascript:/i.test(h) || e.href===location.href) return false; "
+        "e.click(); return true; })()"
+    ) % node
+
 def _select_js(node, value):
     return (
         "(() => { const e=window.__jevFast.nodes.get(%d); if (!e || e.tagName!=='SELECT') return false; "
@@ -587,11 +596,19 @@ try:
             else:
                 # A click that navigates needs the new document, not the old one mid-unload: give it
                 # up to 0.6 s to start navigating, then wait for load. Same-page updates fall through.
-                for _ in range(6):
-                    time.sleep(0.1)
-                    if js('location.href') != before:
-                        wait_for_load(10)
-                        break
+                def _navigated():
+                    for _ in range(6):
+                        time.sleep(0.1)
+                        if js('location.href') != before:
+                            wait_for_load(10)
+                            return True
+                    return False
+                # Some sites swallow synthetic mouse clicks on a link (a card script cancels them;
+                # cinemalaplata.com.ar). A link only navigates, so if the mouse click left us on the
+                # same URL and the link points elsewhere, follow it with element.click(). Never for
+                # buttons or other controls: firing those twice could repeat an action.
+                if kind == 'click' and not _navigated() and js(_link_fallback_js(node)):
+                    _navigated()
                 out = {'ok': True, 'stale': False, 'page': _snapshot()}
     elif op == 'scroll':
         if js('document.visibilityState') != 'visible': cdp('Page.bringToFront')
