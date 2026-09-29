@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, UNSURE_P1, UNSURE_MARGIN, risky, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
+import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, unsureThresholds, risky, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1281,7 +1281,8 @@ async function cmdWebPick({ pos, flags }) {
     lines.push(`${f2(topP)}  ${topId}  ${refLabel(byRef[topId])}`);
     for (const [id, p] of real.slice(1, 3)) lines.push(`  runner-up ${f2(p)}  ${id}  ${refLabel(byRef[id])}`);
     const p1 = ranked[0][1], p2 = ranked[1]?.[1] ?? 0;
-    unsure = p1 < UNSURE_P1 || p1 - p2 < UNSURE_MARGIN;
+    const thr = unsureThresholds(byRef[topId], 'click');
+    unsure = p1 < thr.p1 || p1 - p2 < thr.margin;
     if (unsure) {
       const span = refLineSpan(fs.readFileSync(file, 'utf8'), topId);
       lines.push(`? unsure: read ${file}${span ? ` lines ${span[0]}-${span[1]}` : ''}`);
@@ -1388,7 +1389,8 @@ async function cmdWebClick({ pos, flags }) {
 
   const [topId, topP] = real[0];
   const p2 = ranked[1]?.[1] ?? 0;
-  if (topP < UNSURE_P1 || topP - p2 < UNSURE_MARGIN) {
+  const thr = unsureThresholds(byRef1[topId], 'click');
+  if (topP < thr.p1 || topP - p2 < thr.margin) {
     const span = refLineSpan(fs.readFileSync(file, 'utf8'), topId);
     return finish(`? unsure: read ${file}${span ? ` lines ${span[0]}-${span[1]}` : ''}`, { acted: false, stop: 'unsure', ref: topId });
   }
@@ -1481,9 +1483,10 @@ async function runLoop(ctx, { page, i, acted, noChangeStreak, log }) {
     if (!match) { log.push(`${i}. ${r.operation}: no element matches the goal`); return finishRun(ctx, log, acted, 'no-match'); }
     const [topId, topP] = r.real[0];
     const p2 = r.ranked[1]?.[1] ?? 0;
-    if (topP < UNSURE_P1 || topP - p2 < UNSURE_MARGIN) { log.push(`${i}. ? unsure @${topId}`); return finishRun(ctx, log, acted, 'unsure'); }
-
     const target = page.refs.find((x) => x.ref === topId);
+    const thr = unsureThresholds(target, r.operation);
+    if (topP < thr.p1 || topP - p2 < thr.margin) { log.push(`${i}. ? unsure @${topId}`); return finishRun(ctx, log, acted, 'unsure'); }
+
     const page2 = await ctx.time('freshness-snapshot', ctx.snap);
     const fresh = freshRef(target, page2.refs.find((x) => x.ref === topId));
     if (!fresh) { log.push(`${i}. stale @${topId}`); return finishRun(ctx, log, acted, 'stale'); }

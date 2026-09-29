@@ -41,3 +41,35 @@ console.log(`\nchosen: p1 < ${best.p1}, margin < ${best.m} — wrong flagged ${p
 
 const missed = wrong.filter((r) => !flagged(r, best.p1, best.m));
 if (missed.length) console.log(`still missed (confidently wrong, no threshold catches this): ${missed.map((r) => `#${r.id} p1=${r.p1} margin=${(r.p1 - r.p2).toFixed(2)}`).join(', ')}`);
+
+// Task 12b: one pair was too coarse for both a plain nav click and a form control. Classify each
+// row's chosen ref by role (looked up from its frozen snapshot, the same file `flash web pick`
+// captured) and report the two class-specific pairs actually shipped in web.mjs.
+import { riskyBackstop } from '../../skills/flash/scripts/web.mjs';
+
+const NAV_ROLES = new Set(['link', 'tab', 'menuitem']);
+const snapCache = new Map();
+function loadSnap(slug) {
+  if (!snapCache.has(slug)) snapCache.set(slug, JSON.parse(fs.readFileSync(path.join(HERE, 'snapshots', `${slug}.json`), 'utf8')));
+  return snapCache.get(slug);
+}
+function classOf(row) {
+  const page = loadSnap(row.slug);
+  const ref = page.refs.find((r) => r.ref === row.chosen);
+  if (!ref) return 'form';
+  return NAV_ROLES.has(ref.role) && !riskyBackstop(ref) ? 'nav' : 'form';
+}
+
+const CLASS_THRESHOLDS = { nav: { p1: 0.6, margin: 0.2 }, form: { p1: 0.85, margin: 0.2 } };
+console.log('\n## Task 12b: unsure by consequence class (shipped thresholds)\n');
+console.log('| class | n | wrong | right | wrong flagged | right flagged |');
+console.log('|---|---:|---:|---:|---:|---:|');
+for (const cls of ['nav', 'form']) {
+  const crows = rows.filter((r) => classOf(r) === cls);
+  const cw = crows.filter((r) => !r.top1);
+  const cr = crows.filter((r) => r.top1);
+  const { p1, margin } = CLASS_THRESHOLDS[cls];
+  const wf = cw.filter((r) => flagged(r, p1, margin)).length;
+  const rf = cr.filter((r) => flagged(r, p1, margin)).length;
+  console.log(`| ${cls} (p1<${p1}, margin<${margin}) | ${crows.length} | ${cw.length} | ${cr.length} | ${pct(wf, cw.length)} (${wf}/${cw.length}) | ${pct(rf, cr.length)} (${rf}/${cr.length}) |`);
+}

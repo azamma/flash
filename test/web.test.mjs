@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName, risky, riskyBackstop } from '../skills/flash/scripts/web.mjs';
+import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName, risky, riskyBackstop, unsureThresholds, isPlainNav, UNSURE_NAV_P1, UNSURE_NAV_MARGIN, UNSURE_FORM_P1, UNSURE_FORM_MARGIN } from '../skills/flash/scripts/web.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const FIXTURES = path.join(ROOT, 'test/fixtures/web');
@@ -208,6 +208,26 @@ test('riskyBackstop: a long descriptive link with "order" next to a stronger wor
   assert.equal(riskyBackstop(link), false, 'no adjacent trigger word here, still not risky');
   const withPay = { ref: 'e2', role: 'link', name: 'Review and pay for your pending order today', value: null, state: [], context: null };
   assert.equal(riskyBackstop(withPay), true, '"pay" sits next to "order"');
+});
+
+// ---------- Task 12b: unsure threshold by consequence ----------
+
+test('unsureThresholds: a plain nav link/tab/menuitem gets the looser pair', () => {
+  for (const role of ['link', 'tab', 'menuitem']) {
+    assert.deepEqual(unsureThresholds(ref('View details', role), 'click'), { p1: UNSURE_NAV_P1, margin: UNSURE_NAV_MARGIN });
+  }
+});
+
+test('unsureThresholds: a form control, a button, or anything about to be typed into gets the strict pair', () => {
+  assert.deepEqual(unsureThresholds(ref('Origin', 'textbox'), 'click'), { p1: UNSURE_FORM_P1, margin: UNSURE_FORM_MARGIN });
+  assert.deepEqual(unsureThresholds(ref('Continue', 'button'), 'click'), { p1: UNSURE_FORM_P1, margin: UNSURE_FORM_MARGIN });
+  assert.deepEqual(unsureThresholds(ref('Origin', 'link'), 'type'), { p1: UNSURE_FORM_P1, margin: UNSURE_FORM_MARGIN }, 'a `type` operation is never plain nav, whatever the role');
+});
+
+test('unsureThresholds: a risky-flagged link is not plain nav even though its role is `link`', () => {
+  const dangerous = ref('Delete account', 'link');
+  assert.equal(isPlainNav(dangerous, 'click'), false);
+  assert.deepEqual(unsureThresholds(dangerous, 'click'), { p1: UNSURE_FORM_P1, margin: UNSURE_FORM_MARGIN });
 });
 
 test('pageFile and sessionName build the ~/.flash/web/<session>/page.json path', () => {

@@ -166,8 +166,8 @@ from web.mjs; pick/click/run each classify the acted-on ref (and, for run, its c
 before picking which pair applies. `bench/web/tune-unsure.mjs` re-run on the saved Task 7 pick rows,
 split by class, with the resulting flagged/right-flagged numbers written to `bench/web/RESULTS.md`.
 **Acceptance criteria:**
-- [ ] Constants exported from web.mjs; pick/click/run use them instead of one fixed pair.
-- [ ] bench/web/RESULTS.md has flagged/right-flagged numbers per class (nav vs form).
+- [x] Constants exported from web.mjs; pick/click/run use them instead of one fixed pair.
+- [x] bench/web/RESULTS.md has flagged/right-flagged numbers per class (nav vs form).
 **Verification:** `npm test`.
 **Dependencies:** 12a · **Files:** `web.mjs`, `flash.mjs`, `bench/web/tune-unsure.mjs`, `bench/web/RESULTS.md`, tests · **Scope:** S
 
