@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName, risky, riskyBackstop, unsureThresholds, isPlainNav, UNSURE_NAV_P1, UNSURE_NAV_MARGIN, UNSURE_FORM_P1, UNSURE_FORM_MARGIN, deriveRegions } from '../skills/flash/scripts/web.mjs';
+import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName, risky, riskyBackstop, unsureThresholds, isPlainNav, UNSURE_NAV_P1, UNSURE_NAV_MARGIN, UNSURE_FORM_P1, UNSURE_FORM_MARGIN, deriveRegions, collapseDuplicates, pickCriteria } from '../skills/flash/scripts/web.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const FIXTURES = path.join(ROOT, 'test/fixtures/web');
@@ -252,6 +252,53 @@ test('deriveRegions returns null when every ref shares one context (nothing to p
 test('deriveRegions returns null when one region swallows almost everything (> 90%)', () => {
   const refs = [...Array(95)].map((_, i) => navRef(`n${i}`, `Item ${i}`)).concat([...Array(5)].map((_, i) => mainRef(`m${i}`, `Result ${i}`)));
   assert.equal(deriveRegions(refs), null, '95/100 = 95% in one region, above the 90% cutoff');
+});
+
+// ---------- Task 12d: collapse duplicate refs before pick ----------
+
+test('collapseDuplicates: the Wikipedia search-suggestion duplicate (link + its ARIA option mirror) collapses to one candidate', () => {
+  const refs = [
+    { ref: 'e50', role: 'link', name: 'Octopus', value: null, state: [], context: 'listbox "suggestions"' },
+    { ref: 'e51', role: 'option', name: 'Octopus', value: null, state: [], context: 'listbox "suggestions"' },
+    { ref: 'e52', role: 'link', name: 'Octopoda', value: null, state: [], context: 'listbox "suggestions"' },
+  ];
+  const collapsed = collapseDuplicates(refs);
+  assert.equal(collapsed.length, 2, 'the link/option pair for "Octopus" collapses to one');
+  assert.deepEqual(collapsed.map((r) => r.ref), ['e50', 'e52'], 'keeps the link (more directly actionable than its ARIA option mirror)');
+});
+
+test('collapseDuplicates: pickCriteria only offers one candidate for the duplicate pair, not two competing for probability', () => {
+  const refs = [
+    { ref: 'e50', role: 'link', name: 'Octopus', value: null, state: [], context: 'listbox "suggestions"' },
+    { ref: 'e51', role: 'option', name: 'Octopus', value: null, state: [], context: 'listbox "suggestions"' },
+  ];
+  const criteria = pickCriteria(refs);
+  assert.deepEqual(Object.keys(criteria).sort(), ['e50', 'none']);
+});
+
+test('collapseDuplicates: same name but not adjacent, and no href on either, does not collapse', () => {
+  const refs = [
+    { ref: 'e1', role: 'link', name: 'Octopus', value: null, state: [], context: null },
+    { ref: 'e2', role: 'link', name: 'Unrelated', value: null, state: [], context: null },
+    { ref: 'e3', role: 'option', name: 'Octopus', value: null, state: [], context: null },
+  ];
+  assert.equal(collapseDuplicates(refs).length, 3);
+});
+
+test('collapseDuplicates: adjacent refs with different hrefs do not collapse even if the name matches', () => {
+  const refs = [
+    { ref: 'e1', role: 'link', name: 'More', href: '/a', value: null, state: [], context: null },
+    { ref: 'e2', role: 'link', name: 'More', href: '/b', value: null, state: [], context: null },
+  ];
+  assert.equal(collapseDuplicates(refs).length, 2);
+});
+
+test('collapseDuplicates: adjacent refs with the same href collapse even without an identical role', () => {
+  const refs = [
+    { ref: 'e1', role: 'link', name: 'More', href: '/a', value: null, state: [], context: null },
+    { ref: 'e2', role: 'option', name: 'More', href: '/a', value: null, state: [], context: null },
+  ];
+  assert.equal(collapseDuplicates(refs).length, 1);
 });
 
 test('pageFile and sessionName build the ~/.flash/web/<session>/page.json path', () => {

@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startFakeJev } from './fake-jev.mjs';
-import { parseTree } from '../skills/flash/scripts/web.mjs';
+import { parseTree, collapseDuplicates } from '../skills/flash/scripts/web.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const FLASH = path.join(ROOT, 'skills/flash/scripts/flash.mjs');
@@ -628,6 +628,10 @@ test('flash web pick chunks a 512-ref page (Amazon fixture) into groups of 150 a
   const r = await flash(['web', 'pick', 'the sort-by dropdown', '--session', 'pick-amazon']);
   assert.equal(r.code, 0, r.stderr);
   assert.equal(jev.requests.length, 4, '512 refs / 150 per chunk = 4 chunks');
+  // Task 12d: pickCriteria collapses adjacent duplicate refs (same name, same or no href) within
+  // each chunk before asking Jev, so the surviving count per chunk can be under 150.
+  let expected = 0;
+  for (let i = 0; i < refs.length; i += 150) expected += collapseDuplicates(refs.slice(i, i + 150)).length;
   let seen = 0;
   for (const { body } of jev.requests) {
     assert.ok(body.questions.pick, 'each chunk asks a pick choice');
@@ -636,7 +640,8 @@ test('flash web pick chunks a 512-ref page (Amazon fixture) into groups of 150 a
     assert.ok(ids.length <= 150);
     seen += ids.length;
   }
-  assert.equal(seen, 512, 'every ref appears in exactly one chunk');
+  assert.equal(seen, expected, 'every surviving (deduped) ref appears in exactly one chunk');
+  assert.ok(expected < 512, 'the real Amazon capture does carry some adjacent duplicate refs');
   const lines = r.stdout.trim().split('\n');
   assert.ok(lines.length <= 5);
   assert.match(lines.at(-1), /^(agent-browser --session flash-pick-amazon click @e\d+|\? unsure: read )/);

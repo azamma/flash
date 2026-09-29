@@ -228,10 +228,47 @@ export function unsureThresholds(ref, opKind = 'click') {
 
 export const NONE_CRITERION = 'No element on the page matches the intent.';
 
+// ---------- Task 12d: collapse duplicate refs before pick ----------
+// Some pages carry two refs for the same visual thing — Wikipedia's search-suggestion dropdown
+// pairs a real `link` with its ARIA `option` mirror, same name, right next to each other in the
+// tree — which splits the pick's probability mass across both and can trip the margin rule for
+// nothing (the Task 11 manual run hit exactly this). Two adjacent refs collapse into one candidate
+// when they share a role-agnostic name (case/whitespace-insensitive) and the same target: the same
+// `href`, when the driver exposes one, else just that adjacency plus the matching name. The kept
+// ref is whichever role is the more directly actionable one, so the act step still resolves to a
+// real, clickable ref — never a synthetic merged one.
+const ACT_PRIORITY = ['link', 'button', 'menuitem', 'tab', 'option', 'radio', 'checkbox'];
+const normName = (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+function betterOf(a, b) {
+  const pa = ACT_PRIORITY.indexOf(a.role), pb = ACT_PRIORITY.indexOf(b.role);
+  if (pa === -1) return pb === -1 ? a : b;
+  if (pb === -1) return a;
+  return pa <= pb ? a : b;
+}
+
+function sameCandidate(a, b) {
+  const name = normName(a.name);
+  if (!name || name !== normName(b.name)) return false;
+  return a.href && b.href ? a.href === b.href : true; // no href on either: name + adjacency is the signal
+}
+
+// Collapses only adjacent pairs (index i, i+1) — the shape the mirror pattern actually produces —
+// not an all-pairs scan; three or more consecutive duplicates aren't a case seen in practice.
+export function collapseDuplicates(refs) {
+  const out = [];
+  for (let i = 0; i < refs.length; i++) {
+    const cur = refs[i], next = refs[i + 1];
+    if (next && sameCandidate(cur, next)) { out.push(betterOf(cur, next)); i++; continue; }
+    out.push(cur);
+  }
+  return out;
+}
+
 // One choice option per ref, plus `none`, per plan.md's `{element, role, value, state, context}`.
 export function pickCriteria(refs) {
   const c = {};
-  for (const r of refs) c[r.ref] = { element: r.name || r.role, role: r.role, value: r.value, state: r.state, context: r.context };
+  for (const r of collapseDuplicates(refs)) c[r.ref] = { element: r.name || r.role, role: r.role, value: r.value, state: r.state, context: r.context };
   c.none = NONE_CRITERION;
   return c;
 }

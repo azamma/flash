@@ -195,7 +195,7 @@ same role-agnostic name and the same target (an `href` when the driver exposes o
 name plus adjacent tree position) now collapse into one candidate; whichever of the collapsed refs
 is chosen, the act step still resolves and clicks a real ref.
 **Acceptance criteria:**
-- [ ] The Wikipedia search-suggestion duplicate (link + ARIA option mirror) collapses to one
+- [x] The Wikipedia search-suggestion duplicate (link + ARIA option mirror) collapses to one
       candidate before pick.
 **Verification:** `npm test`.
 **Dependencies:** 12c · **Files:** `web.mjs`, `test/web.test.mjs` · **Scope:** S
