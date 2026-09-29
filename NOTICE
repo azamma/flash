@@ -68,11 +68,23 @@ adapter are original code, not copied from snapshot.js.
 The `bh` driver's `BH_SNAPSHOT_JS` (web.mjs, Phase 5 Task 16) is a trimmed port of
 jev_ultrafast/snapshot.js: the `window.__jevFast` node-identity cache, the
 safe/visible/name/role element classification, and the visible-text scan are
-carried over near-verbatim; the guard-tuple/page-key/marker/fingerprint
-machinery was dropped in favor of web.mjs's existing role/name/context
-freshness check (freshRef). The pre-act resolve + visible/enabled/occlusion
+carried over near-verbatim. The pre-act resolve + visible/enabled/occlusion
 check (web.mjs's bh glue script) is a port of jev_ultrafast/browser.py's
 `browser_operation()` act branch.
+
+Phase 6 (the ultrafast-faithful rewrite of `flash web run`) ports more of
+jev-ultrafast directly: `BH_SNAPSHOT_JS` now also carries the guard tuple and
+a page marker (snapshot.js:47-54, :44), used for run's in-page freshness and
+done/stuck recheck instead of web.mjs's own role/name/context diff; native
+`<select>` options are enumerated the same way (snapshot.js:68-71). `flash.mjs`'s
+`runStep` ports jev_ultrafast/model.py's dynamic operation/per-operation-target
+policy (`action_space`/`choose`, model.py:71-176) and its instruction text
+(`NEXT_ACTION`/`TARGET`, questions.py:3-19), adapted to Flash's own operations
+(`click`/`type`/`select`/`scroll`/`done`/`stuck`; Jev never writes text). `run`
+is bh-only as of this rewrite; the agent-browser run loop this NOTICE entry
+used to also describe was removed. Flash's own additions on top -- the risky-
+action keyword backstop, the swallowed-click `element.click()` link fallback,
+and the sign-in-wall pause -- are not in jev-ultrafast and stay Flash's own.
 
 ---
 

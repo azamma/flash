@@ -413,12 +413,12 @@ test('skill and help web cover flash web: stop reasons, secrets, and permission 
   const skill = (await flash(['skill'])).stdout;
   assert.match(skill, /## Browser \(`flash web`\)/);
   assert.match(skill, /needs input:.*resume:/);
-  assert.match(skill, /needs secret input/);
+  assert.match(skill, /needs login:.*--resume/);
   assert.match(skill, /allow `flash web snapshot`.*approve `flash web click`\/`flash web run`/s);
   assert.match(skill, /logged into/);
   const help = (await flash(['help', 'web'])).stdout;
   assert.match(help, /^flash web/);
-  assert.match(help, /click\/type loop|click.*run/);
+  assert.match(help, /click\/type\/select loop|click.*run/);
   assert.match(help, /--resume/);
 });
 
@@ -744,258 +744,43 @@ test('flash web click reports "no element matches" and never acts', async () => 
   assert.match(r.stdout, /no element on the page matches/);
 });
 
-// ---------- flash web run ----------
+// ---------- flash web run (Phase 6: bh-only, ultrafast-faithful rewrite) ----------
+// `run` no longer drives agent-browser at all (plan.md's Decisions) -- only browser-harness, via
+// the fake driver defined below (bhEnv/bhPage/bhOps/bhResolvePage).
 
-// One `run` step's forced answer: `operation` and `target` together, matching runStep's single
-// fan-out request. `target` is still supplied even for done/stuck (runStep always asks both).
-function forceRun(operation, targetChoice, ids, targetProbs) {
-  const OPS = ['click', 'type', 'scroll', 'done', 'stuck'];
-  const opProbs = Object.fromEntries(OPS.map((o) => [o, o === operation ? 0.9 : 0.1 / (OPS.length - 1)]));
-  // A single-candidate `ids` (e.g. a page with no refs, just `none`) must get probability 1, not
-  // 0.9 — the map below has nothing else to spread the remaining 0.1 across, which would fail
-  // validChoice's sum-to-1 check.
-  const targetP = targetProbs || Object.fromEntries(ids.map((id) => [id, id === targetChoice ? (ids.length === 1 ? 1 : 0.9) : 0.1 / (ids.length - 1)]));
-  jev.force({ status: 200, body: { answers: {
-    operation: { type: 'choice', choice: operation, confidence: 0.9, probabilities: opProbs },
-    target: { type: 'choice', choice: targetChoice, confidence: 0.9, probabilities: targetP },
-  } } });
+test('flash web run refuses --driver agent-browser with a clear usage error', async () => {
+  const r = await flash(['web', 'run', 'do a thing', '--driver', 'agent-browser', '--session', 'run-usage']);
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /flash web run only drives through browser-harness/);
+  assert.match(r.stderr, /click\/pick\/check\/snapshot/);
+});
+
+// One run step's forced answer, matching runStep's own dynamic per-operation heads: `heads` lists,
+// for each operation that has a target head this step (only click/type/select can), the ref ids
+// offered (a 'none' entry is added automatically, matching runCriterion's own criteria shape). `op`
+// is the winning operation; `pick` is the winning ref within that operation's own head (omitted for
+// scroll/done/stuck, which have no head at all).
+function forceRunStep(heads, op, pick) {
+  const OPS = ['scroll', 'done', 'stuck', ...Object.keys(heads)];
+  const opProbs = Object.fromEntries(OPS.map((o) => [o, o === op ? 0.9 : 0.1 / (OPS.length - 1)]));
+  const answers = { operation: { type: 'choice', choice: op, confidence: 0.9, probabilities: opProbs } };
+  for (const [kind, rawIds] of Object.entries(heads)) {
+    const ids = [...rawIds, 'none'];
+    const winner = kind === op ? pick : ids[0];
+    const probabilities = Object.fromEntries(ids.map((id) => [id, id === winner ? (ids.length === 1 ? 1 : 0.9) : 0.1 / (ids.length - 1)]));
+    answers[`${kind}_target`] = { type: 'choice', choice: winner, confidence: kind === op ? 0.9 : 0.5, probabilities };
+  }
+  jev.force({ status: 200, body: { answers } });
 }
 
-test('flash web run stops on "done" without acting', async () => {
-  const env = agentBrowserRounds([{ tree: '- link "Home" [ref=e1]\n' }]);
-  forceRun('done', 'none', ['e1', 'none']);
-  const r = await flash(['web', 'run', 'search for wombats', '--session', 'run-done', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'done');
-  assert.equal(out.acted, 0);
-  assert.equal(jev.requests.length, 1, 'only the run-step fan-out — no risky call, nothing to act on');
-  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
-});
-
-test('flash web run stops on "stuck" without acting', async () => {
-  const env = agentBrowserRounds([{ tree: '- link "Home" [ref=e1]\n' }]);
-  forceRun('stuck', 'none', ['e1', 'none']);
-  const r = await flash(['web', 'run', 'buy a spaceship', '--session', 'run-stuck', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  assert.equal(JSON.parse(r.stdout).stop, 'stuck');
-});
-
-test('flash web run stops "? unsure" on low confidence without acting', async () => {
-  const env = agentBrowserRounds([{ tree: '- link "Option A" [ref=e1]\n- link "Option B" [ref=e2]\n' }]);
-  jev.force({ status: 200, body: { answers: {
-    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.9, type: 0.03, scroll: 0, done: 0.03, stuck: 0.04 } },
-    target: { type: 'choice', choice: 'e1', confidence: 0.5, probabilities: { e1: 0.5, e2: 0.45, none: 0.05 } },
-  } } });
-  const r = await flash(['web', 'run', 'pick one', '--session', 'run-unsure', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  assert.equal(JSON.parse(r.stdout).stop, 'unsure');
-  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
-});
-
-test('flash web run stops on a stale target without acting', async () => {
-  const env = agentBrowserRounds([
-    { tree: '- group "Details"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
-    { tree: '- group "Payment"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' }, // context changed before acting
-  ]);
-  forceRun('click', 'e2', ['e1', 'e2', 'none']);
-  const r = await flash(['web', 'run', 'continue', '--session', 'run-stale', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'stale');
-  assert.equal(jev.requests.length, 1, 'no risky call once stale');
-  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
-});
-
-test('flash web run stops on a risky target (backstop) and names it, without acting', async () => {
-  const env = agentBrowserRounds([
-    { tree: '- button "Delete" [ref=e2]\n- link "Home" [ref=e1]\n' },
-    { tree: '- button "Delete" [ref=e2]\n- link "Home" [ref=e1]\n' },
-  ]);
-  forceRun('click', 'e2', ['e1', 'e2', 'none']);
-  const r = await flash(['web', 'run', 'remove the item', '--session', 'run-risky', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'risky');
-  assert.match(out.log.join('\n'), /risky @e2 button "Delete"/);
-  assert.equal(jev.requests.length, 1, 'the backstop fires without ever calling the risky noul');
-  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
-});
-
-test('flash web run clicks across two steps, reusing the post-act snapshot, then stops on "done"', async () => {
-  const env = agentBrowserRounds([
-    { url: 'https://example.com/a', title: 'A', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
-    { url: 'https://example.com/a', title: 'A', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' }, // freshness: unchanged
-    { url: 'https://example.com/b', title: 'B', tree: '- heading "B" [ref=e9]\n- link "Home" [ref=e1]\n' }, // post-act: navigated
-  ]);
-  forceRun('click', 'e2', ['e1', 'e2', 'none']);
-  forceRisky(0.05);
-  forceRun('done', 'none', ['e1', 'e9', 'none']);
-  const r = await flash(['web', 'run', 'go to page b', '--session', 'run-multi', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'done');
-  assert.equal(out.acted, 1);
-  assert.match(out.log[0], /^1\. clicked @e2 button "Continue" · page changed: yes$/);
-  assert.equal(out.log[1], '2. done');
-  // exactly 3 snapshot rounds (initial, freshness, post-act) — step 2 reuses the post-act page,
-  // no 4th snapshot call before deciding "done".
-  const snapshotCalls = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).filter((c) => c[2] === 'snapshot');
-  assert.equal(snapshotCalls.length, 3);
-});
-
-test('flash web run stops at --max-steps', async () => {
-  const env = agentBrowserRounds([
-    { url: 'https://example.com/a', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
-    { url: 'https://example.com/a', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
-    { url: 'https://example.com/b', tree: '- heading "B" [ref=e9]\n- link "Home" [ref=e1]\n' },
-  ]);
-  forceRun('click', 'e2', ['e1', 'e2', 'none']);
-  forceRisky(0.05);
-  const r = await flash(['web', 'run', 'go to page b', '--session', 'run-maxsteps', '--max-steps', '1', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'max-steps');
-  assert.equal(out.acted, 1);
-});
-
-test('flash web run stops after 3 steps with no page change, never retrying the same click', async () => {
-  const tree = '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n';
-  const env = agentBrowserRounds(Array(7).fill({ tree })); // 1 initial + 3 x (freshness, post-act), all identical
-  for (let i = 0; i < 3; i++) { forceRun('click', 'e2', ['e1', 'e2', 'none']); forceRisky(0.05); }
-  const r = await flash(['web', 'run', 'keep clicking continue', '--session', 'run-nochange', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'no-change');
-  assert.equal(out.acted, 3);
-  for (const l of out.log) assert.match(l, /page changed: no$/);
-  const clickCalls = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).filter((c) => c[2] === 'click');
-  assert.equal(clickCalls.length, 3, 'each click acted on once, never retried');
-});
-
-// ---------- flash web run: type / --resume (Task 11) ----------
-
-test('flash web run pauses on a text field, types the exact stdin value on --resume, and continues', async () => {
-  const env = agentBrowserRounds([
-    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 1: initial
-    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 2: freshness before pausing (unchanged)
-    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 3: resume's own re-check (unchanged)
-    { url: 'https://example.com/confirm', title: 'Confirmed', tree: '- heading "Confirmed" [ref=e9]\n- link "Home" [ref=e1]\n' }, // round 4: post-fill
-  ]);
-  forceRun('type', 'e5', ['e1', 'e5', 'none']);
-  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'run-pause', '--json'], { env });
-  assert.equal(r1.code, 0, r1.stderr);
-  const out1 = JSON.parse(r1.stdout);
-  assert.equal(out1.stop, 'needs-input');
-  assert.equal(out1.ref, 'e5');
-  assert.equal(out1.secret, false);
-  assert.ok(out1.resumeId);
-  assert.match(out1.log.at(-1), /^1\. needs input: @e5 textbox "Origin" · resume: echo "<text>" \| flash web run --resume [\w-]+$/);
-  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"fill"/, 'nothing is typed before resume');
-  assert.equal(jev.requests.length, 1, 'no risky call for a type pause');
-
-  const runStateFile = path.join(home, 'web', 'runs', `${out1.resumeId}.json`);
-  assert.ok(fs.existsSync(runStateFile));
-  if (process.platform !== 'win32') assert.equal(fs.statSync(runStateFile).mode & 0o777, 0o600);
-
-  forceRun('done', 'none', ['e1', 'e9', 'none']);
-  const r2 = await flash(['web', 'run', '--resume', out1.resumeId, '--json'], { env, input: 'Paris\n' });
-  assert.equal(r2.code, 0, r2.stderr);
-  const out2 = JSON.parse(r2.stdout);
-  assert.equal(out2.stop, 'done');
-  assert.equal(out2.acted, 1);
-  assert.match(out2.log[0], /^1\. typed @e5 textbox "Origin" · page changed: yes$/);
-  assert.equal(out2.log[1], '2. done');
-  assert.doesNotMatch(r2.stdout, /Paris/, "the typed value never appears in flash's own stdout");
-  assert.doesNotMatch(r2.stderr, /Paris/);
-  assert.doesNotMatch(fs.readFileSync(path.join(home, 'history.jsonl'), 'utf8'), /Paris/);
-  assert.ok(!fs.existsSync(runStateFile), 'the run-state file is consumed (deleted) on resume');
-
-  const fillCall = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c[2] === 'fill');
-  assert.deepEqual(fillCall, ['--session', 'flash-run-pause', 'fill', '@e5', 'Paris'], 'the driver receives the value verbatim');
-});
-
-test('flash web run --resume reads --value when given, instead of stdin', async () => {
-  const env = agentBrowserRounds([
-    { tree: '- textbox "City" [ref=e5]\n' },
-    { tree: '- textbox "City" [ref=e5]\n' },
-    { tree: '- textbox "City" [ref=e5]\n' },
-    { url: 'https://example.com/2', tree: '- heading "Next" [ref=e9]\n' },
-  ]);
-  forceRun('type', 'e5', ['e5', 'none']);
-  const r1 = await flash(['web', 'run', 'enter the city', '--session', 'run-value-flag', '--json'], { env });
-  const id = JSON.parse(r1.stdout).resumeId;
-  forceRun('done', 'none', ['e9', 'none']);
-  const r2 = await flash(['web', 'run', '--resume', id, '--value', 'Lima', '--json'], { env });
-  assert.equal(r2.code, 0, r2.stderr);
-  const fillCall = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c[2] === 'fill');
-  assert.deepEqual(fillCall, ['--session', 'flash-run-value-flag', 'fill', '@e5', 'Lima']);
-});
-
-test('flash web run pauses with "needs secret input" for a password field, never echoing its name', async () => {
-  const maskedTree = '- textbox "Password" [ref=e5]: ••••••••\n- link "Home" [ref=e1]\n';
-  const env = agentBrowserRounds([{ tree: maskedTree }, { tree: maskedTree }]);
-  forceRun('type', 'e5', ['e1', 'e5', 'none']);
-  const r = await flash(['web', 'run', 'log in', '--session', 'run-secret', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'needs-input');
-  assert.equal(out.secret, true);
-  assert.doesNotMatch(r.stdout, /Password/);
-  assert.match(out.log.at(-1), /^1\. needs secret input · resume: echo "<secret>" \| flash web run --resume [\w-]+$/);
-});
-
-test('flash web run --resume on a changed field re-picks instead of typing blind', async () => {
-  const env = agentBrowserRounds([
-    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 1: initial
-    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 2: freshness before pausing (unchanged)
-    { tree: '- group "Reloaded"\n  - textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 3: resume's re-check -- context now differs
-  ]);
-  forceRun('type', 'e5', ['e1', 'e5', 'none']);
-  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'run-stale-resume', '--json'], { env });
-  const out1 = JSON.parse(r1.stdout);
-  assert.equal(out1.stop, 'needs-input');
-
-  forceRun('done', 'none', ['e1', 'e5', 'none']); // the re-pick, decided fresh on the changed page
-  const r2 = await flash(['web', 'run', '--resume', out1.resumeId, '--json'], { env, input: 'Paris\n' });
-  assert.equal(r2.code, 0, r2.stderr);
-  const out2 = JSON.parse(r2.stdout);
-  assert.equal(out2.stop, 'done');
-  assert.equal(out2.acted, 0, 'nothing was typed -- the field had gone stale');
-  assert.deepEqual(out2.log, ['1. done'], 're-picked at the same step, not advanced past it');
-  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"fill"/, 'never typed into the stale ref');
-  assert.doesNotMatch(r2.stdout, /Paris/);
-});
-
-test('flash web run --resume errors clearly on an unknown or already-used id', async () => {
-  const r = await flash(['web', 'run', '--resume', 'nonexistent-id']);
-  assert.equal(r.code, 2);
-  assert.match(r.stderr, /no pending run "nonexistent-id"/);
-  assert.match(r.stderr, /flash web run/);
-});
-
-test('flash web run sweeps expired run-state files (past the 1h TTL) on the next run', async () => {
-  const dir = path.join(home, 'web', 'runs');
-  fs.mkdirSync(dir, { recursive: true });
-  const staleFile = path.join(dir, 'stale-id.json');
-  fs.writeFileSync(staleFile, JSON.stringify({ goal: 'x' }), { mode: 0o600 });
-  const twoHoursAgo = new Date(Date.now() - 2 * 3600_000);
-  fs.utimesSync(staleFile, twoHoursAgo, twoHoursAgo);
-
-  const env = agentBrowserRounds([{ tree: '- link "Home" [ref=e1]\n' }]);
-  forceRun('done', 'none', ['e1', 'none']);
-  await flash(['web', 'run', 'anything', '--session', 'run-cleanup', '--json'], { env });
-  assert.ok(!fs.existsSync(staleFile), 'a run-state file older than 1h is swept automatically');
-});
-
-// ---------- flash web run --driver bh (Task 17-18): the fast loop ----------
 // A fake `browser-harness` speaking the exact file protocol runBh uses (test/fixtures/web/
 // fake-browser-harness.mjs) — no real Python or Chrome. `round` (a plain counter file) is "the
 // current page": snapshot/resolve read it, a non-stale dispatch advances it and returns the next
-// page, mirroring the real driver's one-call resolve+dispatch+post-snapshot.
-function bhPage(dir, n, { url = 'https://example.com', title = 'Example', text = '', refs, login = false }) {
+// page, mirroring the real driver's one-call resolve+dispatch+post-snapshot. `marker` defaults to
+// `[url, title, text.length]` (BH_SNAPSHOT_JS's own cheap approximation) unless a test overrides it.
+function bhPage(dir, n, { url = 'https://example.com', title = 'Example', text = '', refs, login = false, marker } = {}) {
   const f = path.join(dir, `page-${n}.json`);
-  fs.writeFileSync(f, JSON.stringify({ url, title, text, refs, login }));
+  fs.writeFileSync(f, JSON.stringify({ url, title, text, refs, login, marker: marker ?? [url, title, text.length] }));
   return f;
 }
 
@@ -1015,77 +800,311 @@ const bhOps = (env) => fs.readFileSync(env.FAKE_BH_LOG, 'utf8').trim().split('\n
 // snapshot() reads — simulates the live DOM having already moved on from what Jev decided against.
 function bhResolvePage(refs) {
   const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'flash-bh-resolve-')), 'page.json');
-  fs.writeFileSync(f, JSON.stringify({ url: 'https://example.com', title: 'Example', text: '', refs }));
+  // Same default marker formula as bhPage(): a page handed back from a stale resolve/dispatch still
+  // needs a real marker, or run's own done/stuck recheck (comparing this page's marker to a fresh
+  // eval) spuriously reports a mismatch on the very next step.
+  fs.writeFileSync(f, JSON.stringify({ url: 'https://example.com', title: 'Example', text: '', refs, marker: ['https://example.com', 'Example', 0] }));
   return f;
 }
 
-test('flash web run --driver bh: pause on a text field, resume types it and continues (2 driver calls per step)', async () => {
-  const refs = [{ ref: 'n5', role: 'textbox', name: 'Origin', value: '', state: [], context: '' }];
+// A click ref, a type (editable) ref, and a select ref (one candidate per non-selected option,
+// matching BH_SNAPSHOT_JS's own split) — the three `kind`s runStep groups into their own heads.
+const clickRef = (ref, name, extra = {}) => ({ ref, role: 'button', name, value: null, state: [], context: '', kind: 'click', guard: `g-${ref}`, ...extra });
+const typeRef = (ref, name, extra = {}) => ({ ref, role: 'textbox', name, value: '', state: [], context: '', kind: 'type', guard: `g-${ref}`, ...extra });
+const selectRef = (ref, name, value, current, extra = {}) => ({ ref, role: 'combobox', name, value, current_value: current, state: [], context: '', kind: 'select', guard: `g-${ref.split(':')[0]}`, ...extra });
+
+test('flash web run stops on "done" without acting (marker recheck passes, no re-snapshot)', async () => {
+  const refs = [clickRef('n1', 'Home')];
+  const env = bhEnv([{ refs }]);
+  forceRunStep({ click: ['n1'] }, 'done');
+  const r = await flash(['web', 'run', 'search for wombats', '--session', 'run-done', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'done');
+  assert.equal(out.acted, 0);
+  assert.equal(jev.requests.length, 1, 'only the run-step fan-out — no risky call, nothing to act on');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'marker', 'close'], 'the done recheck is one cheap marker eval, not a full re-snapshot');
+});
+
+test('flash web run stops on "stuck" without acting', async () => {
+  const refs = [clickRef('n1', 'Home')];
+  const env = bhEnv([{ refs }]);
+  forceRunStep({ click: ['n1'] }, 'stuck');
+  const r = await flash(['web', 'run', 'buy a spaceship', '--session', 'run-stuck', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(JSON.parse(r.stdout).stop, 'stuck');
+});
+
+test('flash web run re-decides instead of trusting "done" when the page moved on during the Jev call', async () => {
+  const refs = [clickRef('n1', 'Home')];
+  const markerOnce = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'flash-bh-marker-')), 'used');
+  const env = bhEnv([{ refs }], { FAKE_BH_MARKER_MISMATCH_ONCE: markerOnce });
+  forceRunStep({ click: ['n1'] }, 'done'); // decided against the page in hand, but the first marker check reports a mismatch
+  forceRunStep({ click: ['n1'] }, 'done'); // re-decided after the resulting re-snapshot resyncs
+  // --no-cache: the re-decide reads an identical page (same url/title/text), which would otherwise
+  // be served from decide()'s own cache -- forcing a real second request is the point of this test.
+  const r = await flash(['web', 'run', 'reach the done page', '--session', 'run-redecide', '--driver', 'bh', '--no-cache', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'done');
+  assert.deepEqual(out.log, ['1. done'], 'the retry re-decides the SAME step, never advances the step number');
+  assert.equal(jev.requests.length, 2, 'one run-step call per decision, including the re-decide');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'marker', 'snapshot', 'marker', 'close']);
+});
+
+test('flash web run stops "? unsure" on low confidence without acting', async () => {
+  const refs = [clickRef('n1', 'Option A'), clickRef('n2', 'Option B')];
+  const env = bhEnv([{ refs }]);
+  jev.force({ status: 200, body: { answers: {
+    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.9, scroll: 0.03, done: 0.03, stuck: 0.04 } },
+    click_target: { type: 'choice', choice: 'n1', confidence: 0.5, probabilities: { n1: 0.5, n2: 0.45, none: 0.05 } },
+  } } });
+  const r = await flash(['web', 'run', 'pick one', '--session', 'run-unsure', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(JSON.parse(r.stdout).stop, 'unsure');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'close'], 'never resolves/dispatches once unsure');
+});
+
+test('flash web run stops on a stale target (guard changed) without dispatching', async () => {
+  const refs1 = [clickRef('n2', 'Continue')];
+  const refs2 = [{ ...clickRef('n2', 'Continue'), guard: 'g-n2-changed' }]; // guard moved on before acting
+  const env = bhEnv([{ refs: refs1 }], { FAKE_BH_RESOLVE_PAGE: bhResolvePage(refs2) });
+  forceRunStep({ click: ['n2'] }, 'click', 'n2');
+  const r = await flash(['web', 'run', 'continue', '--session', 'run-stale', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'stale');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'resolve catches it, dispatch never runs');
+});
+
+test('flash web run stops on a risky target (backstop) and names it, without acting', async () => {
+  const refs = [clickRef('n2', 'Delete')];
+  const env = bhEnv([{ refs }]);
+  forceRunStep({ click: ['n2'] }, 'click', 'n2');
+  const r = await flash(['web', 'run', 'remove the item', '--session', 'run-risky', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'risky');
+  assert.match(out.log.join('\n'), /risky @n2 button "Delete" \(keyword\/role backstop\)/);
+  assert.equal(jev.requests.length, 1, 'the backstop fires without ever calling the risky noul');
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'resolve runs, dispatch never does');
+});
+
+test('flash web run clicks across two steps, reusing the post-act snapshot, then stops on "done"', async () => {
+  const refs1 = [clickRef('n2', 'Continue')];
+  const refs2 = [{ ref: 'n9', role: 'heading', name: 'B', value: null, state: [], context: '', kind: 'click', guard: 'g-n9' }];
   const env = bhEnv([
-    { refs }, // round 1: initial snapshot
-    { url: 'https://example.com/confirmed', title: 'Confirmed', refs: [] }, // round 2: after typing (resume's dispatch)
+    { refs: refs1, url: 'https://example.com/a', title: 'A' }, // round 1: initial
+    { refs: refs2, url: 'https://example.com/b', title: 'B' }, // round 2: post-act (navigated)
   ]);
-  forceRun('type', 'n5', ['n5', 'none']);
-  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'bh-pause', '--driver', 'bh', '--json'], { env });
+  forceRunStep({ click: ['n2'] }, 'click', 'n2');
+  forceRisky(0.05);
+  forceRunStep({ click: ['n9'] }, 'done');
+  const r = await flash(['web', 'run', 'go to page b', '--session', 'run-multi', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'done');
+  assert.equal(out.acted, 1);
+  assert.match(out.log[0], /^1\. clicked @n2 button "Continue" · page changed: yes$/);
+  assert.equal(out.log[1], '2. done');
+  // init, snapshot (initial), resolve+dispatch (step 1: dispatch returns the post-act page in the
+  // same call), marker (step 2's done recheck, matches -- no extra snapshot), close.
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'dispatch', 'marker', 'close']);
+});
+
+test('flash web run stops at --max-steps', async () => {
+  const refs = [clickRef('n2', 'Continue')];
+  const env = bhEnv([{ refs }, { refs, url: 'https://example.com/a' }]);
+  forceRunStep({ click: ['n2'] }, 'click', 'n2');
+  forceRisky(0.05);
+  const r = await flash(['web', 'run', 'keep clicking', '--session', 'run-maxsteps', '--driver', 'bh', '--max-steps', '1', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'max-steps');
+  assert.equal(out.acted, 1);
+});
+
+test('flash web run stops after 3 steps with no page change, never retrying the same click', async () => {
+  const refs = [clickRef('n2', 'Continue')];
+  const env = bhEnv(Array(4).fill({ refs })); // round never advances url/title/refs -- "no change" every time
+  for (let i = 0; i < 3; i++) { forceRunStep({ click: ['n2'] }, 'click', 'n2'); forceRisky(0.05); }
+  const r = await flash(['web', 'run', 'keep clicking continue', '--session', 'run-nochange', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'no-change');
+  assert.equal(out.acted, 3);
+  for (const l of out.log) assert.match(l, /page changed: no$/);
+  assert.equal(bhOps(env).filter((o) => o === 'dispatch').length, 3, 'each click acted on once, never retried');
+});
+
+test('flash web run: a scroll that never moves the page counts toward the no-change limit', async () => {
+  const refs = [clickRef('n1', 'Something below the fold')];
+  const env = bhEnv([{ refs }]); // one page, scroll never advances the round -- "moved: false" every time
+  for (let i = 0; i < 3; i++) forceRunStep({ click: ['n1'] }, 'scroll');
+  const r = await flash(['web', 'run', 'find something further down', '--session', 'run-scroll-nochange', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'no-change');
+  for (const l of out.log) assert.match(l, /scrolled · page moved: no/);
+  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'scroll', 'scroll', 'scroll', 'close']);
+});
+
+test('flash web run: select is wired end to end (dispatches the DOM option value, risky gate applies)', async () => {
+  const refs1 = [selectRef('n3:2', 'Ticket type → VIP', 'vip', 'General')];
+  const refs2 = [{ ...selectRef('n3:2', 'Ticket type → VIP', 'vip', 'VIP'), guard: 'g-n3' }];
+  const env = bhEnv([{ refs: refs1 }, { refs: refs2 }]);
+  forceRunStep({ select: ['n3:2'] }, 'select', 'n3:2');
+  forceRisky(0.05);
+  forceRunStep({ select: ['n3:2'] }, 'done'); // round 2 still has one select ref -- its own head is still offered
+  const r = await flash(['web', 'run', 'choose the VIP ticket', '--session', 'run-select', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.acted, 1);
+  assert.equal(out.stop, 'done');
+  assert.match(out.log[0], /^1\. selected @n3:2 combobox "Ticket type → VIP"/);
+  const dispatchCall = fs.readFileSync(env.FAKE_BH_LOG, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c.op === 'dispatch');
+  assert.equal(dispatchCall.kind, 'select');
+  assert.equal(dispatchCall.value, 'vip', 'dispatches the DOM option value, not its display label');
+});
+
+test('flash web run: click_target and type_target are scoped to their own kind only (operation-scoped heads)', async () => {
+  const refs = [clickRef('n1', 'Continue'), typeRef('n5', 'Origin')];
+  const env = bhEnv([{ refs }, { refs: [] }]);
+  forceRunStep({ click: ['n1'], type: ['n5'] }, 'click', 'n1');
+  forceRisky(0.05);
+  forceRunStep({}, 'done');
+  await flash(['web', 'run', 'continue', '--session', 'run-scoped', '--driver', 'bh', '--json'], { env });
+  const body = jev.requests.at(0).body;
+  assert.deepEqual(Object.keys(body.questions.click_target.criteria).sort(), ['n1', 'none'], 'the editable field never appears as a click candidate');
+  assert.deepEqual(Object.keys(body.questions.type_target.criteria).sort(), ['n5', 'none'], 'the button never appears as a type candidate');
+  assert.equal(body.questions.operation.criteria.select, undefined, 'select is not offered -- no select candidates on this page');
+});
+
+test('flash web run pauses on a text field, types the exact stdin value on --resume, and continues', async () => {
+  const refs = [typeRef('n5', 'Origin')];
+  const env = bhEnv([
+    { refs }, // round 1: initial
+    { url: 'https://example.com/confirm', title: 'Confirmed', refs: [] }, // round 2: after typing
+  ]);
+  forceRunStep({ type: ['n5'] }, 'type', 'n5');
+  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'run-pause', '--driver', 'bh', '--json'], { env });
   assert.equal(r1.code, 0, r1.stderr);
   const out1 = JSON.parse(r1.stdout);
   assert.equal(out1.stop, 'needs-input');
   assert.equal(out1.ref, 'n5');
+  assert.equal(out1.secret, false);
   assert.ok(out1.resumeId);
+  assert.match(out1.log.at(-1), /^1\. needs input: @n5 textbox "Origin" · resume: echo "<text>" \| flash web run --resume [\w-]+$/);
   assert.deepEqual(bhOps(env), ['init', 'snapshot'], 'a type pause never resolves/dispatches, no risky call either');
   assert.equal(jev.requests.length, 1, 'only the run-step fan-out');
 
-  forceRun('done', 'none', ['none']); // round 2's page has no refs at all
+  const runStateFile = path.join(home, 'web', 'runs', `${out1.resumeId}.json`);
+  assert.ok(fs.existsSync(runStateFile));
+  if (process.platform !== 'win32') assert.equal(fs.statSync(runStateFile).mode & 0o777, 0o600);
+
+  forceRunStep({}, 'done');
   const r2 = await flash(['web', 'run', '--resume', out1.resumeId, '--json'], { env, input: 'Paris\n' });
   assert.equal(r2.code, 0, r2.stderr);
   const out2 = JSON.parse(r2.stdout);
   assert.equal(out2.stop, 'done');
   assert.equal(out2.acted, 1);
   assert.match(out2.log[0], /^1\. typed @n5 textbox "Origin" · page changed: yes$/);
-  assert.doesNotMatch(r2.stdout, /Paris/);
+  assert.equal(out2.log[1], '2. done');
+  assert.doesNotMatch(r2.stdout, /Paris/, "the typed value never appears in flash's own stdout");
+  assert.doesNotMatch(r2.stderr, /Paris/);
   assert.doesNotMatch(fs.readFileSync(path.join(home, 'history.jsonl'), 'utf8'), /Paris/);
-  // resume: no `init` (that would open a SECOND tab and abandon the first -- a real leak an
-  // earlier version had) -- just `resolve` (the freshness re-check before typing), `dispatch`
-  // (the actual type), on the same tab run 1 left open, then `close` once the run is done.
-  assert.deepEqual(bhOps(env).slice(2), ['resolve', 'dispatch', 'close'], 'bh --resume: resolve + dispatch, not init + a full re-snapshot');
+  assert.ok(!fs.existsSync(runStateFile), 'the run-state file is consumed (deleted) on resume');
+  // resume: no `init` (that would open a SECOND tab) -- resolve (freshness), dispatch (the type),
+  // marker (done recheck), close.
+  assert.deepEqual(bhOps(env).slice(2), ['resolve', 'dispatch', 'marker', 'close']);
+
+  const dispatchCall = fs.readFileSync(env.FAKE_BH_LOG, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c.op === 'dispatch');
+  assert.equal(dispatchCall.value, 'Paris', 'the driver receives the value verbatim');
 });
 
-test('flash web run --driver bh: risky backstop stops before any driver dispatch call', async () => {
-  const refs = [{ ref: 'n2', role: 'button', name: 'Delete', value: null, state: [], context: '' }];
-  const env = bhEnv([{ refs }]);
-  forceRun('click', 'n2', ['n2', 'none']);
-  const r = await flash(['web', 'run', 'remove the item', '--session', 'bh-risky', '--driver', 'bh', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'risky');
-  assert.match(out.log.join('\n'), /risky @n2 button "Delete" \(keyword\/role backstop\)/);
-  assert.equal(jev.requests.length, 1, 'the backstop fires without ever calling the risky noul');
-  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'resolve runs (to check staleness) but dispatch never does');
+test('flash web run --resume reads --value when given, instead of stdin', async () => {
+  const refs = [typeRef('n5', 'City')];
+  const env = bhEnv([{ refs }, { url: 'https://example.com/2', refs: [] }]);
+  forceRunStep({ type: ['n5'] }, 'type', 'n5');
+  const r1 = await flash(['web', 'run', 'enter the city', '--session', 'run-value-flag', '--driver', 'bh', '--json'], { env });
+  const id = JSON.parse(r1.stdout).resumeId;
+  forceRunStep({}, 'done');
+  const r2 = await flash(['web', 'run', '--resume', id, '--value', 'Lima', '--json'], { env });
+  assert.equal(r2.code, 0, r2.stderr);
+  const dispatchCall = fs.readFileSync(env.FAKE_BH_LOG, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c.op === 'dispatch');
+  assert.equal(dispatchCall.value, 'Lima');
 });
 
-test('flash web run --driver bh: a stale node (role/name/context changed) stops without dispatching', async () => {
-  const refs1 = [{ ref: 'n2', role: 'button', name: 'Continue', value: null, state: [], context: 'Details' }];
-  const refs2 = [{ ref: 'n2', role: 'button', name: 'Continue', value: null, state: [], context: 'Payment' }]; // context changed
+test('flash web run --resume on a changed field (guard moved on) re-picks instead of typing blind', async () => {
+  const refs1 = [typeRef('n5', 'Origin')];
+  const refs2 = [{ ...typeRef('n5', 'Origin'), guard: 'g-n5-reloaded' }]; // guard changed before resume
   const env = bhEnv([{ refs: refs1 }], { FAKE_BH_RESOLVE_PAGE: bhResolvePage(refs2) });
-  forceRun('click', 'n2', ['n2', 'none']);
-  forceRisky(0.05);
-  const r = await flash(['web', 'run', 'continue', '--session', 'bh-stale', '--driver', 'bh', '--json'], { env });
-  assert.equal(r.code, 0, r.stderr);
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'stale');
-  assert.equal(jev.requests.length, 2, 'the risky noul still ran in parallel with resolve; only the dispatch never happens');
-  assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'never reaches dispatch once resolve reports stale');
+  forceRunStep({ type: ['n5'] }, 'type', 'n5');
+  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'run-stale-resume', '--driver', 'bh', '--no-cache', '--json'], { env });
+  const out1 = JSON.parse(r1.stdout);
+  assert.equal(out1.stop, 'needs-input');
+
+  // --no-cache: the re-pick's own Jev-visible state (url/title/text/criteria; guard never reaches
+  // Jev) is otherwise identical to the first decision's, which would be served from decide()'s cache.
+  forceRunStep({ type: ['n5'] }, 'done'); // the re-pick, decided fresh on the changed page
+  const r2 = await flash(['web', 'run', '--resume', out1.resumeId, '--no-cache', '--json'], { env, input: 'Paris\n' });
+  assert.equal(r2.code, 0, r2.stderr);
+  const out2 = JSON.parse(r2.stdout);
+  assert.equal(out2.stop, 'done');
+  assert.equal(out2.acted, 0, 'nothing was typed -- the field had gone stale');
+  assert.deepEqual(out2.log, ['1. done'], 're-picked at the same step, not advanced past it');
+  assert.doesNotMatch(r2.stdout, /Paris/);
 });
 
-test('flash web run --driver bh: an occluded element (covered by something else) refuses like any other stale node', async () => {
-  const refs = [{ ref: 'n7', role: 'button', name: 'Continue', value: null, state: [], context: '' }];
+test('flash web run --resume errors clearly on an unknown or already-used id', async () => {
+  const r = await flash(['web', 'run', '--resume', 'nonexistent-id']);
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /no pending run "nonexistent-id"/);
+  assert.match(r.stderr, /flash web run/);
+});
+
+test('flash web run sweeps expired run-state files (past the 1h TTL) on the next run', async () => {
+  const dir = path.join(home, 'web', 'runs');
+  fs.mkdirSync(dir, { recursive: true });
+  const staleFile = path.join(dir, 'stale-id.json');
+  fs.writeFileSync(staleFile, JSON.stringify({ goal: 'x' }), { mode: 0o600 });
+  const twoHoursAgo = new Date(Date.now() - 2 * 3600_000);
+  fs.utimesSync(staleFile, twoHoursAgo, twoHoursAgo);
+
+  const refs = [clickRef('n1', 'Home')];
+  const env = bhEnv([{ refs }]);
+  forceRunStep({ click: ['n1'] }, 'done');
+  await flash(['web', 'run', 'anything', '--session', 'run-cleanup', '--driver', 'bh', '--json'], { env });
+  assert.ok(!fs.existsSync(staleFile), 'a run-state file older than 1h is swept automatically');
+});
+
+test('flash web run: recent_actions sent to Jev are structured entries (action, kind, page_changed, url, title)', async () => {
+  const refs1 = [clickRef('n2', 'Continue')];
+  const refs2 = [clickRef('n9', 'Next')];
+  const env = bhEnv([
+    { refs: refs1, url: 'https://example.com/a', title: 'A' },
+    { refs: refs2, url: 'https://example.com/b', title: 'B' },
+  ]);
+  forceRunStep({ click: ['n2'] }, 'click', 'n2');
+  forceRisky(0.05);
+  forceRunStep({ click: ['n9'] }, 'done');
+  await flash(['web', 'run', 'go to page b', '--session', 'run-history', '--driver', 'bh', '--json'], { env });
+  // requests: 0 = step 1's run-step fan-out, 1 = step 1's risky noul, 2 = step 2's run-step fan-out.
+  const secondCall = jev.requests.at(2).body;
+  assert.deepEqual(secondCall.state.recent_actions, [
+    { action: 'button "Continue"', kind: 'click', page_changed: true, url: 'https://example.com/b', title: 'B' },
+  ]);
+});
+
+test('flash web run: an occluded element (covered by something else) refuses like any other stale node', async () => {
+  const refs = [clickRef('n7', 'Continue')];
   const env = bhEnv([{ refs }], { FAKE_BH_RESOLVE_PAGE: bhResolvePage(refs), FAKE_BH_COVERED: 'n7' });
-  forceRun('click', 'n7', ['n7', 'none']);
+  forceRunStep({ click: ['n7'] }, 'click', 'n7');
   forceRisky(0.05);
   const r = await flash(['web', 'run', 'continue', '--session', 'bh-occluded', '--driver', 'bh', '--json'], { env });
   assert.equal(r.code, 0, r.stderr);
   const out = JSON.parse(r.stdout);
-  assert.equal(out.stop, 'stale', 'role/name/context all match -- only the in-page occlusion check failed');
+  assert.equal(out.stop, 'stale', 'the guard matches -- only the in-page occlusion check failed');
   assert.deepEqual(bhOps(env), ['init', 'snapshot', 'resolve', 'close'], 'never dispatches onto a covered element');
 });
 
@@ -1114,8 +1133,8 @@ test('flash web check errors with a fix when there is no snapshot yet', async ()
   assert.match(r.stderr, /no snapshot/);
 });
 
-test('flash web run --driver bh: a sign-in wall pauses without asking Jev, --resume continues after the user signs in', async () => {
-  const refs = [{ ref: 'n1', role: 'textbox', name: 'Documento', value: '', state: [], context: '' }];
+test('flash web run: a sign-in wall pauses without asking Jev, --resume continues after the user signs in', async () => {
+  const refs = [typeRef('n1', 'Documento')];
   const env = bhEnv([{ url: 'https://cine.example/Usuarios/Ingresar', refs, login: true }]);
   const before = jev.requests.length;
   const r = await flash(['web', 'run', 'buy 2 tickets', '--session', 'bh-login', '--driver', 'bh', '--json'], { env });
@@ -1127,7 +1146,7 @@ test('flash web run --driver bh: a sign-in wall pauses without asking Jev, --res
   assert.deepEqual(bhOps(env), ['init', 'snapshot'], 'the tab stays open for --resume');
 
   fs.writeFileSync(env.FAKE_BH_PAGE_1, JSON.stringify({ url: 'https://cine.example/checkout', title: 'Checkout', text: '', refs: [], login: false }));
-  forceRun('done', 'none', ['none']);
+  forceRunStep({}, 'done');
   const r2 = await flash(['web', 'run', '--resume', out.resumeId, '--json'], { env });
   assert.equal(r2.code, 0, r2.stderr);
   const out2 = JSON.parse(r2.stdout);

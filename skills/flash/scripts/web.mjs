@@ -275,34 +275,6 @@ export function pickCriteria(refs) {
 
 export const refLabel = (r) => (r.name ? `${r.role} "${r.name}"` : r.role);
 
-// ---------- Task 12c: regions, tried for a two-step pick on big pages ----------
-// Above PICK_CHUNK refs, chunking scatters probability thin regardless of correctness (Task 7b's
-// finding, plan.md's Decisions). Grouping by each ref's own `context` — the nearest enclosing
-// landmark/heading container the parser already records for freshness — narrows the search space
-// to one region before picking within it. Measured on the Task 7 corpus (bench/web/RESULTS.md):
-// Jev tokens fell ~6x, but top-1 dropped from ~78.6% to 72.9% and top-3 from ~95% to 83.7% — a
-// wrong region forecloses the right ref with no "? unsure" signal at the region step itself. The
-// old chunked-merge method wins on top-1 and is what `pickRanked` (flash.mjs) actually uses; this
-// stays as a tested, unused building block for a future attempt (e.g. treating a low-confidence
-// region choice as its own "? unsure", instead of committing to the top region).
-const MIN_REGIONS = 2; // fewer than this isn't a partition worth asking about
-const MAX_REGION_SHARE = 0.9; // one region holding > 90% of refs isn't a useful partition either
-
-// Map<contextLabel, refs[]>, or null when the page's contexts don't actually partition it (the
-// caller falls back to the flat chunked-merge method in that case).
-export function deriveRegions(refs) {
-  const byCtx = new Map();
-  for (const r of refs) {
-    const key = r.context || '(no container)';
-    if (!byCtx.has(key)) byCtx.set(key, []);
-    byCtx.get(key).push(r);
-  }
-  if (byCtx.size < MIN_REGIONS) return null;
-  const largest = Math.max(...[...byCtx.values()].map((v) => v.length));
-  if (largest > refs.length * MAX_REGION_SHARE) return null;
-  return byCtx;
-}
-
 // Locates a ref's JSON object span inside a written page.json file's text, so an "unsure" answer can
 // point Claude at exactly the lines to read instead of the whole file. Walks brace balance rather
 // than assuming a fixed field count, so it survives the page schema changing.
@@ -411,13 +383,16 @@ export async function risky(page, ref, ask) {
 // `browser-harness` invocation per call (~100-300ms, no fresh browser/CDP handshake), always
 // against a tab this driver created itself and closes when done.
 
-// jev-ultrafast's snapshot.js (MIT © 2026 Browser Use; NOTICE), trimmed: kept verbatim are the
-// window.__jevFast node-identity cache, the safe/visible/name/role classification and the
-// visible-text scan; dropped are the guard-tuple/page-key/marker/fingerprint machinery (web.mjs
-// already has its own role/name/context freshness check, freshRef, reused here instead) and the
-// scroll/wait pseudo-actions (not used by pick/click/run today). Output refs already match the
-// common page format directly — no Node-side remapping. password/file/hidden inputs are excluded
-// entirely by `safe()`, not masked (stricter than the agent-browser adapter; see plan.md).
+// jev-ultrafast's snapshot.js (MIT © 2026 Browser Use; NOTICE), ported closely (ultrafast-faithful
+// rewrite): kept verbatim are the window.__jevFast node-identity cache, the safe/visible/name/role
+// classification and the visible-text scan; now ALSO ported are the guard tuple (snapshot.js:47-54)
+// and a cheap page marker, so run's freshness and done/stuck recheck compare in-page state instead
+// of web.mjs's Node-side role/name/context diff. Native <select> elements emit one candidate per
+// non-selected, non-disabled option (snapshot.js:68-71), ref keyed \`n<node>:<optIndex>\`; every other
+// ref carries \`kind: 'click'|'type'\` so run's per-operation target heads can filter without
+// re-deriving it. Output refs already match the common page format directly — no Node-side
+// remapping. password/file/hidden inputs are excluded entirely by \`safe()\`, not masked (stricter
+// than the agent-browser adapter; see plan.md).
 export const BH_SNAPSHOT_JS = `(() => {
   if (!document.body) return null;
   const cache = window.__jevFast ||= { ids: new WeakMap(), nodes: new Map(), next: 1 };
@@ -457,10 +432,22 @@ export const BH_SNAPSHOT_JS = `(() => {
     }
     return null;
   };
-  const scopeText = e => {
-    const s = e.closest('form,dialog,[role="dialog"],article,li,tr,[role="row"],nav,header,footer,main,section') || e.parentElement;
-    return ((s && s.innerText) || '').trim().slice(0, 200);
+  const scopeEl = e => e.closest('form,dialog,[role="dialog"],article,li,tr,[role="row"],nav,header,footer,main,section') || e.parentElement;
+  const scopeText = e => ((scopeEl(e) || {}).innerText || '').trim().slice(0, 200);
+  // Ported from jev_ultrafast/snapshot.js's guard(e): identity, role, name, value/checked/
+  // selectedIndex/readOnly/disabled state, aria-*, href, scope text. Assigned on window.__jevFast so
+  // a later single-node eval (BH_PY_GLUE's _guard_js) can re-invoke it cheaply, without re-running
+  // this whole snapshot, the way jev-ultrafast's Browser.fresh() re-invokes cache.guard/cache.pageKey.
+  cache.guard = e => {
+    if (!e || !e.isConnected || !visible(e)) return null;
+    return [identity(e), role(e), name(e), e.value ?? null, e.checked ?? null, e.selectedIndex ?? null,
+      e.readOnly ?? null, e.matches(':disabled'), e.getAttribute('aria-disabled'), e.getAttribute('aria-expanded'),
+      e.getAttribute('aria-checked'), e.getAttribute('aria-selected'), e.getAttribute('href'), scopeText(e)];
   };
+  // Cheap approximate marker for the done/stuck recheck (agent.py:93-97): url/title/text-length, not
+  // a full content diff. ponytail: a same-length content swap is a false negative; upgrade to a text
+  // hash if that shows up live.
+  cache.marker = () => [location.href, document.title, (document.body.innerText || '').length];
   const refs = [];
   for (const e of document.querySelectorAll(selector)) {
     if (!safe(e) || !visible(e) || e.matches(':disabled') || e.closest('[aria-disabled=true]')) continue;
@@ -479,15 +466,26 @@ export const BH_SNAPSHOT_JS = `(() => {
     if (['checkbox', 'radio'].includes(e.type)) state.push('checked=' + String(e.checked));
     const context = scopeText(e);
     const node = identity(e);
+    // One guard per DOM node (not per ref): every select option shares its select's own guard, the
+    // same node ultrafast's browser.py checks freshness against for a 'select' action.
+    const guard = cache.guard(e);
     if (e.tagName === 'SELECT') {
-      const value = [...e.selectedOptions].map(o => o.label || o.value).join(', ');
-      refs.push({ ref: 'n' + node, role: rname, name: rlabel, value, state, context });
+      const current = [...e.selectedOptions].map(o => o.label || o.value).join(', ');
+      let i = 0;
+      for (const o of e.options) {
+        if (o.selected || o.disabled || o.closest('optgroup[disabled]')) continue;
+        i++;
+        refs.push({ ref: 'n' + node + ':' + i, role: rname, name: rlabel + ' → ' + (o.label || o.value),
+          value: o.value, label: o.label || o.value, current_value: current, state, context, kind: 'select', guard });
+      }
     } else {
+      const editable = !e.readOnly && e.getAttribute('aria-readonly') !== 'true' &&
+        (['textbox','searchbox','spinbutton'].includes(rname) || (rname === 'combobox' && ['INPUT','TEXTAREA'].includes(e.tagName)));
       const value = 'value' in e ? String(e.value) : (e.isContentEditable ? e.innerText.trim() : null);
       // Where a link goes tells Jev what a terse label means (HN's "discuss" is the comments page).
       let href = null;
       if (e.tagName === 'A' && e.href) { const u = new URL(e.href, location.href); href = (u.origin === location.origin ? '' : u.host) + u.pathname + u.search; href = href.slice(0, 120); }
-      refs.push({ ref: 'n' + node, role: rname, name: rlabel, value, state, context, ...(href ? { href } : {}) });
+      refs.push({ ref: 'n' + node, role: rname, name: rlabel, value, state, context, kind: editable ? 'type' : 'click', guard, ...(href ? { href } : {}) });
     }
   }
   refs.splice(250);
@@ -503,20 +501,29 @@ export const BH_SNAPSHOT_JS = `(() => {
   }
   // Password inputs never enter refs; this flag alone tells run a sign-in wall is up.
   const login = [...document.querySelectorAll('input[type=password]')].some((e) => visible(e));
-  return { url: location.href, title: document.title, text: words.join('\\n').slice(0, 6000), refs, login };
+  return { url: location.href, title: document.title, text: words.join('\\n').slice(0, 6000), refs, login, marker: cache.marker() };
 })()`;
 
 // One fixed Python program, piped to `browser-harness` on every call (its helpers — new_tab, js,
 // cdp, close_tab — are pre-imported into the exec'd script's globals). Reads one JSON command from
 // FLASH_BH_CMD, writes one JSON result to FLASH_BH_OUT (never parses stdout: browser-harness can
-// print an update banner there). `resolve`/`dispatch` re-run BH_SNAPSHOT_JS fresh, so freshness is
-// checked against the page as it is right now, not a stale earlier read; `dispatch` re-checks it
-// again immediately before touching the DOM (browser.py's `fresh()` re-check, ported), then
-// dispatches and returns the post-act snapshot in the same call — no separate re-snapshot.
+// print an update banner there). `resolve`/`dispatch` freshness is now one cheap single-node
+// `cache.guard` eval (`_guard_js`, ultrafast-faithful rewrite) instead of a full BH_SNAPSHOT_JS
+// re-run just to compare one ref — the full snapshot only runs when that check reports stale, when
+// the op is a plain `resolve`, or after a successful dispatch (the post-act observation the next
+// step needs). `dispatch` re-checks the same guard again immediately before touching the DOM
+// (browser.py's `fresh()` re-check, ported), then dispatches and returns the post-act snapshot in
+// the same call — no separate re-snapshot.
 export const BH_PY_GLUE = `import json, os, sys, time
 
 def _snapshot():
     return js(SNAPSHOT_JS)
+
+def _guard_js(node):
+    return "(() => { const c=window.__jevFast; if (!c) return null; const e=c.nodes.get(%d); return e ? c.guard(e) : null; })()" % node
+
+def _marker_js():
+    return "(() => { const c=window.__jevFast; return c ? c.marker() : null; })()"
 
 def _resolve_js(node):
     return (
@@ -555,32 +562,35 @@ try:
     op = cmd.get('op')
     if op == 'init':
         new_tab(cmd['url']) if cmd.get('url') else new_tab()
-        cdp('Page.bringToFront')  # Chrome drops trusted mouse input on a hidden tab
+        # browser.py:26-27's experiment, ported: keep rAF/menus rendering and trusted input landing
+        # in this owned background tab without stealing the user's foreground Chrome tab. Live-tested
+        # (see NOTICE/plan.md): holds for both nav clicks and form dispatch, so bringToFront is no
+        # longer called per dispatch/scroll -- only once here, for the tab's very first paint.
+        cdp('Emulation.setFocusEmulationEnabled', enabled=True)
+        cdp('Page.bringToFront')
         if cmd.get('url'): wait_for_load(10)
         out = {'ok': True}
     elif op == 'snapshot':
         page = _snapshot()
         out = {'ok': page is not None, 'page': page}
+    elif op == 'marker':
+        out = {'ok': True, 'marker': js(_marker_js())}
     elif op in ('resolve', 'dispatch'):
-        page = _snapshot()
-        refs = (page or {}).get('refs', [])
-        target = next((r for r in refs if r.get('ref') == cmd.get('ref')), None)
-        stale = (
-            page is None or target is None or
-            (cmd.get('role') and target.get('role') != cmd.get('role')) or
-            (cmd.get('name') and target.get('name') != cmd.get('name')) or
-            (cmd.get('context') and target.get('context') != cmd.get('context'))
-        )
+        node = int(cmd.get('ref', '')[1:].split(':')[0])
+        expected = cmd.get('guard')
+        current = js(_guard_js(node))
+        # No guard sent: the plain adapter contract (click/pick, Task 15) only checks the node still
+        # exists/is visible. A guard IS sent by run's fast path, which compares the full tuple.
+        stale = current is None or (expected is not None and current != expected)
         if stale or op == 'resolve':
-            out = {'ok': not stale, 'stale': stale, 'page': page}
+            out = {'ok': not stale, 'stale': stale, 'page': _snapshot()}
         else:
-            node = int(cmd['ref'][1:])
             kind = cmd.get('kind')
+            value = cmd.get('value', '')
             dispatched = False
-            if js('document.visibilityState') != 'visible': cdp('Page.bringToFront')
             before = js('location.href')
             if kind == 'select':
-                dispatched = bool(js(_select_js(node, cmd.get('value', ''))))
+                dispatched = bool(js(_select_js(node, value)))
             else:
                 pos = js(_resolve_js(node))
                 if pos is not None:
@@ -591,10 +601,10 @@ try:
                         mod = 4 if sys.platform == 'darwin' else 2
                         cdp('Input.dispatchKeyEvent', type='keyDown', key='a', code='KeyA', modifiers=mod, commands=['selectAll'])
                         cdp('Input.dispatchKeyEvent', type='keyUp', key='a', code='KeyA', modifiers=mod)
-                        cdp('Input.insertText', text=cmd.get('value', ''))
+                        cdp('Input.insertText', text=value)
                     dispatched = True
             if not dispatched:
-                out = {'ok': False, 'stale': True, 'page': page}
+                out = {'ok': False, 'stale': True, 'page': _snapshot()}
             else:
                 # A click that navigates needs the new document, not the old one mid-unload: give it
                 # up to 0.6 s to start navigating, then wait for load. Same-page updates fall through.
@@ -613,7 +623,6 @@ try:
                     _navigated()
                 out = {'ok': True, 'stale': False, 'page': _snapshot()}
     elif op == 'scroll':
-        if js('document.visibilityState') != 'visible': cdp('Page.bringToFront')
         before = js('scrollY')
         cdp('Input.dispatchMouseEvent', type='mouseWheel', x=js('innerWidth')//2, y=js('innerHeight')//2, deltaX=0, deltaY=int(js('innerHeight') * 0.8))
         time.sleep(0.35)
@@ -681,7 +690,7 @@ function runBh(session, cmd, opts = {}) {
 
 function toBhPage(raw) {
   return { driver: 'browser-harness', url: raw?.url || '', title: raw?.title || '', text: raw?.text || '',
-    refs: raw?.refs || [], login: !!raw?.login, taken: new Date().toISOString() };
+    refs: raw?.refs || [], login: !!raw?.login, marker: raw?.marker ?? null, taken: new Date().toISOString() };
 }
 
 // Isolated tab, created once per session per process (the daemon keeps it attached across our
@@ -718,9 +727,9 @@ export const browserHarness = {
 };
 
 // ---------- fast-path primitives (Task 17's collapsed run loop) ----------
-// Unlike the plain adapter above, these carry the target's role/name/context so `resolve`/
-// `dispatch` do the SAME freshness compare as `freshRef()` (web.mjs/flash.mjs), just done in-page
-// instead of via a second snapshot() round trip.
+// Unlike the plain adapter above, these carry the target's own `guard` tuple (captured at snapshot
+// time) so `resolve`/`dispatch` do the SAME in-page freshness compare ultrafast's Browser.fresh()
+// does, instead of a role/name/context diff computed on two separate Node-side snapshots.
 
 export function bhInit(session, url) {
   const r = runBh(session, { op: 'init', url });
@@ -734,12 +743,12 @@ export function bhSnapshot(session) {
 }
 
 export function bhResolve(session, ref, target) {
-  const r = runBh(session, { op: 'resolve', ref, role: target.role, name: target.name, context: target.context });
+  const r = runBh(session, { op: 'resolve', ref, guard: target.guard });
   return { ok: r.ok, stale: !!r.stale, page: r.page ? toBhPage(r.page) : null, error: r.error };
 }
 
 export function bhDispatch(session, ref, kind, value, target) {
-  const r = runBh(session, { op: 'dispatch', ref, kind, value: value ?? '', role: target.role, name: target.name, context: target.context });
+  const r = runBh(session, { op: 'dispatch', ref, kind, value: value ?? '', guard: target.guard });
   return { ok: r.ok && !r.stale, stale: !!r.stale, page: r.page ? toBhPage(r.page) : null, error: r.error };
 }
 
@@ -747,6 +756,13 @@ export function bhDispatch(session, ref, kind, value, target) {
 export function bhScroll(session) {
   const r = runBh(session, { op: 'scroll' });
   return { ok: !!r.ok, moved: !!r.moved, page: r.page ? toBhPage(r.page) : null, error: r.error };
+}
+
+// The done/stuck recheck (agent.py:93-97): one cheap in-page marker eval, no full snapshot, to
+// catch a page that moved on during the Jev call before trusting "done"/"stuck".
+export function bhMarker(session) {
+  const r = runBh(session, { op: 'marker' });
+  return r.ok ? { ok: true, marker: r.marker } : { ok: false, error: r.error || 'marker failed' };
 }
 
 export function bhClose(session) {
