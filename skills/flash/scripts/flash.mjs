@@ -106,7 +106,7 @@ function recordStats(run) {
   try {
     fs.mkdirSync(HOME, { recursive: true });
     const row = { ts: new Date().toISOString(), cmd: process.argv[2], project: projectName(process.cwd()),
-      provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved),
+      by: process.env.CLAUDECODE ? 'claude' : 'you', session: process.env.CLAUDE_CODE_SESSION_ID, provider: provider().name, items: run.items, requests: run.requests, cached: cacheHits, jev_tokens: run.jevTokens, saved: Math.max(0, run.saved),
       ...audit, results: audit.results?.slice(0, 50) };
     const g = afterGuard(audit.inputs);
     if (g) row.after_guard = g;
@@ -118,10 +118,12 @@ function recordStats(run) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// The project a row belongs to: the git repo's root folder, or the working folder outside git.
+// The project a row belongs to: the main repo's root folder (a worktree counts as its main repo,
+// via the shared .git dir), or the working folder outside git.
 function projectName(cwd) {
   try {
-    return path.basename(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim());
+    const common = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return path.basename(path.dirname(common));
   } catch { return path.basename(cwd); }
 }
 
@@ -928,7 +930,7 @@ function describeRun(r) {
   if (r.cmd === 'guard') return `blocked whole Read of ${r.file}`;
   const top = (r.results || []).slice(0, 3).map((x) => (typeof x === 'string' ? x
     : `${x.id}${x.line ? ':' + x.line : ''}${x.label ? ' [' + x.label + ']' : ''}${x.picked?.length ? ' ' + x.picked[0] : ''} ${x.p ?? ''}`.trim()));
-  return `${r.query ? JSON.stringify(clip(r.query, 70)) : ''}${top.length ? ' → ' + top.join(', ') : ''}${r.after_guard ? '  (after hook)' : ''}`;
+  return `${r.query ? JSON.stringify(clip(r.query, 70)) : ''}${top.length ? ' → ' + top.join(', ') : ''}${r.after_guard ? '  (after hook)' : ''}${r.by ? '  by ' + r.by : ''}`;
 }
 
 function totalsLine(rows) {

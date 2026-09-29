@@ -382,6 +382,23 @@ test('guard blocks a whole Read of a large file and allows a ranged one', async 
   assert.match((await flash(['gain', '--plain'])).stdout, /guard +1 runs/);
 });
 
+test('guard blocks a file once per session, then lets the second whole Read through', async () => {
+  const big = write('big2.txt', Array.from({ length: 900 }, (_, i) => `line ${i}`).join('\n'));
+  const read = (session_id) => run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', session_id, tool_name: 'Read', tool_input: { file_path: big } }) });
+  assert.match((await read('s1')).stdout, /"deny"/);
+  assert.equal(history()[0].session, 's1');
+  assert.equal((await read('s1')).stdout, '', 'second ask in the same session passes');
+  assert.match((await read('s2')).stdout, /"deny"/, 'a new session is blocked again');
+});
+
+test('history rows say whether Claude ran the command', async () => {
+  await flash(['filter', 'q?', write('a.txt', 'MATCH')], { env: { CLAUDECODE: '1', CLAUDE_CODE_SESSION_ID: 'sx' } });
+  const [row] = history();
+  assert.equal(row.by, 'claude');
+  assert.equal(row.session, 'sx');
+  assert.match((await flash(['gain', '--history', '1'])).stdout, /by claude/);
+});
+
 test('guard turns the footer of a real run into a UI message', async () => {
   write('a.txt', 'MATCH');
   const r = await flash(['filter', 'q?', 'a.txt']);
