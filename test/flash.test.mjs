@@ -404,6 +404,19 @@ test('skill prints SKILL.md with this install path filled in', async () => {
   assert.ok(r.stdout.includes(path.join(ROOT, 'skills/flash')));
 });
 
+test('skill and help web cover flash web: stop reasons, secrets, and permission guidance', async () => {
+  const skill = (await flash(['skill'])).stdout;
+  assert.match(skill, /## Browser \(`flash web`\)/);
+  assert.match(skill, /needs input:.*resume:/);
+  assert.match(skill, /needs secret input/);
+  assert.match(skill, /allow `flash web snapshot`.*approve `flash web click`\/`flash web run`/s);
+  assert.match(skill, /logged into/);
+  const help = (await flash(['help', 'web'])).stdout;
+  assert.match(help, /^flash web/);
+  assert.match(help, /click\/type loop|click.*run/);
+  assert.match(help, /--resume/);
+});
+
 test('guard blocks a whole Read of a large file and allows a ranged one', async () => {
   const big = write('big.txt', Array.from({ length: 900 }, (_, i) => `line ${i}`).join('\n'));
   const whole = await run(GUARD, [], { input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: big } }) });

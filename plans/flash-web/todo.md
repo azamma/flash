@@ -131,7 +131,7 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 12: `SKILL.md` and help
 **Description:** When to use each web command; how to handle `needs input`, `? unsure` and risky stops; read page.json yourself only when Flash says unsure. Warn before use on logged-in sensitive pages. Tell users to allow `snapshot/pick/check` freely but approve `click/run` per use.
 **Acceptance criteria:**
-- [ ] `flash skill` and `flash help web` show it.
+- [x] `flash skill` and `flash help web` show it.
 **Verification:** `npm test`.
 **Dependencies:** 11 · **Files:** `skills/flash/SKILL.md`, `flash.mjs` · **Scope:** S
 
