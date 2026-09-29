@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan } from './web.mjs';
+import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, UNSURE_P1, UNSURE_MARGIN } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1089,8 +1089,8 @@ Drive a browser through an adapter (agent-browser today) so Claude never reads t
   pick "<intent>"     choose the one element that best satisfies intent; never acts
   check "<question>"  yes/no judgement over the page's url, title and visible text
 Pick prints the top choice with its probability, up to two runner-ups, and either the exact driver
-command to act on it or "? unsure: read <page.json> lines a-b" when confidence is low (top p < 0.6
-or margin to the runner-up < 0.2) — read exactly those lines yourself rather than the whole file.
+command to act on it or "? unsure: read <page.json> lines a-b" when confidence is low (top p < 0.85
+or margin to the runner-up < 0.2, tuned in Task 7b) — read exactly those lines yourself rather than the whole file.
 Check prints "0.93 yes" (or "no"), labelled "? borderline" within --band of --threshold (defaults
 0.5/0.15, same as filter).
 Every call uses an isolated browser session, flash-<session> (default: this git project's name),
@@ -1248,7 +1248,7 @@ async function cmdWebPick({ pos, flags }) {
     lines.push(`${f2(topP)}  ${topId}  ${refLabel(byRef[topId])}`);
     for (const [id, p] of real.slice(1, 3)) lines.push(`  runner-up ${f2(p)}  ${id}  ${refLabel(byRef[id])}`);
     const p1 = ranked[0][1], p2 = ranked[1]?.[1] ?? 0;
-    unsure = p1 < 0.6 || p1 - p2 < 0.2;
+    unsure = p1 < UNSURE_P1 || p1 - p2 < UNSURE_MARGIN;
     if (unsure) {
       const span = refLineSpan(fs.readFileSync(file, 'utf8'), topId);
       lines.push(`? unsure: read ${file}${span ? ` lines ${span[0]}-${span[1]}` : ''}`);

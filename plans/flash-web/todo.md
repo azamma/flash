@@ -84,8 +84,8 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 7b: Tune the unsure rule on the saved pick runs
 **Description:** Before acting on picks, use the Task 7 runs already saved in `bench/web/` (no new Jev calls): for each wrong top-1, was it flagged `? unsure` by the rule (top p < 0.6 or margin < 0.2)? Pick thresholds so that almost every wrong pick is flagged while right picks mostly are not; report the trade-off table and set the new defaults.
 **Acceptance criteria:**
-- [ ] Table: threshold vs share of wrong picks flagged vs share of right picks flagged.
-- [ ] Chosen defaults written in plan.md and used by `pick`.
+- [x] Table: threshold vs share of wrong picks flagged vs share of right picks flagged.
+- [x] Chosen defaults written in plan.md and used by `pick`.
 **Verification:** `npm test`.
 **Dependencies:** 7 · **Files:** `bench/web/*`, `web.mjs`, `plan.md` · **Scope:** S
 

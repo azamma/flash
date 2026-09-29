@@ -55,6 +55,15 @@ Task checklist: [todo.md](todo.md).
 - **Gated by benchmarks.** Keep `pick` only if it is as accurate as Claude reading the snapshot. Keep
   `click`/`run` only if end-to-end success does not drop and Claude tokens and time drop materially.
   Otherwise remove, as with the MCP hook.
+- **Unsure rule (Task 7b, tuned against the Task 7 pick runs, `bench/web/tune-unsure.mjs`):**
+  `p1 < 0.85` or `p1 - p2 < 0.2` (was `0.6`/`0.2`). On the 129 scored picks (29 wrong, 100 right),
+  raising the p1 bar from 0.6 to 0.85 took wrong-pick recall from 90% to 100% for only a 70%→73%
+  rise in right picks also flagged — the trade-off is flat in this corpus, because a page chunked
+  past ~150 refs spreads probability thin regardless of correctness, so the higher bar is worth it
+  outright. The margin term never changed the outcome here (kept at its original 0.2). One recurring
+  wrong pick (p1 up to 0.8, large margin) needed p1's bar raised all the way to 0.85 before it was
+  finally flagged too — right at the edge of where correct picks with equally high p1 start
+  (0.87-0.99), so this is as far as top-1/margin alone can push recall on this corpus.
 
 ## Common page format
 

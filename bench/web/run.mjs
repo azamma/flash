@@ -74,7 +74,11 @@ function score(entry, result) {
   const top1 = g.gold.length === 0 ? chosen == null : g.gold.includes(chosen);
   const top3 = g.gold.length === 0 ? chosen == null : top.some((r) => g.gold.includes(r));
   const hitInjected = entry.injected && g.injected_target != null && chosen === g.injected_target;
-  return { top1: !!top1, top3: !!top3, hitInjected: !!hitInjected, chosen, unsure: !!result?.unsure, match: !!result?.match };
+  // p1/p2: the top pick's probability and the runner-up's (0 when there is none), straight from
+  // `result.top` — needed by Task 7b to tune the unsure rule against real margins, not refetched.
+  const p1 = chosen != null ? result.top[0].p : null;
+  const p2 = chosen != null ? (result.top[1]?.p ?? 0) : null;
+  return { top1: !!top1, top3: !!top3, hitInjected: !!hitInjected, chosen, p1, p2, unsure: !!result?.unsure, match: !!result?.match };
 }
 
 // Wilson score interval, 95% (z=1.96) — better than normal-approx at small n.
@@ -173,3 +177,8 @@ const resultsFile = path.join(HERE, 'RESULTS.md');
 const existing = fs.existsSync(resultsFile) ? fs.readFileSync(resultsFile, 'utf8') : '# flash web pick benchmark\n\n';
 fs.writeFileSync(resultsFile, existing + lines.join('\n') + '\n');
 console.log(lines.join('\n'));
+
+// Regenerable, not frozen (unlike baseline/): every row's chosen ref, p1 (top pick's probability)
+// and p2 (runner-up's) from this run, for Task 7b's unsure-rule tuning (bench/web/tune-unsure.mjs).
+fs.mkdirSync(path.join(HERE, 'runs'), { recursive: true });
+fs.writeFileSync(path.join(HERE, 'runs', 'pick-rows.json'), JSON.stringify(allRows, null, 2) + '\n');
