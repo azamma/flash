@@ -124,7 +124,15 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 **Dependencies:** 10 · **Files:** `web.mjs`, `flash.mjs`, tests · **Scope:** S
 
 ### Checkpoint: Acting
-- [ ] `npm test` passes; manual `run` on a real multi-step task completes or stops with a clear reason.
+- [x] `npm test` passes; manual `run` on a real multi-step task completes or stops with a clear
+      reason. (Wikipedia: `run` on the busy Main_Page stopped `? unsure` at step 1 on the chunked
+      >150-ref page (expected per Task 7b); on Special:Search (44 refs) it paused `needs-input` on
+      the search box, `--resume octopus` typed it and detected the page changed, then stopped `?
+      unsure` again at step 2 -- two look-alike duplicate nodes for the same suggestion (a real
+      "link" and its ARIA "option" mirror) triggered the margin rule correctly. A follow-up `click`
+      on the same target found the correct element (0.88 confidence) but was stopped by the risky
+      backstop: "order" in "eight-limbed order of molluscs" matched the `order` keyword -- a real
+      false positive worth the user's attention, see the final report.)
 
 ## Phase 4: Measure and ship
 
