@@ -1371,7 +1371,7 @@ function freshRef(before, after) {
 function riskyAsk(flags, stats) {
   return async (page, ref) => {
     const body = { model: modelName(flags), state: { url: page.url, title: page.title,
-      target: { element: ref.name || ref.role, role: ref.role, value: ref.value, context: ref.context } },
+      target: { element: ref.name || ref.role, role: ref.role, value: ref.value, context: ref.context, ...(ref.href ? { href: ref.href } : {}) } },
       questions: { risky: { type: 'noul', instructions: { question:
         'Would acting on `target` (clicking it, or submitting whatever value it already holds) perform a ' +
         'mutating, committing or hard-to-undo action — a purchase, payment, deletion, sending, posting, ' +
