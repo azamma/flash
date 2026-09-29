@@ -19,15 +19,10 @@ function answer(state, q) {
     return { type: 'score', score: has(s) ? levels.length - 1 : 0, confidence: 0.9 };
   }
   const options = Array.isArray(q.criteria) ? q.criteria : Object.keys(q.criteria);
-  const criteriaObj = Array.isArray(q.criteria) ? null : q.criteria;
   const text = JSON.stringify(s).toLowerCase();
   // find's `where` question: the options are line numbers of state.lines.
-  // pick/web-style questions: criteria are objects keyed by option (e.g. by ref); pick the option
-  // whose own criteria value contains MATCH, not just the first key.
   const pick = state.lines
     ? Object.keys(state.lines).find((n) => state.lines[n].includes('MATCH')) || 'none'
-    : criteriaObj && options.some((o) => has(criteriaObj[o]))
-    ? options.find((o) => has(criteriaObj[o]))
     : options.find((o) => text.includes(String(o).toLowerCase())) || options[0];
   const probabilities = Object.fromEntries(options.map((o) => [o, o === pick ? 0.9 : 0.1 / Math.max(1, options.length - 1)]));
   return { type: 'choice', choice: pick, confidence: 0.9, probabilities };
