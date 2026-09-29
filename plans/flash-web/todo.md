@@ -143,6 +143,60 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 **Verification:** `npm test`.
 **Dependencies:** 11 · **Files:** `skills/flash/SKILL.md`, `flash.mjs` · **Scope:** S
 
+### Task 12a: Risky keywords with context
+**Description:** The manual live run (Checkpoint: Acting) found a false positive: "order" inside
+"eight-limbed order of molluscs" (plain prose in a link) tripped the risky backstop. Words like
+"order" and "confirm" (Spanish "pedido"/"confirmar") now count as risky only when they sit on an
+actionable control (a button, or a link/menuitem whose own name is short and imperative) or appear
+next to a stronger action word (place/pay/checkout/buy/submit/purchase and Spanish equivalents
+comprar/compra/pagar/pago/enviar/realizar). Every other risky word is unchanged and still fires
+everywhere. The separate Jev noul >= 0.3 check is untouched.
+**Acceptance criteria:**
+- [x] The Octopus false positive ("eight-limbed order of molluscs" link) no longer flags risky.
+- [x] "Place order", "Confirmar compra", "Delete account", "Pagar" still stop.
+**Verification:** `npm test`.
+**Dependencies:** 12 · **Files:** `web.mjs`, `test/web.test.mjs` · **Scope:** S
+
+### Task 12b: Unsure threshold by consequence
+**Description:** One threshold pair was too coarse for both a plain navigation click and a payment
+form. Plain navigation clicks (a link/tab/menuitem the risky backstop doesn't flag) now use
+`p1 < 0.6` / `margin < 0.2`; form controls and anything the loop is about to type into keep the
+stricter `p1 < 0.85` / `margin < 0.2`. `UNSURE_NAV_P1/MARGIN` and `UNSURE_FORM_P1/MARGIN` exported
+from web.mjs; pick/click/run each classify the acted-on ref (and, for run, its chosen operation)
+before picking which pair applies. `bench/web/tune-unsure.mjs` re-run on the saved Task 7 pick rows,
+split by class, with the resulting flagged/right-flagged numbers written to `bench/web/RESULTS.md`.
+**Acceptance criteria:**
+- [ ] Constants exported from web.mjs; pick/click/run use them instead of one fixed pair.
+- [ ] bench/web/RESULTS.md has flagged/right-flagged numbers per class (nav vs form).
+**Verification:** `npm test`.
+**Dependencies:** 12a · **Files:** `web.mjs`, `flash.mjs`, `bench/web/tune-unsure.mjs`, `bench/web/RESULTS.md`, tests · **Scope:** S
+
+### Task 12c: Two-step pick on big pages
+**Description:** Above `PICK_CHUNK` (150) refs, first ask Jev one choice over page regions (refs
+grouped by their nearest landmark/heading container from the snapshot tree's own `context` field —
+navigation, main, search results, footer, etc.), then pick within the chosen region only. Falls back
+to the current chunked-merge method when regions can't be derived (e.g. too few distinct contexts to
+be worth a region pass). Offline pick benchmark (`node bench/web/run.mjs`, real Jev, cents) re-run;
+top-1/top-3 before vs after reported in `bench/web/RESULTS.md`; whichever wins on top-1 is kept.
+**Acceptance criteria:**
+- [ ] Region grouping derived from `context`; falls back to chunking when it can't be derived.
+- [ ] bench/web/RESULTS.md reports top-1/top-3 before/after and states which method is kept.
+**Verification:** `npm test`; `node bench/web/run.mjs`.
+**Dependencies:** 12b · **Files:** `web.mjs`, `flash.mjs`, tests, `bench/web/RESULTS.md` · **Scope:** M
+
+### Task 12d: Collapse duplicate refs
+**Description:** Some pages carry two refs for the same visual suggestion (e.g. Wikipedia's search
+autocomplete: a real `link` and its ARIA `option` mirror), which the Task 11 manual run showed can
+split the pick's probability mass across both and trip the margin rule. Before pick, refs with the
+same role-agnostic name and the same target (an `href` when the driver exposes one, else identical
+name plus adjacent tree position) now collapse into one candidate; whichever of the collapsed refs
+is chosen, the act step still resolves and clicks a real ref.
+**Acceptance criteria:**
+- [ ] The Wikipedia search-suggestion duplicate (link + ARIA option mirror) collapses to one
+      candidate before pick.
+**Verification:** `npm test`.
+**Dependencies:** 12c · **Files:** `web.mjs`, `test/web.test.mjs` · **Scope:** S
+
 ### Task 13: End-to-end benchmark (gate)
 **Description:** ~8 tasks on the hotel fixture, Wikipedia, HN, plus 2 with injected content and 1 whose goal requires a risky action (must stop). Each verified independently. Arms: Claude + agent-browser (`snapshot -i --delta`) vs Claude + agent-browser + `flash web`, 3 runs per arm, alternating. Charge SKILL.md and tool wrappers. Measure success, Claude tokens (minus measured floor), Jev tokens and $, wall time, wrong actions, risky stops, and adoption (web calls vs direct page reads).
 **Acceptance criteria:**

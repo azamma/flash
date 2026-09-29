@@ -241,20 +241,56 @@ export function sanitizeRef(r) {
 // and its enclosing container's text (a mutating action often hides in a generic "button" whose
 // name alone is bland, e.g. a checkout footer's lone "Continue" inside a "Confirmar pago" section).
 // Independent of Jev: fires even if the noul call is skipped, unavailable, or wrong.
-const RISKY_WORDS = [
+//
+// Two tiers (Task 12a): most of these words are unambiguous outside of an actual UI control, so
+// they fire everywhere. "order" and "confirm" (and their Spanish forms "pedido"/"confirmar") are
+// not — "order" is also a taxonomic rank ("the eight-limbed order of molluscs"), "confirm" also
+// appears in plain prose ("please confirm your details below"). Those two only count when they sit
+// on an actionable control (a button always qualifies; a link/menuitem only if its own name reads
+// as a short imperative, not a descriptive phrase), or when a stronger action word sits right next
+// to them — the real signal a checkout/order flow gives off.
+const ALWAYS_RISKY_WORDS = [
   // English
-  'buy', 'pay', 'purchase', 'checkout', 'order', 'delete', 'remove', 'cancel', 'unsubscribe',
-  'send', 'submit', 'post', 'publish', 'share', 'transfer', 'confirm', 'sign', 'accept terms',
+  'buy', 'pay', 'purchase', 'checkout', 'delete', 'remove', 'cancel', 'unsubscribe',
+  'send', 'submit', 'post', 'publish', 'share', 'transfer', 'sign', 'accept terms',
   // Spanish
-  'comprar', 'pagar', 'pago', 'pedido', 'eliminar', 'borrar', 'quitar', 'cancelar', 'anular',
-  'darse de baja', 'desuscrib\\w*', 'enviar', 'publicar', 'compartir', 'transferir', 'confirmar',
+  'comprar', 'pagar', 'pago', 'eliminar', 'borrar', 'quitar', 'cancelar', 'anular',
+  'darse de baja', 'desuscrib\\w*', 'enviar', 'publicar', 'compartir', 'transferir',
   'firmar', 'aceptar t[ée]rminos', 'aceptar condiciones',
 ];
-const RISKY_RE = new RegExp(`\\b(${RISKY_WORDS.join('|')})\\b`, 'i');
+const CONTEXT_WORDS = ['order', 'confirm', 'pedido', 'confirmar'];
+// Words that, sitting next to a context word, turn it risky even off a control (an "order" or
+// "confirm" beside any of these is a checkout/purchase flow, not a taxonomy page).
+const ADJACENT_TRIGGER_WORDS = [
+  'place', 'pay', 'checkout', 'buy', 'submit', 'purchase',
+  'comprar', 'compra', 'pagar', 'pago', 'enviar', 'realizar',
+];
+const ALWAYS_RISKY_RE = new RegExp(`\\b(${ALWAYS_RISKY_WORDS.join('|')})\\b`, 'i');
+const CONTEXT_WORDS_RE = new RegExp(`\\b(${CONTEXT_WORDS.join('|')})\\b`, 'i');
+const ADJACENT_TRIGGER_RE = new RegExp(`\\b(${ADJACENT_TRIGGER_WORDS.join('|')})\\b`, 'i');
+// Proxy for "reads as a descriptive phrase, not an imperative label": a connector/article word
+// anywhere in the name ("order OF molluscs") means it's prose, not a control's own short label.
+const PROSE_WORD_RE = /^(of|the|a|an|in|on|for|and|or|to|with|is|are|this|that)$/i;
+
+function isImperativeShort(name) {
+  const words = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length || words.length > 3) return false;
+  return !words.some((w) => PROSE_WORD_RE.test(w));
+}
+
+// A button is always an actionable control; a link/menuitem only counts when its name is short
+// and imperative (a nav link's visible text is often a long descriptive phrase, not a command).
+function isActionableControl(ref) {
+  if (ref.role === 'button') return true;
+  if (ref.role === 'link' || ref.role === 'menuitem') return isImperativeShort(ref.name);
+  return false;
+}
 
 export function riskyBackstop(ref) {
   const text = [ref.name, ref.role, ref.context].filter(Boolean).join(' ');
-  return RISKY_RE.test(text);
+  if (ALWAYS_RISKY_RE.test(text)) return true;
+  if (!CONTEXT_WORDS_RE.test(text)) return false;
+  return isActionableControl(ref) || ADJACENT_TRIGGER_RE.test(text);
 }
 
 // A separate Jev noul call, never the fan-out that picks the target: "is acting on this one element

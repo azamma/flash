@@ -184,6 +184,32 @@ test('riskyBackstop also matches on role and on the enclosing container text, no
   assert.equal(riskyBackstop(ref('View details')), false);
 });
 
+// ---------- Task 12a: risky keywords with context ----------
+
+test('riskyBackstop: plain prose containing "order" in a link does not trigger (Octopus false positive)', () => {
+  const link = { ref: 'e1', role: 'link', name: 'Octopuses belong to the eight-limbed order of molluscs called Cephalopoda', value: null, state: [], context: 'main "About octopuses"' };
+  assert.equal(riskyBackstop(link), false);
+});
+
+test('riskyBackstop: "confirm" in ordinary prose does not trigger', () => {
+  const link = { ref: 'e1', role: 'link', name: 'Please confirm your details are correct before continuing', value: null, state: [], context: null };
+  assert.equal(riskyBackstop(link), false);
+});
+
+test('riskyBackstop: context words still stop on an actionable control or next to a stronger word', () => {
+  assert.equal(riskyBackstop(ref('Place order')), true, 'button, short imperative name');
+  assert.equal(riskyBackstop(ref('Confirmar compra')), true, 'button, short imperative name');
+  assert.equal(riskyBackstop(ref('Delete account')), true, 'always-risky word');
+  assert.equal(riskyBackstop(ref('Pagar')), true, 'always-risky word');
+});
+
+test('riskyBackstop: a long descriptive link with "order" next to a stronger word still triggers via adjacency', () => {
+  const link = { ref: 'e1', role: 'link', name: 'Track your order status and delivery details', value: null, state: [], context: null };
+  assert.equal(riskyBackstop(link), false, 'no adjacent trigger word here, still not risky');
+  const withPay = { ref: 'e2', role: 'link', name: 'Review and pay for your pending order today', value: null, state: [], context: null };
+  assert.equal(riskyBackstop(withPay), true, '"pay" sits next to "order"');
+});
+
 test('pageFile and sessionName build the ~/.flash/web/<session>/page.json path', () => {
   const p = pageFile('flash-quicksilver');
   assert.match(p, /\.flash[\\/]web[\\/]flash-quicksilver[\\/]page\.json$/);
