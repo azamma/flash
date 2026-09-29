@@ -179,8 +179,11 @@ to the current chunked-merge method when regions can't be derived (e.g. too few 
 be worth a region pass). Offline pick benchmark (`node bench/web/run.mjs`, real Jev, cents) re-run;
 top-1/top-3 before vs after reported in `bench/web/RESULTS.md`; whichever wins on top-1 is kept.
 **Acceptance criteria:**
-- [ ] Region grouping derived from `context`; falls back to chunking when it can't be derived.
-- [ ] bench/web/RESULTS.md reports top-1/top-3 before/after and states which method is kept.
+- [x] Region grouping derived from `context`; falls back to chunking when it can't be derived
+      (`deriveRegions`, web.mjs — tested, kept as a building block).
+- [x] bench/web/RESULTS.md reports top-1/top-3 before/after and states which method is kept: chunked
+      won on top-1 (77.5% vs 72.9%, and 94.6% vs 83.7% top-3) despite the region pass cutting Jev
+      tokens ~6x, so `pickRanked` (flash.mjs) still uses chunking; the region path is not wired in.
 **Verification:** `npm test`; `node bench/web/run.mjs`.
 **Dependencies:** 12b · **Files:** `web.mjs`, `flash.mjs`, tests, `bench/web/RESULTS.md` · **Scope:** M
 

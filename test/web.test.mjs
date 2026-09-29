@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName, risky, riskyBackstop, unsureThresholds, isPlainNav, UNSURE_NAV_P1, UNSURE_NAV_MARGIN, UNSURE_FORM_P1, UNSURE_FORM_MARGIN } from '../skills/flash/scripts/web.mjs';
+import { agentBrowser, parseTree, extractTreeText, sanitizeRef, pageFile, sessionName, risky, riskyBackstop, unsureThresholds, isPlainNav, UNSURE_NAV_P1, UNSURE_NAV_MARGIN, UNSURE_FORM_P1, UNSURE_FORM_MARGIN, deriveRegions } from '../skills/flash/scripts/web.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const FIXTURES = path.join(ROOT, 'test/fixtures/web');
@@ -228,6 +228,30 @@ test('unsureThresholds: a risky-flagged link is not plain nav even though its ro
   const dangerous = ref('Delete account', 'link');
   assert.equal(isPlainNav(dangerous, 'click'), false);
   assert.deepEqual(unsureThresholds(dangerous, 'click'), { p1: UNSURE_FORM_P1, margin: UNSURE_FORM_MARGIN });
+});
+
+// ---------- Task 12c: regions for the two-step pick ----------
+
+const navRef = (ref, name) => ({ ref, role: 'link', name, value: null, state: [], context: 'navigation "Main"' });
+const mainRef = (ref, name) => ({ ref, role: 'link', name, value: null, state: [], context: 'main "Results"' });
+
+test('deriveRegions groups refs by their own context into more than one bucket', () => {
+  const refs = [...Array(10)].flatMap((_, i) => [navRef(`n${i}`, `Nav ${i}`), mainRef(`m${i}`, `Result ${i}`)]);
+  const regions = deriveRegions(refs);
+  assert.ok(regions);
+  assert.equal(regions.size, 2);
+  assert.equal(regions.get('navigation "Main"').length, 10);
+  assert.equal(regions.get('main "Results"').length, 10);
+});
+
+test('deriveRegions returns null when every ref shares one context (nothing to partition)', () => {
+  const refs = [...Array(20)].map((_, i) => navRef(`n${i}`, `Item ${i}`));
+  assert.equal(deriveRegions(refs), null);
+});
+
+test('deriveRegions returns null when one region swallows almost everything (> 90%)', () => {
+  const refs = [...Array(95)].map((_, i) => navRef(`n${i}`, `Item ${i}`)).concat([...Array(5)].map((_, i) => mainRef(`m${i}`, `Result ${i}`)));
+  assert.equal(deriveRegions(refs), null, '95/100 = 95% in one region, above the 90% cutoff');
 });
 
 test('pageFile and sessionName build the ~/.flash/web/<session>/page.json path', () => {

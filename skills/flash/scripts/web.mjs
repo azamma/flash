@@ -238,6 +238,34 @@ export function pickCriteria(refs) {
 
 export const refLabel = (r) => (r.name ? `${r.role} "${r.name}"` : r.role);
 
+// ---------- Task 12c: regions, tried for a two-step pick on big pages ----------
+// Above PICK_CHUNK refs, chunking scatters probability thin regardless of correctness (Task 7b's
+// finding, plan.md's Decisions). Grouping by each ref's own `context` — the nearest enclosing
+// landmark/heading container the parser already records for freshness — narrows the search space
+// to one region before picking within it. Measured on the Task 7 corpus (bench/web/RESULTS.md):
+// Jev tokens fell ~6x, but top-1 dropped from ~78.6% to 72.9% and top-3 from ~95% to 83.7% — a
+// wrong region forecloses the right ref with no "? unsure" signal at the region step itself. The
+// old chunked-merge method wins on top-1 and is what `pickRanked` (flash.mjs) actually uses; this
+// stays as a tested, unused building block for a future attempt (e.g. treating a low-confidence
+// region choice as its own "? unsure", instead of committing to the top region).
+const MIN_REGIONS = 2; // fewer than this isn't a partition worth asking about
+const MAX_REGION_SHARE = 0.9; // one region holding > 90% of refs isn't a useful partition either
+
+// Map<contextLabel, refs[]>, or null when the page's contexts don't actually partition it (the
+// caller falls back to the flat chunked-merge method in that case).
+export function deriveRegions(refs) {
+  const byCtx = new Map();
+  for (const r of refs) {
+    const key = r.context || '(no container)';
+    if (!byCtx.has(key)) byCtx.set(key, []);
+    byCtx.get(key).push(r);
+  }
+  if (byCtx.size < MIN_REGIONS) return null;
+  const largest = Math.max(...[...byCtx.values()].map((v) => v.length));
+  if (largest > refs.length * MAX_REGION_SHARE) return null;
+  return byCtx;
+}
+
 // Locates a ref's JSON object span inside a written page.json file's text, so an "unsure" answer can
 // point Claude at exactly the lines to read instead of the whole file. Walks brace balance rather
 // than assuming a fixed field count, so it survives the page schema changing.

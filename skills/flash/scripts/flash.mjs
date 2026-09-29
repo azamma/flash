@@ -1228,40 +1228,53 @@ function webFooter(t0, cmd, session, page, stats, outText) {
 
 const PICK_CHUNK = 150;
 
-// Shared by pick, click and run: ranks `page.refs` (+`none`) by how well they satisfy `intent`,
-// chunking above PICK_CHUNK refs (`find`'s merge pattern: per-chunk choice + `exists` noul, scaled
-// and merged). Returns { ranked, real, stats }: `ranked` is [[ref|'none', p], ...] sorted desc
-// (only the unchunked path can return 'none' inside it — the chunked path already drops it, same
-// asymmetry as before this was factored out); `real` is `ranked` with 'none' filtered out.
-async function pickRanked(page, intent, flags) {
+// One choice over `refs` (+`none`), a single Jev call.
+async function pickFlat(refs, intent, flags, noneQuestion) {
+  const model = modelName(flags);
+  const body = { model, state: { intent }, questions: { pick: {
+    type: 'choice',
+    instructions: { question: noneQuestion, untrusted: UNTRUSTED_NOTE },
+    criteria: pickCriteria(refs),
+  } } };
+  const res = await decide(body, flags);
+  const stats = { requests: 1, jevTokens: res.usage?.input_tokens || 0 };
+  const ranked = Object.entries(res.answers.pick.probabilities).sort((a, b) => b[1] - a[1]);
+  return { ranked, real: ranked.filter(([id]) => id !== 'none'), stats };
+}
+
+// `find`'s merge pattern: per-chunk choice + `exists` noul, scaled and merged.
+async function pickChunked(refs, intent, flags) {
   const model = modelName(flags);
   const stats = { requests: 0, jevTokens: 0 };
-  let ranked;
-  if (page.refs.length <= PICK_CHUNK) {
-    const body = { model, state: { intent }, questions: { pick: {
-      type: 'choice',
-      instructions: { question: 'Choose the single element that best satisfies `intent`. Choose `none` if nothing on the page matches.', untrusted: UNTRUSTED_NOTE },
-      criteria: pickCriteria(page.refs),
-    } } };
+  const chunks = [];
+  for (let i = 0; i < refs.length; i += PICK_CHUNK) chunks.push(refs.slice(i, i + PICK_CHUNK));
+  const perChunk = await pool(chunks.map((chunk) => async () => {
+    const body = { model, state: { intent }, questions: {
+      pick: { type: 'choice', instructions: { question: 'Choose the single element that best satisfies `intent`. Choose `none` if nothing among these matches.', untrusted: UNTRUSTED_NOTE }, criteria: pickCriteria(chunk) },
+      exists: { type: 'noul', instructions: { question: 'Does any element among these choices satisfy `intent`?', untrusted: UNTRUSTED_NOTE } },
+    } };
     const res = await decide(body, flags);
-    stats.requests = 1; stats.jevTokens = res.usage?.input_tokens || 0;
-    ranked = Object.entries(res.answers.pick.probabilities).sort((a, b) => b[1] - a[1]);
-  } else {
-    const chunks = [];
-    for (let i = 0; i < page.refs.length; i += PICK_CHUNK) chunks.push(page.refs.slice(i, i + PICK_CHUNK));
-    const perChunk = await pool(chunks.map((chunk) => async () => {
-      const body = { model, state: { intent }, questions: {
-        pick: { type: 'choice', instructions: { question: 'Choose the single element that best satisfies `intent`. Choose `none` if nothing among these matches.', untrusted: UNTRUSTED_NOTE }, criteria: pickCriteria(chunk) },
-        exists: { type: 'noul', instructions: { question: 'Does any element among these choices satisfy `intent`?', untrusted: UNTRUSTED_NOTE } },
-      } };
-      const res = await decide(body, flags);
-      stats.requests++; stats.jevTokens += res.usage?.input_tokens || 0;
-      const ex = res.answers.exists.noul;
-      return Object.entries(res.answers.pick.probabilities).filter(([id]) => id !== 'none').map(([id, p]) => [id, p * ex]);
-    }), num(flags.concurrency, 16));
-    ranked = perChunk.flat().sort((a, b) => b[1] - a[1]);
+    stats.requests++; stats.jevTokens += res.usage?.input_tokens || 0;
+    const ex = res.answers.exists.noul;
+    return Object.entries(res.answers.pick.probabilities).filter(([id]) => id !== 'none').map(([id, p]) => [id, p * ex]);
+  }), num(flags.concurrency, 16));
+  const ranked = perChunk.flat().sort((a, b) => b[1] - a[1]);
+  return { ranked, real: ranked, stats };
+}
+
+// Task 12c tried a two-step region pass first (one Jev choice over page regions grouped by each
+// ref's own `context`, then a plain pick inside just the chosen region) to save Jev tokens on big
+// pages. Measured on the Task 7 corpus it cut Jev tokens ~6x but top-1 dropped from ~78.6% to 72.9%
+// and top-3 from ~95% to 83.7% (bench/web/RESULTS.md) — a wrong region silently forecloses the
+// right ref, with no "? unsure" signal at the region step itself to catch it. Chunking wins on
+// top-1, so that's what ships; `deriveRegions` (web.mjs) is kept as a tested building block for a
+// future attempt (e.g. flagging a low-confidence region choice instead of committing to it), not
+// called from here.
+async function pickRanked(page, intent, flags) {
+  if (page.refs.length <= PICK_CHUNK) {
+    return pickFlat(page.refs, intent, flags, 'Choose the single element that best satisfies `intent`. Choose `none` if nothing on the page matches.');
   }
-  return { ranked, real: ranked.filter(([id]) => id !== 'none'), stats };
+  return pickChunked(page.refs, intent, flags);
 }
 
 async function cmdWebPick({ pos, flags }) {

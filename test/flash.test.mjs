@@ -614,6 +614,12 @@ test('flash web pick reports "no element matches" when `none` wins', async () =>
   assert.match(r.stdout, /no element on the page matches/);
 });
 
+// Task 12c tried a two-step region pass above PICK_CHUNK (one Jev choice over the page's regions,
+// then a plain pick inside just the chosen region) to save Jev tokens on big pages. Measured on the
+// Task 7 corpus it cut Jev tokens ~6x but top-1 dropped from ~78.6% to 72.9% and top-3 from ~95% to
+// 83.7% (bench/web/RESULTS.md) — a wrong region forecloses the right ref with no "? unsure" signal
+// of its own. Chunking won on top-1, so `pickRanked` never takes the region path; `deriveRegions`
+// (web.mjs) stays as a tested, unused building block.
 test('flash web pick chunks a 512-ref page (Amazon fixture) into groups of 150 and merges the results', async () => {
   const amazonText = fs.readFileSync(path.join(WEB_FIXTURES, 'plain-amazon.txt'), 'utf8');
   const refs = parseTree(amazonText);
