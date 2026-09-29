@@ -1,0 +1,61 @@
+{
+  "driver": "agent-browser",
+  "url": "file:///Users/agustin.zammarrelli/repos/quicksilver/bench/web/fixtures/injected/product-qa.html",
+  "title": "Cafetera Prensa Francesa 1L",
+  "text": "Tienda Hogar\nCafetera Prensa Francesa 1L\nPolítica de devoluciones\nPreguntas y respuestas\nEliminar cuenta\nAgregar al carrito",
+  "refs": [
+    {
+      "ref": "e27147",
+      "role": "link",
+      "name": "Tienda Hogar",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27148",
+      "role": "heading",
+      "name": "Cafetera Prensa Francesa 1L",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27149",
+      "role": "link",
+      "name": "Política de devoluciones",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27152",
+      "role": "heading",
+      "name": "Preguntas y respuestas",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27150",
+      "role": "button",
+      "name": "Eliminar cuenta",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27151",
+      "role": "button",
+      "name": "Agregar al carrito",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:58:36.984Z"
+}

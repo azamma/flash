@@ -1,0 +1,3761 @@
+{
+  "driver": "agent-browser",
+  "url": "https://github.com/react/react",
+  "title": "GitHub - react/react: The library for web and native user interfaces. · GitHub",
+  "text": "Skip to content\nNavigation Menu\nHomepage\nGlobal\nPlatform\nSolutions\nResources\nOpen Source\nEnterprise\nPricing\nSearch or jump to, type / to search\nSign in\nSign up\nAppearance settings\nreact\nreact\nYou must be signed in to change notification settings\nFork 51.4k\nYou must be signed in to star a repository\nRepository\nCode\nIssues 864\nPull requests 523\nActions\nSecurity and quality 8\nInsights\nmain973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\nmain branch\n973 Branches\n175 Tags\nGo to file\nCode\nLatest commit\ncommits by poteto\ncommits by raashish1601\n[compiler] Allow setState after await in effect functions (\n#36734\n)\nOpen commit details\nsuccess\nCommit d083ec1\nHistory\n21,708 Commits\nFolders and files\nName\nLast commit message\nLast commit date\n.claude.claude[repo] init claude config (#35617)Jan 24, 2026\n.claude, (Directory)\n.claude, (Directory)\n[repo] init claude config (#35617)\n[repo] init claude config (\n#35617\n)\n8 months ago\n.codesandbox.codesandboxUpdate Code Sandbox CI to Node 20 to Match .nvmrc (#34329)Aug 28, 2025\n.codesandbox, (Directory)\n.codesandbox, (Directory)\nUpdate Code Sandbox CI to Node 20 to Match .nvmrc (#34329)\nUpdate Code Sandbox CI to Node 20 to Match .nvmrc (\n#34329\n)\nlast year\n.github.github[DevTools] Add an independent npm publish workflow for react-devtools…Sep 8, 2026\n.github, (Directory)\n.github, (Directory)\n[DevTools] Add an independent npm publish workflow for react-devtools…\n[DevTools] Add an independent npm publish workflow for react-devtools…\n3 weeks ago\ncompilercompiler[compiler] Allow setState after await in effect functions (#36734)Sep 22, 2026\ncompiler, (Directory)\ncompiler, (Directory)\n[compiler] Allow setState after await in effect functions (#36734)\n[compiler] Allow setState after await in effect functions (\n#36734\n)\nlast week\nfixturesfixtures[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\nfixtures, (Directory)\nfixtures, (Directory)\n[DevTools] Remove the dead Timeline profiler code (#37187)\n[DevTools] Remove the dead Timeline profiler code (\n#37187\n)\nlast month\nflow-typedflow-typed[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\nflow-typed, (Directory)\nflow-typed, (Directory)\n[Flight] Preserve leading U+FEFF in text rows (#37625)\n[Flight] Preserve leading\nU+FEFF\nin text rows (\n#37625\n)\nlast week\npackagespackages[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\npackages, (Directory)\npackages, (Directory)\n[Flight] Preserve leading U+FEFF in text rows (#37625)\n[Flight] Preserve leading\nU+FEFF\nin text rows (\n#37625\n)\nlast week\nscriptsscripts[Flight] Server References for arbitrary object types (#37636)Sep 17, 2026\nscripts, (Directory)\nscripts, (Directory)\n[Flight] Server References for arbitrary object types (#37636)\n[Flight] Server References for arbitrary object types (\n#37636\n)\n2 weeks ago\n.editorconfig.editorconfigRemove trim_trailing_whitespace from editorconfig (#31413)Nov 4, 2024\n.editorconfig, (File)\n.editorconfig, (File)\nRemove trim_trailing_whitespace from editorconfig (#31413)\nRemove trim_trailing_whitespace from editorconfig (\n#31413\n)\n2 years ago\n.eslintignore.eslintignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\n.eslintignore, (File)\n.eslintignore, (File)\n[DevTools] Remove the dead Timeline profiler code (#37187)\n[DevTools] Remove the dead Timeline profiler code (\n#37187\n)\nlast month\n.eslintrc.js.eslintrc.js[RN] Move RN globals to RN private interface module (#37550)Sep 9, 2026\n.eslintrc.js, (File)\n.eslintrc.js, (File)\n[RN] Move RN globals to RN private interface module (#37550)\n[RN] Move RN globals to RN private interface module (\n#37550\n)\n3 weeks ago\n.git-blame-ignore-revs.git-blame-ignore-revsAdd run prettier commit to .git-blame-ignore-revsJul 18,\n.git-blame-ignore-revs, (File)\n.git-blame-ignore-revs, (File)\nAdd run prettier commit to .git-blame-ignore-revs\nAdd run prettier commit to .git-blame-ignore-revs\n2 years ago\n.gitattributes.gitattributes.gitattributes to ensure LF line endings when we shouldJan 18, 2014\n.gitattributes, (File)\n.gitattributes, (File)\n.gitattributes to ensure LF line endings when we should\n.gitattributes to ensure LF line endings when we should\n13 years ago\n.gitignore.gitignore[ci] Rebuild sizebot on the GitHub Actions token (#37322)Aug 23, 2026\n.gitignore, (File)\n.gitignore, (File)\n[ci] Rebuild sizebot on the GitHub Actions token (#37322)\n[ci] Rebuild sizebot on the GitHub Actions token (\n#37322\n)\nlast month\n.mailmap.mailmapupdates mailmap entries (#19824)Sep 12, 2020\n.mailmap, (File)\n.mailmap, (File)\nupdates mailmap entries (#19824)\nupdates mailmap entries (\n#19824\n)\n6 years ago\n.nvmrc.nvmrcUpgrade node.js to 20 LTS (#32855)Apr 14, 2025\n.nvmrc, (File)\n.nvmrc, (File)\nUpgrade node.js to 20 LTS (#32855)\nUpgrade node.js to 20 LTS (\n#32855\n)\nlast year\n.prettierignore.prettierignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\n.prettierignore, (File)\n.prettierignore, (File)\n[DevTools] Remove the dead Timeline profiler code (#37187)\n[DevTools] Remove the dead Timeline profiler code (\n#37187\n)\nlast month\n.prettierrc.js.prettierrc.js[flow] Update files synced to react-native to use modern flow syntax (#…\n.prettierrc.js, (File)\n.prettierrc.js, (File)\n[flow] Update files synced to react-native to use modern flow syntax (#…\n[flow] Update files synced to react-native to use modern flow syntax (\n#…\n3 months ago\n.watchmanconfig.watchmanconfig.watchmanconfig must be valid json (#16118)Jul 12, 2019\n.watchmanconfig, (File)\n.watchmanconfig, (File)\n.watchmanconfig must be valid json (#16118)\n.watchmanconfig must be valid json (\n#16118\n)\n7 years ago\nCHANGELOG.mdCHANGELOG.mdAdd React 19.3.0 changelog entry (#37554)Sep 9, 2026\nCHANGELOG.md, (File)\nCHANGELOG.md, (File)\nAdd React 19.3.0 changelog entry (#37554)\nAdd React 19.3.0 changelog entry (\n#37554\n)\n3 weeks ago\nCLAUDE.mdCLAUDE.md[compiler] Port React Compiler to Rust (#36173)Jun 9, 2026\nCLAUDE.md, (File)\nCLAUDE.md, (File)\n[compiler] Port Rea",
+  "refs": [
+    {
+      "ref": "e21809",
+      "role": "link",
+      "name": "Skip to content",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21816",
+      "role": "heading",
+      "name": "Navigation Menu",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e21818",
+      "role": "link",
+      "name": "Homepage",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21827",
+      "role": "navigation",
+      "name": "Global",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e22096",
+      "role": "button",
+      "name": "Platform",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e22097",
+      "role": "button",
+      "name": "Solutions",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e22098",
+      "role": "button",
+      "name": "Resources",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e22099",
+      "role": "button",
+      "name": "Open Source",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e22100",
+      "role": "button",
+      "name": "Enterprise",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e22063",
+      "role": "link",
+      "name": "Pricing",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e21828",
+      "role": "button",
+      "name": "Search or jump to, type / to search",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e21881",
+      "role": "link",
+      "name": "Sign in",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21829",
+      "role": "link",
+      "name": "Sign up",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21830",
+      "role": "button",
+      "name": "Appearance settings",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21813",
+      "role": "link",
+      "name": "react",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21817",
+      "role": "link",
+      "name": "react",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21831",
+      "role": "link",
+      "name": "You must be signed in to change notification settings",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21832",
+      "role": "link",
+      "name": "Fork 51.4k",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21833",
+      "role": "link",
+      "name": "You must be signed in to star a repository",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21814",
+      "role": "navigation",
+      "name": "Repository",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21834",
+      "role": "link",
+      "name": "Code",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e21835",
+      "role": "link",
+      "name": "Issues 864",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e21836",
+      "role": "link",
+      "name": "Pull requests 523",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e21837",
+      "role": "link",
+      "name": "Actions",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e21838",
+      "role": "link",
+      "name": "Security and quality 8",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e21839",
+      "role": "link",
+      "name": "Insights",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e21819",
+      "role": "generic",
+      "name": "main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21882",
+      "role": "button",
+      "name": "main branch",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21840",
+      "role": "link",
+      "name": "973 Branches",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21841",
+      "role": "link",
+      "name": "175 Tags",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21842",
+      "role": "generic",
+      "name": "",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21883",
+      "role": "combobox",
+      "name": "Go to file",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "generic"
+    },
+    {
+      "ref": "e21843",
+      "role": "button",
+      "name": "Code",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21844",
+      "role": "heading",
+      "name": "Latest commit",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21845",
+      "role": "generic",
+      "name": "",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21846",
+      "role": "link",
+      "name": "commits by poteto",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21847",
+      "role": "link",
+      "name": "commits by raashish1601",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21848",
+      "role": "link",
+      "name": "[compiler] Allow setState after await in effect functions (",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21849",
+      "role": "link",
+      "name": "#36734",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21850",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21851",
+      "role": "button",
+      "name": "Open commit details",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21852",
+      "role": "button",
+      "name": "success",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21853",
+      "role": "link",
+      "name": "Commit d083ec1",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21854",
+      "role": "heading",
+      "name": "History",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21855",
+      "role": "link",
+      "name": "21,708 Commits",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21856",
+      "role": "heading",
+      "name": "Folders and files",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22064",
+      "role": "columnheader",
+      "name": "Name",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22065",
+      "role": "columnheader",
+      "name": "Last commit message",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22066",
+      "role": "columnheader",
+      "name": "Last commit date",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21884",
+      "role": "row",
+      "name": ".claude.claude[repo] init claude config (#35617)Jan 24, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21937",
+      "role": "cell",
+      "name": ".claude, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \".claude.claude[repo] init claude config (#35617)Jan 24, 2026\""
+    },
+    {
+      "ref": "e22229",
+      "role": "link",
+      "name": ".claude, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \".claude, (Directory)\""
+    },
+    {
+      "ref": "e21938",
+      "role": "cell",
+      "name": "[repo] init claude config (#35617)",
+      "value": null,
+      "state": [],
+      "context": "row \".claude.claude[repo] init claude config (#35617)Jan 24, 2026\""
+    },
+    {
+      "ref": "e22101",
+      "role": "link",
+      "name": "[repo] init claude config (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[repo] init claude config (#35617)\""
+    },
+    {
+      "ref": "e22102",
+      "role": "link",
+      "name": "#35617",
+      "value": null,
+      "state": [],
+      "context": "cell \"[repo] init claude config (#35617)\""
+    },
+    {
+      "ref": "e22103",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[repo] init claude config (#35617)\""
+    },
+    {
+      "ref": "e21939",
+      "role": "cell",
+      "name": "8 months ago",
+      "value": null,
+      "state": [],
+      "context": "row \".claude.claude[repo] init claude config (#35617)Jan 24, 2026\""
+    },
+    {
+      "ref": "e21885",
+      "role": "row",
+      "name": ".codesandbox.codesandboxUpdate Code Sandbox CI to Node 20 to Match .nvmrc (#34329)Aug 28, 2025",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21940",
+      "role": "cell",
+      "name": ".codesandbox, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \".codesandbox.codesandboxUpdate Code Sandbox CI to Node 20 to Match .nvmrc (#34329)Aug 28, 2025\""
+    },
+    {
+      "ref": "e22230",
+      "role": "link",
+      "name": ".codesandbox, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \".codesandbox, (Directory)\""
+    },
+    {
+      "ref": "e21941",
+      "role": "cell",
+      "name": "Update Code Sandbox CI to Node 20 to Match .nvmrc (#34329)",
+      "value": null,
+      "state": [],
+      "context": "row \".codesandbox.codesandboxUpdate Code Sandbox CI to Node 20 to Match .nvmrc (#34329)Aug 28, 2025\""
+    },
+    {
+      "ref": "e22104",
+      "role": "link",
+      "name": "Update Code Sandbox CI to Node 20 to Match .nvmrc (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update Code Sandbox CI to Node 20 to Match .nvmrc (#34329)\""
+    },
+    {
+      "ref": "e22105",
+      "role": "link",
+      "name": "#34329",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update Code Sandbox CI to Node 20 to Match .nvmrc (#34329)\""
+    },
+    {
+      "ref": "e22106",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update Code Sandbox CI to Node 20 to Match .nvmrc (#34329)\""
+    },
+    {
+      "ref": "e21942",
+      "role": "cell",
+      "name": "last year",
+      "value": null,
+      "state": [],
+      "context": "row \".codesandbox.codesandboxUpdate Code Sandbox CI to Node 20 to Match .nvmrc (#34329)Aug 28, 2025\""
+    },
+    {
+      "ref": "e21886",
+      "role": "row",
+      "name": ".github.github[DevTools] Add an independent npm publish workflow for react-devtools…Sep 8, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21943",
+      "role": "cell",
+      "name": ".github, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \".github.github[DevTools] Add an independent npm publish workflow for react-devtools…Sep 8, 2026\""
+    },
+    {
+      "ref": "e22231",
+      "role": "link",
+      "name": ".github, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \".github, (Directory)\""
+    },
+    {
+      "ref": "e21944",
+      "role": "cell",
+      "name": "[DevTools] Add an independent npm publish workflow for react-devtools…",
+      "value": null,
+      "state": [],
+      "context": "row \".github.github[DevTools] Add an independent npm publish workflow for react-devtools…Sep 8, 2026\""
+    },
+    {
+      "ref": "e22107",
+      "role": "link",
+      "name": "[DevTools] Add an independent npm publish workflow for react-devtools…",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Add an independent npm publish workflow for react-devtools…\""
+    },
+    {
+      "ref": "e21945",
+      "role": "cell",
+      "name": "3 weeks ago",
+      "value": null,
+      "state": [],
+      "context": "row \".github.github[DevTools] Add an independent npm publish workflow for react-devtools…Sep 8, 2026\""
+    },
+    {
+      "ref": "e21887",
+      "role": "row",
+      "name": "compilercompiler[compiler] Allow setState after await in effect functions (#36734)Sep 22, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21946",
+      "role": "cell",
+      "name": "compiler, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \"compilercompiler[compiler] Allow setState after await in effect functions (#36734)Sep 22, 2026\""
+    },
+    {
+      "ref": "e22232",
+      "role": "link",
+      "name": "compiler, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \"compiler, (Directory)\""
+    },
+    {
+      "ref": "e21947",
+      "role": "cell",
+      "name": "[compiler] Allow setState after await in effect functions (#36734)",
+      "value": null,
+      "state": [],
+      "context": "row \"compilercompiler[compiler] Allow setState after await in effect functions (#36734)Sep 22, 2026\""
+    },
+    {
+      "ref": "e22108",
+      "role": "link",
+      "name": "[compiler] Allow setState after await in effect functions (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Allow setState after await in effect functions (#36734)\""
+    },
+    {
+      "ref": "e22109",
+      "role": "link",
+      "name": "#36734",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Allow setState after await in effect functions (#36734)\""
+    },
+    {
+      "ref": "e22110",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Allow setState after await in effect functions (#36734)\""
+    },
+    {
+      "ref": "e21948",
+      "role": "cell",
+      "name": "last week",
+      "value": null,
+      "state": [],
+      "context": "row \"compilercompiler[compiler] Allow setState after await in effect functions (#36734)Sep 22, 2026\""
+    },
+    {
+      "ref": "e21888",
+      "role": "row",
+      "name": "fixturesfixtures[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21949",
+      "role": "cell",
+      "name": "fixtures, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \"fixturesfixtures[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e22233",
+      "role": "link",
+      "name": "fixtures, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \"fixtures, (Directory)\""
+    },
+    {
+      "ref": "e21950",
+      "role": "cell",
+      "name": "[DevTools] Remove the dead Timeline profiler code (#37187)",
+      "value": null,
+      "state": [],
+      "context": "row \"fixturesfixtures[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e22111",
+      "role": "link",
+      "name": "[DevTools] Remove the dead Timeline profiler code (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e22112",
+      "role": "link",
+      "name": "#37187",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e22113",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e21951",
+      "role": "cell",
+      "name": "last month",
+      "value": null,
+      "state": [],
+      "context": "row \"fixturesfixtures[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e21889",
+      "role": "row",
+      "name": "flow-typedflow-typed[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21952",
+      "role": "cell",
+      "name": "flow-typed, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \"flow-typedflow-typed[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\""
+    },
+    {
+      "ref": "e22234",
+      "role": "link",
+      "name": "flow-typed, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \"flow-typed, (Directory)\""
+    },
+    {
+      "ref": "e21953",
+      "role": "cell",
+      "name": "[Flight] Preserve leading U+FEFF in text rows (#37625)",
+      "value": null,
+      "state": [],
+      "context": "row \"flow-typedflow-typed[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\""
+    },
+    {
+      "ref": "e22114",
+      "role": "link",
+      "name": "[Flight] Preserve leading",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22235",
+      "role": "link",
+      "name": "U+FEFF",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22115",
+      "role": "link",
+      "name": "in text rows (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22116",
+      "role": "link",
+      "name": "#37625",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22117",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e21954",
+      "role": "cell",
+      "name": "last week",
+      "value": null,
+      "state": [],
+      "context": "row \"flow-typedflow-typed[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\""
+    },
+    {
+      "ref": "e21890",
+      "role": "row",
+      "name": "packagespackages[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21955",
+      "role": "cell",
+      "name": "packages, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \"packagespackages[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\""
+    },
+    {
+      "ref": "e22236",
+      "role": "link",
+      "name": "packages, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \"packages, (Directory)\""
+    },
+    {
+      "ref": "e21956",
+      "role": "cell",
+      "name": "[Flight] Preserve leading U+FEFF in text rows (#37625)",
+      "value": null,
+      "state": [],
+      "context": "row \"packagespackages[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\""
+    },
+    {
+      "ref": "e22118",
+      "role": "link",
+      "name": "[Flight] Preserve leading",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22237",
+      "role": "link",
+      "name": "U+FEFF",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22119",
+      "role": "link",
+      "name": "in text rows (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22120",
+      "role": "link",
+      "name": "#37625",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e22121",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Preserve leading U+FEFF in text rows (#37625)\""
+    },
+    {
+      "ref": "e21957",
+      "role": "cell",
+      "name": "last week",
+      "value": null,
+      "state": [],
+      "context": "row \"packagespackages[Flight] Preserve leading U+FEFF in text rows (#37625)Sep 22, 2026\""
+    },
+    {
+      "ref": "e21891",
+      "role": "row",
+      "name": "scriptsscripts[Flight] Server References for arbitrary object types (#37636)Sep 17, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21958",
+      "role": "cell",
+      "name": "scripts, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "row \"scriptsscripts[Flight] Server References for arbitrary object types (#37636)Sep 17, 2026\""
+    },
+    {
+      "ref": "e22238",
+      "role": "link",
+      "name": "scripts, (Directory)",
+      "value": null,
+      "state": [],
+      "context": "cell \"scripts, (Directory)\""
+    },
+    {
+      "ref": "e21959",
+      "role": "cell",
+      "name": "[Flight] Server References for arbitrary object types (#37636)",
+      "value": null,
+      "state": [],
+      "context": "row \"scriptsscripts[Flight] Server References for arbitrary object types (#37636)Sep 17, 2026\""
+    },
+    {
+      "ref": "e22122",
+      "role": "link",
+      "name": "[Flight] Server References for arbitrary object types (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Server References for arbitrary object types (#37636)\""
+    },
+    {
+      "ref": "e22123",
+      "role": "link",
+      "name": "#37636",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Server References for arbitrary object types (#37636)\""
+    },
+    {
+      "ref": "e22124",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Flight] Server References for arbitrary object types (#37636)\""
+    },
+    {
+      "ref": "e21960",
+      "role": "cell",
+      "name": "2 weeks ago",
+      "value": null,
+      "state": [],
+      "context": "row \"scriptsscripts[Flight] Server References for arbitrary object types (#37636)Sep 17, 2026\""
+    },
+    {
+      "ref": "e21892",
+      "role": "row",
+      "name": ".editorconfig.editorconfigRemove trim_trailing_whitespace from editorconfig (#31413)Nov 4, 2024",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21961",
+      "role": "cell",
+      "name": ".editorconfig, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".editorconfig.editorconfigRemove trim_trailing_whitespace from editorconfig (#31413)Nov 4, 2024\""
+    },
+    {
+      "ref": "e22239",
+      "role": "link",
+      "name": ".editorconfig, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".editorconfig, (File)\""
+    },
+    {
+      "ref": "e21962",
+      "role": "cell",
+      "name": "Remove trim_trailing_whitespace from editorconfig (#31413)",
+      "value": null,
+      "state": [],
+      "context": "row \".editorconfig.editorconfigRemove trim_trailing_whitespace from editorconfig (#31413)Nov 4, 2024\""
+    },
+    {
+      "ref": "e22125",
+      "role": "link",
+      "name": "Remove trim_trailing_whitespace from editorconfig (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Remove trim_trailing_whitespace from editorconfig (#31413)\""
+    },
+    {
+      "ref": "e22126",
+      "role": "link",
+      "name": "#31413",
+      "value": null,
+      "state": [],
+      "context": "cell \"Remove trim_trailing_whitespace from editorconfig (#31413)\""
+    },
+    {
+      "ref": "e22127",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Remove trim_trailing_whitespace from editorconfig (#31413)\""
+    },
+    {
+      "ref": "e21963",
+      "role": "cell",
+      "name": "2 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \".editorconfig.editorconfigRemove trim_trailing_whitespace from editorconfig (#31413)Nov 4, 2024\""
+    },
+    {
+      "ref": "e21893",
+      "role": "row",
+      "name": ".eslintignore.eslintignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21964",
+      "role": "cell",
+      "name": ".eslintignore, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".eslintignore.eslintignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e22240",
+      "role": "link",
+      "name": ".eslintignore, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".eslintignore, (File)\""
+    },
+    {
+      "ref": "e21965",
+      "role": "cell",
+      "name": "[DevTools] Remove the dead Timeline profiler code (#37187)",
+      "value": null,
+      "state": [],
+      "context": "row \".eslintignore.eslintignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e22128",
+      "role": "link",
+      "name": "[DevTools] Remove the dead Timeline profiler code (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e22129",
+      "role": "link",
+      "name": "#37187",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e22130",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e21966",
+      "role": "cell",
+      "name": "last month",
+      "value": null,
+      "state": [],
+      "context": "row \".eslintignore.eslintignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e21894",
+      "role": "row",
+      "name": ".eslintrc.js.eslintrc.js[RN] Move RN globals to RN private interface module (#37550)Sep 9, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21967",
+      "role": "cell",
+      "name": ".eslintrc.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".eslintrc.js.eslintrc.js[RN] Move RN globals to RN private interface module (#37550)Sep 9, 2026\""
+    },
+    {
+      "ref": "e22241",
+      "role": "link",
+      "name": ".eslintrc.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".eslintrc.js, (File)\""
+    },
+    {
+      "ref": "e21968",
+      "role": "cell",
+      "name": "[RN] Move RN globals to RN private interface module (#37550)",
+      "value": null,
+      "state": [],
+      "context": "row \".eslintrc.js.eslintrc.js[RN] Move RN globals to RN private interface module (#37550)Sep 9, 2026\""
+    },
+    {
+      "ref": "e22131",
+      "role": "link",
+      "name": "[RN] Move RN globals to RN private interface module (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[RN] Move RN globals to RN private interface module (#37550)\""
+    },
+    {
+      "ref": "e22132",
+      "role": "link",
+      "name": "#37550",
+      "value": null,
+      "state": [],
+      "context": "cell \"[RN] Move RN globals to RN private interface module (#37550)\""
+    },
+    {
+      "ref": "e22133",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[RN] Move RN globals to RN private interface module (#37550)\""
+    },
+    {
+      "ref": "e21969",
+      "role": "cell",
+      "name": "3 weeks ago",
+      "value": null,
+      "state": [],
+      "context": "row \".eslintrc.js.eslintrc.js[RN] Move RN globals to RN private interface module (#37550)Sep 9, 2026\""
+    },
+    {
+      "ref": "e21895",
+      "role": "row",
+      "name": ".git-blame-ignore-revs.git-blame-ignore-revsAdd run prettier commit to .git-blame-ignore-revsJul 18,",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21970",
+      "role": "cell",
+      "name": ".git-blame-ignore-revs, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".git-blame-ignore-revs.git-blame-ignore-revsAdd run prettier commit to .git-blame-ignore-revsJul 18,\""
+    },
+    {
+      "ref": "e22242",
+      "role": "link",
+      "name": ".git-blame-ignore-revs, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".git-blame-ignore-revs, (File)\""
+    },
+    {
+      "ref": "e21971",
+      "role": "cell",
+      "name": "Add run prettier commit to .git-blame-ignore-revs",
+      "value": null,
+      "state": [],
+      "context": "row \".git-blame-ignore-revs.git-blame-ignore-revsAdd run prettier commit to .git-blame-ignore-revsJul 18,\""
+    },
+    {
+      "ref": "e22134",
+      "role": "link",
+      "name": "Add run prettier commit to .git-blame-ignore-revs",
+      "value": null,
+      "state": [],
+      "context": "cell \"Add run prettier commit to .git-blame-ignore-revs\""
+    },
+    {
+      "ref": "e21972",
+      "role": "cell",
+      "name": "2 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \".git-blame-ignore-revs.git-blame-ignore-revsAdd run prettier commit to .git-blame-ignore-revsJul 18,\""
+    },
+    {
+      "ref": "e21896",
+      "role": "row",
+      "name": ".gitattributes.gitattributes.gitattributes to ensure LF line endings when we shouldJan 18, 2014",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21973",
+      "role": "cell",
+      "name": ".gitattributes, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".gitattributes.gitattributes.gitattributes to ensure LF line endings when we shouldJan 18, 2014\""
+    },
+    {
+      "ref": "e22243",
+      "role": "link",
+      "name": ".gitattributes, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".gitattributes, (File)\""
+    },
+    {
+      "ref": "e21974",
+      "role": "cell",
+      "name": ".gitattributes to ensure LF line endings when we should",
+      "value": null,
+      "state": [],
+      "context": "row \".gitattributes.gitattributes.gitattributes to ensure LF line endings when we shouldJan 18, 2014\""
+    },
+    {
+      "ref": "e22135",
+      "role": "link",
+      "name": ".gitattributes to ensure LF line endings when we should",
+      "value": null,
+      "state": [],
+      "context": "cell \".gitattributes to ensure LF line endings when we should\""
+    },
+    {
+      "ref": "e21975",
+      "role": "cell",
+      "name": "13 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \".gitattributes.gitattributes.gitattributes to ensure LF line endings when we shouldJan 18, 2014\""
+    },
+    {
+      "ref": "e21897",
+      "role": "row",
+      "name": ".gitignore.gitignore[ci] Rebuild sizebot on the GitHub Actions token (#37322)Aug 23, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21976",
+      "role": "cell",
+      "name": ".gitignore, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".gitignore.gitignore[ci] Rebuild sizebot on the GitHub Actions token (#37322)Aug 23, 2026\""
+    },
+    {
+      "ref": "e22244",
+      "role": "link",
+      "name": ".gitignore, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".gitignore, (File)\""
+    },
+    {
+      "ref": "e21977",
+      "role": "cell",
+      "name": "[ci] Rebuild sizebot on the GitHub Actions token (#37322)",
+      "value": null,
+      "state": [],
+      "context": "row \".gitignore.gitignore[ci] Rebuild sizebot on the GitHub Actions token (#37322)Aug 23, 2026\""
+    },
+    {
+      "ref": "e22136",
+      "role": "link",
+      "name": "[ci] Rebuild sizebot on the GitHub Actions token (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[ci] Rebuild sizebot on the GitHub Actions token (#37322)\""
+    },
+    {
+      "ref": "e22137",
+      "role": "link",
+      "name": "#37322",
+      "value": null,
+      "state": [],
+      "context": "cell \"[ci] Rebuild sizebot on the GitHub Actions token (#37322)\""
+    },
+    {
+      "ref": "e22138",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[ci] Rebuild sizebot on the GitHub Actions token (#37322)\""
+    },
+    {
+      "ref": "e21978",
+      "role": "cell",
+      "name": "last month",
+      "value": null,
+      "state": [],
+      "context": "row \".gitignore.gitignore[ci] Rebuild sizebot on the GitHub Actions token (#37322)Aug 23, 2026\""
+    },
+    {
+      "ref": "e21898",
+      "role": "row",
+      "name": ".mailmap.mailmapupdates mailmap entries (#19824)Sep 12, 2020",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21979",
+      "role": "cell",
+      "name": ".mailmap, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".mailmap.mailmapupdates mailmap entries (#19824)Sep 12, 2020\""
+    },
+    {
+      "ref": "e22245",
+      "role": "link",
+      "name": ".mailmap, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".mailmap, (File)\""
+    },
+    {
+      "ref": "e21980",
+      "role": "cell",
+      "name": "updates mailmap entries (#19824)",
+      "value": null,
+      "state": [],
+      "context": "row \".mailmap.mailmapupdates mailmap entries (#19824)Sep 12, 2020\""
+    },
+    {
+      "ref": "e22139",
+      "role": "link",
+      "name": "updates mailmap entries (",
+      "value": null,
+      "state": [],
+      "context": "cell \"updates mailmap entries (#19824)\""
+    },
+    {
+      "ref": "e22140",
+      "role": "link",
+      "name": "#19824",
+      "value": null,
+      "state": [],
+      "context": "cell \"updates mailmap entries (#19824)\""
+    },
+    {
+      "ref": "e22141",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"updates mailmap entries (#19824)\""
+    },
+    {
+      "ref": "e21981",
+      "role": "cell",
+      "name": "6 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \".mailmap.mailmapupdates mailmap entries (#19824)Sep 12, 2020\""
+    },
+    {
+      "ref": "e21899",
+      "role": "row",
+      "name": ".nvmrc.nvmrcUpgrade node.js to 20 LTS (#32855)Apr 14, 2025",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21982",
+      "role": "cell",
+      "name": ".nvmrc, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".nvmrc.nvmrcUpgrade node.js to 20 LTS (#32855)Apr 14, 2025\""
+    },
+    {
+      "ref": "e22246",
+      "role": "link",
+      "name": ".nvmrc, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".nvmrc, (File)\""
+    },
+    {
+      "ref": "e21983",
+      "role": "cell",
+      "name": "Upgrade node.js to 20 LTS (#32855)",
+      "value": null,
+      "state": [],
+      "context": "row \".nvmrc.nvmrcUpgrade node.js to 20 LTS (#32855)Apr 14, 2025\""
+    },
+    {
+      "ref": "e22142",
+      "role": "link",
+      "name": "Upgrade node.js to 20 LTS (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Upgrade node.js to 20 LTS (#32855)\""
+    },
+    {
+      "ref": "e22143",
+      "role": "link",
+      "name": "#32855",
+      "value": null,
+      "state": [],
+      "context": "cell \"Upgrade node.js to 20 LTS (#32855)\""
+    },
+    {
+      "ref": "e22144",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Upgrade node.js to 20 LTS (#32855)\""
+    },
+    {
+      "ref": "e21984",
+      "role": "cell",
+      "name": "last year",
+      "value": null,
+      "state": [],
+      "context": "row \".nvmrc.nvmrcUpgrade node.js to 20 LTS (#32855)Apr 14, 2025\""
+    },
+    {
+      "ref": "e21900",
+      "role": "row",
+      "name": ".prettierignore.prettierignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21985",
+      "role": "cell",
+      "name": ".prettierignore, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".prettierignore.prettierignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e22247",
+      "role": "link",
+      "name": ".prettierignore, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".prettierignore, (File)\""
+    },
+    {
+      "ref": "e21986",
+      "role": "cell",
+      "name": "[DevTools] Remove the dead Timeline profiler code (#37187)",
+      "value": null,
+      "state": [],
+      "context": "row \".prettierignore.prettierignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e22145",
+      "role": "link",
+      "name": "[DevTools] Remove the dead Timeline profiler code (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e22146",
+      "role": "link",
+      "name": "#37187",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e22147",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[DevTools] Remove the dead Timeline profiler code (#37187)\""
+    },
+    {
+      "ref": "e21987",
+      "role": "cell",
+      "name": "last month",
+      "value": null,
+      "state": [],
+      "context": "row \".prettierignore.prettierignore[DevTools] Remove the dead Timeline profiler code (#37187)Aug 3, 2026\""
+    },
+    {
+      "ref": "e21901",
+      "role": "row",
+      "name": ".prettierrc.js.prettierrc.js[flow] Update files synced to react-native to use modern flow syntax (#…",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21988",
+      "role": "cell",
+      "name": ".prettierrc.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".prettierrc.js.prettierrc.js[flow] Update files synced to react-native to use modern flow syntax (#…\""
+    },
+    {
+      "ref": "e22248",
+      "role": "link",
+      "name": ".prettierrc.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".prettierrc.js, (File)\""
+    },
+    {
+      "ref": "e21989",
+      "role": "cell",
+      "name": "[flow] Update files synced to react-native to use modern flow syntax (#…",
+      "value": null,
+      "state": [],
+      "context": "row \".prettierrc.js.prettierrc.js[flow] Update files synced to react-native to use modern flow syntax (#…\""
+    },
+    {
+      "ref": "e22148",
+      "role": "link",
+      "name": "[flow] Update files synced to react-native to use modern flow syntax (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[flow] Update files synced to react-native to use modern flow syntax (#…\""
+    },
+    {
+      "ref": "e22149",
+      "role": "link",
+      "name": "#…",
+      "value": null,
+      "state": [],
+      "context": "cell \"[flow] Update files synced to react-native to use modern flow syntax (#…\""
+    },
+    {
+      "ref": "e21990",
+      "role": "cell",
+      "name": "3 months ago",
+      "value": null,
+      "state": [],
+      "context": "row \".prettierrc.js.prettierrc.js[flow] Update files synced to react-native to use modern flow syntax (#…\""
+    },
+    {
+      "ref": "e21902",
+      "role": "row",
+      "name": ".watchmanconfig.watchmanconfig.watchmanconfig must be valid json (#16118)Jul 12, 2019",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21991",
+      "role": "cell",
+      "name": ".watchmanconfig, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \".watchmanconfig.watchmanconfig.watchmanconfig must be valid json (#16118)Jul 12, 2019\""
+    },
+    {
+      "ref": "e22249",
+      "role": "link",
+      "name": ".watchmanconfig, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \".watchmanconfig, (File)\""
+    },
+    {
+      "ref": "e21992",
+      "role": "cell",
+      "name": ".watchmanconfig must be valid json (#16118)",
+      "value": null,
+      "state": [],
+      "context": "row \".watchmanconfig.watchmanconfig.watchmanconfig must be valid json (#16118)Jul 12, 2019\""
+    },
+    {
+      "ref": "e22150",
+      "role": "link",
+      "name": ".watchmanconfig must be valid json (",
+      "value": null,
+      "state": [],
+      "context": "cell \".watchmanconfig must be valid json (#16118)\""
+    },
+    {
+      "ref": "e22151",
+      "role": "link",
+      "name": "#16118",
+      "value": null,
+      "state": [],
+      "context": "cell \".watchmanconfig must be valid json (#16118)\""
+    },
+    {
+      "ref": "e22152",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \".watchmanconfig must be valid json (#16118)\""
+    },
+    {
+      "ref": "e21993",
+      "role": "cell",
+      "name": "7 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \".watchmanconfig.watchmanconfig.watchmanconfig must be valid json (#16118)Jul 12, 2019\""
+    },
+    {
+      "ref": "e21903",
+      "role": "row",
+      "name": "CHANGELOG.mdCHANGELOG.mdAdd React 19.3.0 changelog entry (#37554)Sep 9, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21994",
+      "role": "cell",
+      "name": "CHANGELOG.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"CHANGELOG.mdCHANGELOG.mdAdd React 19.3.0 changelog entry (#37554)Sep 9, 2026\""
+    },
+    {
+      "ref": "e22250",
+      "role": "link",
+      "name": "CHANGELOG.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"CHANGELOG.md, (File)\""
+    },
+    {
+      "ref": "e21995",
+      "role": "cell",
+      "name": "Add React 19.3.0 changelog entry (#37554)",
+      "value": null,
+      "state": [],
+      "context": "row \"CHANGELOG.mdCHANGELOG.mdAdd React 19.3.0 changelog entry (#37554)Sep 9, 2026\""
+    },
+    {
+      "ref": "e22153",
+      "role": "link",
+      "name": "Add React 19.3.0 changelog entry (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Add React 19.3.0 changelog entry (#37554)\""
+    },
+    {
+      "ref": "e22154",
+      "role": "link",
+      "name": "#37554",
+      "value": null,
+      "state": [],
+      "context": "cell \"Add React 19.3.0 changelog entry (#37554)\""
+    },
+    {
+      "ref": "e22155",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Add React 19.3.0 changelog entry (#37554)\""
+    },
+    {
+      "ref": "e21996",
+      "role": "cell",
+      "name": "3 weeks ago",
+      "value": null,
+      "state": [],
+      "context": "row \"CHANGELOG.mdCHANGELOG.mdAdd React 19.3.0 changelog entry (#37554)Sep 9, 2026\""
+    },
+    {
+      "ref": "e21904",
+      "role": "row",
+      "name": "CLAUDE.mdCLAUDE.md[compiler] Port React Compiler to Rust (#36173)Jun 9, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21997",
+      "role": "cell",
+      "name": "CLAUDE.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"CLAUDE.mdCLAUDE.md[compiler] Port React Compiler to Rust (#36173)Jun 9, 2026\""
+    },
+    {
+      "ref": "e22251",
+      "role": "link",
+      "name": "CLAUDE.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"CLAUDE.md, (File)\""
+    },
+    {
+      "ref": "e21998",
+      "role": "cell",
+      "name": "[compiler] Port React Compiler to Rust (#36173)",
+      "value": null,
+      "state": [],
+      "context": "row \"CLAUDE.mdCLAUDE.md[compiler] Port React Compiler to Rust (#36173)Jun 9, 2026\""
+    },
+    {
+      "ref": "e22156",
+      "role": "link",
+      "name": "[compiler] Port React Compiler to Rust (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Port React Compiler to Rust (#36173)\""
+    },
+    {
+      "ref": "e22157",
+      "role": "link",
+      "name": "#36173",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Port React Compiler to Rust (#36173)\""
+    },
+    {
+      "ref": "e22158",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Port React Compiler to Rust (#36173)\""
+    },
+    {
+      "ref": "e21999",
+      "role": "cell",
+      "name": "3 months ago",
+      "value": null,
+      "state": [],
+      "context": "row \"CLAUDE.mdCLAUDE.md[compiler] Port React Compiler to Rust (#36173)Jun 9, 2026\""
+    },
+    {
+      "ref": "e21905",
+      "role": "row",
+      "name": "CODE_OF_CONDUCT.mdCODE_OF_CONDUCT.mdrevert last grammatical edit (#25067)Aug 10, 2022",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22000",
+      "role": "cell",
+      "name": "CODE_OF_CONDUCT.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"CODE_OF_CONDUCT.mdCODE_OF_CONDUCT.mdrevert last grammatical edit (#25067)Aug 10, 2022\""
+    },
+    {
+      "ref": "e22252",
+      "role": "link",
+      "name": "CODE_OF_CONDUCT.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"CODE_OF_CONDUCT.md, (File)\""
+    },
+    {
+      "ref": "e22001",
+      "role": "cell",
+      "name": "revert last grammatical edit (#25067)",
+      "value": null,
+      "state": [],
+      "context": "row \"CODE_OF_CONDUCT.mdCODE_OF_CONDUCT.mdrevert last grammatical edit (#25067)Aug 10, 2022\""
+    },
+    {
+      "ref": "e22159",
+      "role": "link",
+      "name": "revert last grammatical edit (",
+      "value": null,
+      "state": [],
+      "context": "cell \"revert last grammatical edit (#25067)\""
+    },
+    {
+      "ref": "e22160",
+      "role": "link",
+      "name": "#25067",
+      "value": null,
+      "state": [],
+      "context": "cell \"revert last grammatical edit (#25067)\""
+    },
+    {
+      "ref": "e22161",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"revert last grammatical edit (#25067)\""
+    },
+    {
+      "ref": "e22002",
+      "role": "cell",
+      "name": "4 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \"CODE_OF_CONDUCT.mdCODE_OF_CONDUCT.mdrevert last grammatical edit (#25067)Aug 10, 2022\""
+    },
+    {
+      "ref": "e21906",
+      "role": "row",
+      "name": "CONTRIBUTING.mdCONTRIBUTING.mdFix: Updated link in CONTRIBUTING (#25381)Oct 3, 2022",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22003",
+      "role": "cell",
+      "name": "CONTRIBUTING.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"CONTRIBUTING.mdCONTRIBUTING.mdFix: Updated link in CONTRIBUTING (#25381)Oct 3, 2022\""
+    },
+    {
+      "ref": "e22253",
+      "role": "link",
+      "name": "CONTRIBUTING.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"CONTRIBUTING.md, (File)\""
+    },
+    {
+      "ref": "e22004",
+      "role": "cell",
+      "name": "Fix: Updated link in CONTRIBUTING (#25381)",
+      "value": null,
+      "state": [],
+      "context": "row \"CONTRIBUTING.mdCONTRIBUTING.mdFix: Updated link in CONTRIBUTING (#25381)Oct 3, 2022\""
+    },
+    {
+      "ref": "e22162",
+      "role": "link",
+      "name": "Fix: Updated link in CONTRIBUTING (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Fix: Updated link in CONTRIBUTING (#25381)\""
+    },
+    {
+      "ref": "e22163",
+      "role": "link",
+      "name": "#25381",
+      "value": null,
+      "state": [],
+      "context": "cell \"Fix: Updated link in CONTRIBUTING (#25381)\""
+    },
+    {
+      "ref": "e22164",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Fix: Updated link in CONTRIBUTING (#25381)\""
+    },
+    {
+      "ref": "e22005",
+      "role": "cell",
+      "name": "4 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \"CONTRIBUTING.mdCONTRIBUTING.mdFix: Updated link in CONTRIBUTING (#25381)Oct 3, 2022\""
+    },
+    {
+      "ref": "e21907",
+      "role": "row",
+      "name": "LICENSELICENSE[Codemod] Update copyright header to Meta (#25315)Oct 18, 2022",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22006",
+      "role": "cell",
+      "name": "LICENSE, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"LICENSELICENSE[Codemod] Update copyright header to Meta (#25315)Oct 18, 2022\""
+    },
+    {
+      "ref": "e22254",
+      "role": "link",
+      "name": "LICENSE, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"LICENSE, (File)\""
+    },
+    {
+      "ref": "e22007",
+      "role": "cell",
+      "name": "[Codemod] Update copyright header to Meta (#25315)",
+      "value": null,
+      "state": [],
+      "context": "row \"LICENSELICENSE[Codemod] Update copyright header to Meta (#25315)Oct 18, 2022\""
+    },
+    {
+      "ref": "e22165",
+      "role": "link",
+      "name": "[Codemod] Update copyright header to Meta (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Codemod] Update copyright header to Meta (#25315)\""
+    },
+    {
+      "ref": "e22166",
+      "role": "link",
+      "name": "#25315",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Codemod] Update copyright header to Meta (#25315)\""
+    },
+    {
+      "ref": "e22167",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[Codemod] Update copyright header to Meta (#25315)\""
+    },
+    {
+      "ref": "e22008",
+      "role": "cell",
+      "name": "4 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \"LICENSELICENSE[Codemod] Update copyright header to Meta (#25315)Oct 18, 2022\""
+    },
+    {
+      "ref": "e21908",
+      "role": "row",
+      "name": "MAINTAINERSMAINTAINERSUpdate MAINTAINERS file (#37515)Sep 3, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22009",
+      "role": "cell",
+      "name": "MAINTAINERS, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"MAINTAINERSMAINTAINERSUpdate MAINTAINERS file (#37515)Sep 3, 2026\""
+    },
+    {
+      "ref": "e22255",
+      "role": "link",
+      "name": "MAINTAINERS, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"MAINTAINERS, (File)\""
+    },
+    {
+      "ref": "e22010",
+      "role": "cell",
+      "name": "Update MAINTAINERS file (#37515)",
+      "value": null,
+      "state": [],
+      "context": "row \"MAINTAINERSMAINTAINERSUpdate MAINTAINERS file (#37515)Sep 3, 2026\""
+    },
+    {
+      "ref": "e22168",
+      "role": "link",
+      "name": "Update MAINTAINERS file (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update MAINTAINERS file (#37515)\""
+    },
+    {
+      "ref": "e22169",
+      "role": "link",
+      "name": "#37515",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update MAINTAINERS file (#37515)\""
+    },
+    {
+      "ref": "e22170",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update MAINTAINERS file (#37515)\""
+    },
+    {
+      "ref": "e22011",
+      "role": "cell",
+      "name": "last month",
+      "value": null,
+      "state": [],
+      "context": "row \"MAINTAINERSMAINTAINERSUpdate MAINTAINERS file (#37515)Sep 3, 2026\""
+    },
+    {
+      "ref": "e21909",
+      "role": "row",
+      "name": "README.mdREADME.md[ez] Remove circleci badge from readmeJul 29, 2024",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22012",
+      "role": "cell",
+      "name": "README.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"README.mdREADME.md[ez] Remove circleci badge from readmeJul 29, 2024\""
+    },
+    {
+      "ref": "e22256",
+      "role": "link",
+      "name": "README.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"README.md, (File)\""
+    },
+    {
+      "ref": "e22013",
+      "role": "cell",
+      "name": "[ez] Remove circleci badge from readme",
+      "value": null,
+      "state": [],
+      "context": "row \"README.mdREADME.md[ez] Remove circleci badge from readmeJul 29, 2024\""
+    },
+    {
+      "ref": "e22171",
+      "role": "link",
+      "name": "[ez] Remove circleci badge from readme",
+      "value": null,
+      "state": [],
+      "context": "cell \"[ez] Remove circleci badge from readme\""
+    },
+    {
+      "ref": "e22014",
+      "role": "cell",
+      "name": "2 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \"README.mdREADME.md[ez] Remove circleci badge from readmeJul 29, 2024\""
+    },
+    {
+      "ref": "e21910",
+      "role": "row",
+      "name": "ReactVersions.jsReactVersions.js[eprh] Update changelog for 7.1.1 (#36308)Apr 17, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22015",
+      "role": "cell",
+      "name": "ReactVersions.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"ReactVersions.jsReactVersions.js[eprh] Update changelog for 7.1.1 (#36308)Apr 17, 2026\""
+    },
+    {
+      "ref": "e22257",
+      "role": "link",
+      "name": "ReactVersions.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"ReactVersions.js, (File)\""
+    },
+    {
+      "ref": "e22016",
+      "role": "cell",
+      "name": "[eprh] Update changelog for 7.1.1 (#36308)",
+      "value": null,
+      "state": [],
+      "context": "row \"ReactVersions.jsReactVersions.js[eprh] Update changelog for 7.1.1 (#36308)Apr 17, 2026\""
+    },
+    {
+      "ref": "e22172",
+      "role": "link",
+      "name": "[eprh] Update changelog for 7.1.1 (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[eprh] Update changelog for 7.1.1 (#36308)\""
+    },
+    {
+      "ref": "e22173",
+      "role": "link",
+      "name": "#36308",
+      "value": null,
+      "state": [],
+      "context": "cell \"[eprh] Update changelog for 7.1.1 (#36308)\""
+    },
+    {
+      "ref": "e22174",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[eprh] Update changelog for 7.1.1 (#36308)\""
+    },
+    {
+      "ref": "e22017",
+      "role": "cell",
+      "name": "5 months ago",
+      "value": null,
+      "state": [],
+      "context": "row \"ReactVersions.jsReactVersions.js[eprh] Update changelog for 7.1.1 (#36308)Apr 17, 2026\""
+    },
+    {
+      "ref": "e21911",
+      "role": "row",
+      "name": "SECURITY.mdSECURITY.mdCreate SECURITY.md (#15784)Jan 9, 2020",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22018",
+      "role": "cell",
+      "name": "SECURITY.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"SECURITY.mdSECURITY.mdCreate SECURITY.md (#15784)Jan 9, 2020\""
+    },
+    {
+      "ref": "e22258",
+      "role": "link",
+      "name": "SECURITY.md, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"SECURITY.md, (File)\""
+    },
+    {
+      "ref": "e22019",
+      "role": "cell",
+      "name": "Create SECURITY.md (#15784)",
+      "value": null,
+      "state": [],
+      "context": "row \"SECURITY.mdSECURITY.mdCreate SECURITY.md (#15784)Jan 9, 2020\""
+    },
+    {
+      "ref": "e22175",
+      "role": "link",
+      "name": "Create SECURITY.md (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Create SECURITY.md (#15784)\""
+    },
+    {
+      "ref": "e22176",
+      "role": "link",
+      "name": "#15784",
+      "value": null,
+      "state": [],
+      "context": "cell \"Create SECURITY.md (#15784)\""
+    },
+    {
+      "ref": "e22177",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Create SECURITY.md (#15784)\""
+    },
+    {
+      "ref": "e22020",
+      "role": "cell",
+      "name": "7 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \"SECURITY.mdSECURITY.mdCreate SECURITY.md (#15784)Jan 9, 2020\""
+    },
+    {
+      "ref": "e21912",
+      "role": "row",
+      "name": "babel.config-react-compiler.jsbabel.config-react-compiler.jsfeat(eslint-plugin-react-hooks): merge r",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22021",
+      "role": "cell",
+      "name": "babel.config-react-compiler.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config-react-compiler.jsbabel.config-react-compiler.jsfeat(eslint-plugin-react-hooks): merge r\""
+    },
+    {
+      "ref": "e22259",
+      "role": "link",
+      "name": "babel.config-react-compiler.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"babel.config-react-compiler.js, (File)\""
+    },
+    {
+      "ref": "e22022",
+      "role": "cell",
+      "name": "feat(eslint-plugin-react-hooks): merge rule from eslint-plugin-react-…",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config-react-compiler.jsbabel.config-react-compiler.jsfeat(eslint-plugin-react-hooks): merge r\""
+    },
+    {
+      "ref": "e22178",
+      "role": "link",
+      "name": "feat(eslint-plugin-react-hooks): merge rule from eslint-plugin-react-…",
+      "value": null,
+      "state": [],
+      "context": "cell \"feat(eslint-plugin-react-hooks): merge rule from eslint-plugin-react-…\""
+    },
+    {
+      "ref": "e22023",
+      "role": "cell",
+      "name": "last year",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config-react-compiler.jsbabel.config-react-compiler.jsfeat(eslint-plugin-react-hooks): merge r\""
+    },
+    {
+      "ref": "e21913",
+      "role": "row",
+      "name": "babel.config-ts.jsbabel.config-ts.js[compiler] Aggregate error reporting, separate eslint rules (#34",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22024",
+      "role": "cell",
+      "name": "babel.config-ts.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config-ts.jsbabel.config-ts.js[compiler] Aggregate error reporting, separate eslint rules (#34\""
+    },
+    {
+      "ref": "e22260",
+      "role": "link",
+      "name": "babel.config-ts.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"babel.config-ts.js, (File)\""
+    },
+    {
+      "ref": "e22025",
+      "role": "cell",
+      "name": "[compiler] Aggregate error reporting, separate eslint rules (#34176)",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config-ts.jsbabel.config-ts.js[compiler] Aggregate error reporting, separate eslint rules (#34\""
+    },
+    {
+      "ref": "e22179",
+      "role": "link",
+      "name": "[compiler] Aggregate error reporting, separate eslint rules (",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Aggregate error reporting, separate eslint rules (#34176)\""
+    },
+    {
+      "ref": "e22180",
+      "role": "link",
+      "name": "#34176",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Aggregate error reporting, separate eslint rules (#34176)\""
+    },
+    {
+      "ref": "e22181",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[compiler] Aggregate error reporting, separate eslint rules (#34176)\""
+    },
+    {
+      "ref": "e22026",
+      "role": "cell",
+      "name": "last year",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config-ts.jsbabel.config-ts.js[compiler] Aggregate error reporting, separate eslint rules (#34\""
+    },
+    {
+      "ref": "e21914",
+      "role": "row",
+      "name": "babel.config.jsbabel.config.jsStop transpiling computed property names (#36542)May 26, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22027",
+      "role": "cell",
+      "name": "babel.config.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config.jsbabel.config.jsStop transpiling computed property names (#36542)May 26, 2026\""
+    },
+    {
+      "ref": "e22261",
+      "role": "link",
+      "name": "babel.config.js, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"babel.config.js, (File)\""
+    },
+    {
+      "ref": "e22028",
+      "role": "cell",
+      "name": "Stop transpiling computed property names (#36542)",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config.jsbabel.config.jsStop transpiling computed property names (#36542)May 26, 2026\""
+    },
+    {
+      "ref": "e22182",
+      "role": "link",
+      "name": "Stop transpiling computed property names (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Stop transpiling computed property names (#36542)\""
+    },
+    {
+      "ref": "e22183",
+      "role": "link",
+      "name": "#36542",
+      "value": null,
+      "state": [],
+      "context": "cell \"Stop transpiling computed property names (#36542)\""
+    },
+    {
+      "ref": "e22184",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Stop transpiling computed property names (#36542)\""
+    },
+    {
+      "ref": "e22029",
+      "role": "cell",
+      "name": "4 months ago",
+      "value": null,
+      "state": [],
+      "context": "row \"babel.config.jsbabel.config.jsStop transpiling computed property names (#36542)May 26, 2026\""
+    },
+    {
+      "ref": "e21915",
+      "role": "row",
+      "name": "flow-typed.config.jsonflow-typed.config.jsonUpdate Flow to 0.263 (#34269)Aug 22, 2025",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22030",
+      "role": "cell",
+      "name": "flow-typed.config.json, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"flow-typed.config.jsonflow-typed.config.jsonUpdate Flow to 0.263 (#34269)Aug 22, 2025\""
+    },
+    {
+      "ref": "e22262",
+      "role": "link",
+      "name": "flow-typed.config.json, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"flow-typed.config.json, (File)\""
+    },
+    {
+      "ref": "e22031",
+      "role": "cell",
+      "name": "Update Flow to 0.263 (#34269)",
+      "value": null,
+      "state": [],
+      "context": "row \"flow-typed.config.jsonflow-typed.config.jsonUpdate Flow to 0.263 (#34269)Aug 22, 2025\""
+    },
+    {
+      "ref": "e22185",
+      "role": "link",
+      "name": "Update Flow to 0.263 (",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update Flow to 0.263 (#34269)\""
+    },
+    {
+      "ref": "e22186",
+      "role": "link",
+      "name": "#34269",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update Flow to 0.263 (#34269)\""
+    },
+    {
+      "ref": "e22187",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"Update Flow to 0.263 (#34269)\""
+    },
+    {
+      "ref": "e22032",
+      "role": "cell",
+      "name": "last year",
+      "value": null,
+      "state": [],
+      "context": "row \"flow-typed.config.jsonflow-typed.config.jsonUpdate Flow to 0.263 (#34269)Aug 22, 2025\""
+    },
+    {
+      "ref": "e21916",
+      "role": "row",
+      "name": "package.jsonpackage.json[test] Stop polyfilling AbortController (#37633)Sep 16, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22033",
+      "role": "cell",
+      "name": "package.json, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"package.jsonpackage.json[test] Stop polyfilling AbortController (#37633)Sep 16, 2026\""
+    },
+    {
+      "ref": "e22263",
+      "role": "link",
+      "name": "package.json, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"package.json, (File)\""
+    },
+    {
+      "ref": "e22034",
+      "role": "cell",
+      "name": "[test] Stop polyfilling AbortController (#37633)",
+      "value": null,
+      "state": [],
+      "context": "row \"package.jsonpackage.json[test] Stop polyfilling AbortController (#37633)Sep 16, 2026\""
+    },
+    {
+      "ref": "e22188",
+      "role": "link",
+      "name": "[test] Stop polyfilling",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22264",
+      "role": "link",
+      "name": "AbortController",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22189",
+      "role": "link",
+      "name": "(",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22190",
+      "role": "link",
+      "name": "#37633",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22191",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22035",
+      "role": "cell",
+      "name": "2 weeks ago",
+      "value": null,
+      "state": [],
+      "context": "row \"package.jsonpackage.json[test] Stop polyfilling AbortController (#37633)Sep 16, 2026\""
+    },
+    {
+      "ref": "e21917",
+      "role": "row",
+      "name": "react.code-workspacereact.code-workspacecreated a vscode workspace file for the repo (#29830)Jun 13,",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22036",
+      "role": "cell",
+      "name": "react.code-workspace, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"react.code-workspacereact.code-workspacecreated a vscode workspace file for the repo (#29830)Jun 13,\""
+    },
+    {
+      "ref": "e22265",
+      "role": "link",
+      "name": "react.code-workspace, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"react.code-workspace, (File)\""
+    },
+    {
+      "ref": "e22037",
+      "role": "cell",
+      "name": "created a vscode workspace file for the repo (#29830)",
+      "value": null,
+      "state": [],
+      "context": "row \"react.code-workspacereact.code-workspacecreated a vscode workspace file for the repo (#29830)Jun 13,\""
+    },
+    {
+      "ref": "e22192",
+      "role": "link",
+      "name": "created a vscode workspace file for the repo (",
+      "value": null,
+      "state": [],
+      "context": "cell \"created a vscode workspace file for the repo (#29830)\""
+    },
+    {
+      "ref": "e22193",
+      "role": "link",
+      "name": "#29830",
+      "value": null,
+      "state": [],
+      "context": "cell \"created a vscode workspace file for the repo (#29830)\""
+    },
+    {
+      "ref": "e22194",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"created a vscode workspace file for the repo (#29830)\""
+    },
+    {
+      "ref": "e22038",
+      "role": "cell",
+      "name": "2 years ago",
+      "value": null,
+      "state": [],
+      "context": "row \"react.code-workspacereact.code-workspacecreated a vscode workspace file for the repo (#29830)Jun 13,\""
+    },
+    {
+      "ref": "e21918",
+      "role": "row",
+      "name": "yarn.lockyarn.lock[test] Stop polyfilling AbortController (#37633)Sep 16, 2026",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22039",
+      "role": "cell",
+      "name": "yarn.lock, (File)",
+      "value": null,
+      "state": [],
+      "context": "row \"yarn.lockyarn.lock[test] Stop polyfilling AbortController (#37633)Sep 16, 2026\""
+    },
+    {
+      "ref": "e22266",
+      "role": "link",
+      "name": "yarn.lock, (File)",
+      "value": null,
+      "state": [],
+      "context": "cell \"yarn.lock, (File)\""
+    },
+    {
+      "ref": "e22040",
+      "role": "cell",
+      "name": "[test] Stop polyfilling AbortController (#37633)",
+      "value": null,
+      "state": [],
+      "context": "row \"yarn.lockyarn.lock[test] Stop polyfilling AbortController (#37633)Sep 16, 2026\""
+    },
+    {
+      "ref": "e22195",
+      "role": "link",
+      "name": "[test] Stop polyfilling",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22267",
+      "role": "link",
+      "name": "AbortController",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22196",
+      "role": "link",
+      "name": "(",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22197",
+      "role": "link",
+      "name": "#37633",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22198",
+      "role": "link",
+      "name": ")",
+      "value": null,
+      "state": [],
+      "context": "cell \"[test] Stop polyfilling AbortController (#37633)\""
+    },
+    {
+      "ref": "e22041",
+      "role": "cell",
+      "name": "2 weeks ago",
+      "value": null,
+      "state": [],
+      "context": "row \"yarn.lockyarn.lock[test] Stop polyfilling AbortController (#37633)Sep 16, 2026\""
+    },
+    {
+      "ref": "e21919",
+      "role": "heading",
+      "name": "Repository files navigation",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21920",
+      "role": "navigation",
+      "name": "Repository files",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22199",
+      "role": "link",
+      "name": "README",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository files\""
+    },
+    {
+      "ref": "e22200",
+      "role": "link",
+      "name": "Code of conduct",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository files\""
+    },
+    {
+      "ref": "e22201",
+      "role": "link",
+      "name": "Contributing",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository files\""
+    },
+    {
+      "ref": "e22202",
+      "role": "link",
+      "name": "MIT license",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository files\""
+    },
+    {
+      "ref": "e22203",
+      "role": "link",
+      "name": "Security",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository files\""
+    },
+    {
+      "ref": "e21921",
+      "role": "button",
+      "name": "Outline",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21857",
+      "role": "generic",
+      "name": "React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22067",
+      "role": "heading",
+      "name": "React · GitHub license npm version (Runtime) Build and Test (Compiler) TypeScript PRs Welcome",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22204",
+      "role": "link",
+      "name": "React",
+      "value": null,
+      "state": [],
+      "context": "heading \"React · GitHub license npm version (Runtime) Build and Test (Compiler) TypeScript PRs Welcome\""
+    },
+    {
+      "ref": "e22205",
+      "role": "link",
+      "name": "GitHub license",
+      "value": null,
+      "state": [],
+      "context": "heading \"React · GitHub license npm version (Runtime) Build and Test (Compiler) TypeScript PRs Welcome\""
+    },
+    {
+      "ref": "e22206",
+      "role": "link",
+      "name": "npm version",
+      "value": null,
+      "state": [],
+      "context": "heading \"React · GitHub license npm version (Runtime) Build and Test (Compiler) TypeScript PRs Welcome\""
+    },
+    {
+      "ref": "e22207",
+      "role": "link",
+      "name": "(Runtime) Build and Test",
+      "value": null,
+      "state": [],
+      "context": "heading \"React · GitHub license npm version (Runtime) Build and Test (Compiler) TypeScript PRs Welcome\""
+    },
+    {
+      "ref": "e22208",
+      "role": "link",
+      "name": "(Compiler) TypeScript",
+      "value": null,
+      "state": [],
+      "context": "heading \"React · GitHub license npm version (Runtime) Build and Test (Compiler) TypeScript PRs Welcome\""
+    },
+    {
+      "ref": "e22209",
+      "role": "link",
+      "name": "PRs Welcome",
+      "value": null,
+      "state": [],
+      "context": "heading \"React · GitHub license npm version (Runtime) Build and Test (Compiler) TypeScript PRs Welcome\""
+    },
+    {
+      "ref": "e22068",
+      "role": "link",
+      "name": "Permalink: React · ",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22210",
+      "role": "link",
+      "name": "Node",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22211",
+      "role": "link",
+      "name": "React Native",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22069",
+      "role": "link",
+      "name": "Learn how to use React in your project",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22070",
+      "role": "heading",
+      "name": "Installation",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22071",
+      "role": "link",
+      "name": "Permalink: Installation",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22212",
+      "role": "link",
+      "name": "Quick Start",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22213",
+      "role": "link",
+      "name": "Add React to an Existing Project",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22214",
+      "role": "link",
+      "name": "Create a New React App",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22072",
+      "role": "heading",
+      "name": "Documentation",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22073",
+      "role": "link",
+      "name": "Permalink: Documentation",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22074",
+      "role": "link",
+      "name": "on the website",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22075",
+      "role": "link",
+      "name": "Getting Started",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22215",
+      "role": "link",
+      "name": "Quick Start",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22216",
+      "role": "link",
+      "name": "Tutorial",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22217",
+      "role": "link",
+      "name": "Thinking in React",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22218",
+      "role": "link",
+      "name": "Installation",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22219",
+      "role": "link",
+      "name": "Describing the UI",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22220",
+      "role": "link",
+      "name": "Adding Interactivity",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22221",
+      "role": "link",
+      "name": "Managing State",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22222",
+      "role": "link",
+      "name": "Advanced Guides",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22223",
+      "role": "link",
+      "name": "API Reference",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22224",
+      "role": "link",
+      "name": "Where to Get Support",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22225",
+      "role": "link",
+      "name": "Contributing Guide",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22076",
+      "role": "link",
+      "name": "this repository",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22077",
+      "role": "heading",
+      "name": "Examples",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22078",
+      "role": "link",
+      "name": "Permalink: Examples",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22079",
+      "role": "link",
+      "name": "on the website",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22080",
+      "role": "button",
+      "name": "Copy code to clipboard",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22081",
+      "role": "link",
+      "name": "we call it JSX",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22082",
+      "role": "heading",
+      "name": "Contributing",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22083",
+      "role": "link",
+      "name": "Permalink: Contributing",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22084",
+      "role": "heading",
+      "name": "Code of Conduct",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22226",
+      "role": "link",
+      "name": "Code of Conduct",
+      "value": null,
+      "state": [],
+      "context": "heading \"Code of Conduct\""
+    },
+    {
+      "ref": "e22085",
+      "role": "link",
+      "name": "Permalink: Code of Conduct",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22086",
+      "role": "link",
+      "name": "the full text",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22087",
+      "role": "heading",
+      "name": "Contributing Guide",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22227",
+      "role": "link",
+      "name": "Contributing Guide",
+      "value": null,
+      "state": [],
+      "context": "heading \"Contributing Guide\""
+    },
+    {
+      "ref": "e22088",
+      "role": "link",
+      "name": "Permalink: Contributing Guide",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22089",
+      "role": "link",
+      "name": "contributing guide",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22090",
+      "role": "heading",
+      "name": "Good First Issues",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22228",
+      "role": "link",
+      "name": "Good First Issues",
+      "value": null,
+      "state": [],
+      "context": "heading \"Good First Issues\""
+    },
+    {
+      "ref": "e22091",
+      "role": "link",
+      "name": "Permalink: Good First Issues",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22092",
+      "role": "link",
+      "name": "good first issues",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22093",
+      "role": "heading",
+      "name": "License",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22094",
+      "role": "link",
+      "name": "Permalink: License",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e22095",
+      "role": "link",
+      "name": "MIT licensed",
+      "value": null,
+      "state": [],
+      "context": "generic \"React ·     nReact is a JavaScript library for building user interfaces.nnDeclarative: React makes i\""
+    },
+    {
+      "ref": "e21858",
+      "role": "heading",
+      "name": "About",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21922",
+      "role": "link",
+      "name": "react.dev",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21859",
+      "role": "heading",
+      "name": "Topics",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21860",
+      "role": "link",
+      "name": "declarative",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21861",
+      "role": "link",
+      "name": "frontend",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21862",
+      "role": "link",
+      "name": "javascript",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21863",
+      "role": "link",
+      "name": "library",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21864",
+      "role": "link",
+      "name": "react",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21865",
+      "role": "link",
+      "name": "ui",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21866",
+      "role": "heading",
+      "name": "Resources",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21923",
+      "role": "link",
+      "name": "Readme",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21924",
+      "role": "link",
+      "name": "MIT license",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21867",
+      "role": "heading",
+      "name": "Code of conduct",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21925",
+      "role": "link",
+      "name": "Code of conduct",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21868",
+      "role": "heading",
+      "name": "Contributing",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21926",
+      "role": "link",
+      "name": "Contributing",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21869",
+      "role": "heading",
+      "name": "Security policy",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21927",
+      "role": "link",
+      "name": "Security policy",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21928",
+      "role": "link",
+      "name": "Activity",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21929",
+      "role": "link",
+      "name": "Custom properties",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21870",
+      "role": "heading",
+      "name": "Stars",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21871",
+      "role": "heading",
+      "name": "Watchers",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21872",
+      "role": "heading",
+      "name": "Forks",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21930",
+      "role": "link",
+      "name": "51.4k forks",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21931",
+      "role": "link",
+      "name": "Report repository",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21873",
+      "role": "heading",
+      "name": "Releases  (133)",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21932",
+      "role": "link",
+      "name": "Releases",
+      "value": null,
+      "state": [],
+      "context": "heading \"Releases  (133)\""
+    },
+    {
+      "ref": "e21874",
+      "role": "link",
+      "name": "19.3.0 (September 9, 2026) Latest 3 weeks ago",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21933",
+      "role": "link",
+      "name": "+ 132 releases",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21875",
+      "role": "heading",
+      "name": "Used by  (30M)",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21934",
+      "role": "link",
+      "name": "Used by",
+      "value": null,
+      "state": [],
+      "context": "heading \"Used by  (30M)\""
+    },
+    {
+      "ref": "e21876",
+      "role": "link",
+      "name": "@glandais @Toniio @rdjunior4 @vikiru @acidnyan + 30.111.522",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21877",
+      "role": "heading",
+      "name": "Contributors  (1779)",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21935",
+      "role": "link",
+      "name": "Contributors",
+      "value": null,
+      "state": [],
+      "context": "heading \"Contributors  (1779)\""
+    },
+    {
+      "ref": "e22042",
+      "role": "link",
+      "name": "@sebmarkbage",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22043",
+      "role": "link",
+      "name": "@zpao",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22044",
+      "role": "link",
+      "name": "@gaearon",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22045",
+      "role": "link",
+      "name": "@acdlite",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22046",
+      "role": "link",
+      "name": "@sophiebits",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22047",
+      "role": "link",
+      "name": "@josephsavona",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22048",
+      "role": "link",
+      "name": "@poteto",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22049",
+      "role": "link",
+      "name": "@eps1lon",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22050",
+      "role": "link",
+      "name": "@jimfb",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22051",
+      "role": "link",
+      "name": "@trueadm",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22052",
+      "role": "link",
+      "name": "@bvaughn",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22053",
+      "role": "link",
+      "name": "@mofeiZ",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22054",
+      "role": "link",
+      "name": "@gsathya",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22055",
+      "role": "link",
+      "name": "@kassens",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21936",
+      "role": "link",
+      "name": "+ 1765 contributors",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21878",
+      "role": "heading",
+      "name": "Languages",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22056",
+      "role": "link",
+      "name": "JavaScript 49.5%",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22057",
+      "role": "link",
+      "name": "Rust 26%",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22058",
+      "role": "link",
+      "name": "TypeScript 22.4%",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22059",
+      "role": "link",
+      "name": "HTML 1%",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22060",
+      "role": "link",
+      "name": "CSS 0.8%",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22061",
+      "role": "link",
+      "name": "CoffeeScript 0.2%",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e22062",
+      "role": "link",
+      "name": "Shell 0.1%",
+      "value": null,
+      "state": [],
+      "context": "generic \"main973 Branches175 TagsGo to fileCodeOpen more actions menuLatest commit potetoandraashish1601[comp\""
+    },
+    {
+      "ref": "e21810",
+      "role": "heading",
+      "name": "Footer",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e21811",
+      "role": "link",
+      "name": "GitHub Homepage",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21812",
+      "role": "navigation",
+      "name": "Footer",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e21815",
+      "role": "heading",
+      "name": "Footer navigation",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21820",
+      "role": "link",
+      "name": "Terms",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21821",
+      "role": "link",
+      "name": "Privacy",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21822",
+      "role": "link",
+      "name": "Security",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21823",
+      "role": "link",
+      "name": "Status",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21824",
+      "role": "link",
+      "name": "Community",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21825",
+      "role": "link",
+      "name": "Docs",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21826",
+      "role": "link",
+      "name": "Contact",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21879",
+      "role": "button",
+      "name": "Manage cookies",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e21880",
+      "role": "button",
+      "name": "Do not share my personal information",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    }
+  ],
+  "taken": "2026-09-28T23:57:07.646Z"
+}

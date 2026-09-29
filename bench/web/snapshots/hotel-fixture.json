@@ -1,0 +1,167 @@
+{
+  "driver": "agent-browser",
+  "url": "file:///Users/agustin.zammarrelli/repos/quicksilver/bench/web/fixtures/hotel.html",
+  "title": "Forma · Find a place to slow down",
+  "text": "forma.\nFind a stay\nReading room\nSomewhere you can exhale.\nDestination\nFind stays\nStay category\nAll stays\nDesign\nNature\nCoastal\nFree cancellation\nCasa Flora\nView Casa Flora\nThe Glasshouse\nView The Glasshouse\nSerra Lodge\nView Serra Lodge",
+  "refs": [
+    {
+      "ref": "e27174",
+      "role": "link",
+      "name": "forma.",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27177",
+      "role": "link",
+      "name": "Find a stay",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27178",
+      "role": "link",
+      "name": "Reading room",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27175",
+      "role": "heading",
+      "name": "Somewhere you can exhale.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27179",
+      "role": "searchbox",
+      "name": "Destination",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27180",
+      "role": "button",
+      "name": "Find stays",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27181",
+      "role": "combobox",
+      "name": "Stay category",
+      "value": "All stays",
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27188",
+      "role": "option",
+      "name": "All stays",
+      "value": null,
+      "state": [
+        "selected"
+      ],
+      "context": "combobox \"Stay category\""
+    },
+    {
+      "ref": "e27189",
+      "role": "option",
+      "name": "Design",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Stay category\""
+    },
+    {
+      "ref": "e27190",
+      "role": "option",
+      "name": "Nature",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Stay category\""
+    },
+    {
+      "ref": "e27191",
+      "role": "option",
+      "name": "Coastal",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Stay category\""
+    },
+    {
+      "ref": "e27176",
+      "role": "checkbox",
+      "name": "Free cancellation",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27182",
+      "role": "heading",
+      "name": "Casa Flora",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27183",
+      "role": "button",
+      "name": "View Casa Flora",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27184",
+      "role": "heading",
+      "name": "The Glasshouse",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27185",
+      "role": "button",
+      "name": "View The Glasshouse",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27186",
+      "role": "heading",
+      "name": "Serra Lodge",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27187",
+      "role": "button",
+      "name": "View Serra Lodge",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-29T00:01:30.712Z"
+}

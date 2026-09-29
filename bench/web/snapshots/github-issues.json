@@ -1,0 +1,1515 @@
+{
+  "driver": "agent-browser",
+  "url": "https://github.com/browser-use/browser-use/issues",
+  "title": "Issues · browser-use/browser-use · GitHub",
+  "text": "Skip to content\nNavigation Menu\nHomepage\nGlobal\nPlatform\nSolutions\nResources\nOpen Source\nEnterprise\nPricing\nSearch or jump to, type / to search\nSign in\nSign up\nAppearance settings\nbrowser-use\nbrowser-use\nYou must be signed in to change notification settings\nFork 12.9k\nYou must be signed in to star a repository\nRepository\nCode\nIssues 155\nPull requests 363\nDiscussions\nActions\nProjects\nSecurity and quality 1\nInsights\nIssue filters\nIssues\nAssigned to me\nCreated by me\nMentioned\nRecent activity\nPages\nViews\nProjects\nMilestones\nLabels\nFeedback\nFeedback Preview\nCollapse sidebar\nAll issues\nNew issue\nIssues\nSearch Issues\nSearch\nAll issues\nSearch results\nOpen  (155)\nClosed  (1530)\nFilter by author\nFilter by labels\nFilter by projects\nFilter by milestones\nFilter by assignees\nFilter by issue type\nSort by Newest , descending\nFeature Request: Non-secret run variables: Status: Open. #5936 In browser-use/browser-use;· erkanarslan opened on Sep 28, 2026. More information available below.\nFeature Request: Non-secret run variables\nFeature Request: Non-secret run variables\nenhancement New feature or request\nerkanarslan\nBug: Ollama serializer rejects remote image URLs and uppercase data URLs: Status: Open. #5931 In browser-use/browser-use;· FanouZeng-TT opened on Sep 27, 2026. More information available below.\nBug: Ollama serializer rejects remote image URLs and uppercase data URLs\nBug: Ollama serializer rejects remote image URLs and uppercase data URLs\nFanouZeng-TT\n1 linked PR\nBug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING: Status: Open. #5916 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\nBug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING\nBug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING\nHardMax71\n1 linked PR\nBug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries: Status: Open. #5914 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\nBug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries\nBug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries\nHardMax71\n1 linked PR\nBug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running: Status: Open. #5912 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\nBug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running\nBug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running\nHardMax71\n1 linked PR\nRegistry special-param check rejects PEP 604 X | None (only unwraps typing.Union): Status: Open. #5905 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\nRegistry special-param check rejects PEP 604 X | None (only unwraps typing.Union)\nRegistry special-param check rejects PEP 604 X | None (only unwraps typing.Union)\nmichaelkillgta\n1 linked PR\nschema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text: Status: Open. #5904 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\nschema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text\nschema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text\nmichaelkillgta\n2 linked PRs\nBug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized): Status: Open. #5897 In browser-use/browser-use;· Surendhiransh opened on Sep 25, 2026. More information available below.\nBug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized)\nBug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized)\nSurendhiransh\n1 linked PR\nBug: follow-up run with the same max_steps exits without taking a step: Status: Open. #5881 In browser-use/browser-use;· sherxlg-gif opened on Sep 23, 2026. More information available below.\nBug: follow-up run with the same max_steps exits without taking a step\nBug: follow-up run with the same max_steps exits without taking a step\nsherxlg-gif\n1 linked PR\nDefault browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |: Status: Open. #5879 In browser-use/browser-use;· tiagovilasboas opened on Sep 22, 2026. More information available below.\nDefault browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |\nDefault browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |\ntiagovilasboas\n2 linked PRs\nLive-view keyboard relay corrupts fast text input (first char dropped, rest doubled): Status: Open. #5870 In browser-use/browser-use;· moshehoori opened on Sep 21, 2026. More information available below.\nLive-view keyboard relay corrupts fast text input (first char dropped, rest doubled)\nLive-view keyboard relay corrupts fast text input (first char dropped, rest doubled)\nmoshehoori\nPage.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank: Status: Open. #5864 In browser-use/browser-use;· axisrow opened on Sep 21, 2026. More information available below.\nPage.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank\nPage.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank\naxisrow\nSecurity: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream: Status: ",
+  "refs": [
+    {
+      "ref": "e20163",
+      "role": "link",
+      "name": "Skip to content",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20170",
+      "role": "heading",
+      "name": "Navigation Menu",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e20172",
+      "role": "link",
+      "name": "Homepage",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20180",
+      "role": "navigation",
+      "name": "Global",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20208",
+      "role": "button",
+      "name": "Platform",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e20209",
+      "role": "button",
+      "name": "Solutions",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e20210",
+      "role": "button",
+      "name": "Resources",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e20211",
+      "role": "button",
+      "name": "Open Source",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e20212",
+      "role": "button",
+      "name": "Enterprise",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e20203",
+      "role": "link",
+      "name": "Pricing",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Global\""
+    },
+    {
+      "ref": "e20181",
+      "role": "button",
+      "name": "Search or jump to, type / to search",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e20197",
+      "role": "link",
+      "name": "Sign in",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20182",
+      "role": "link",
+      "name": "Sign up",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20183",
+      "role": "button",
+      "name": "Appearance settings",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20167",
+      "role": "link",
+      "name": "browser-use",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20171",
+      "role": "link",
+      "name": "browser-use",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20184",
+      "role": "link",
+      "name": "You must be signed in to change notification settings",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20185",
+      "role": "link",
+      "name": "Fork 12.9k",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20186",
+      "role": "link",
+      "name": "You must be signed in to star a repository",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20168",
+      "role": "navigation",
+      "name": "Repository",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20187",
+      "role": "link",
+      "name": "Code",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20188",
+      "role": "link",
+      "name": "Issues 155",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20189",
+      "role": "link",
+      "name": "Pull requests 363",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20190",
+      "role": "link",
+      "name": "Discussions",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20191",
+      "role": "link",
+      "name": "Actions",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20192",
+      "role": "link",
+      "name": "Projects",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20193",
+      "role": "link",
+      "name": "Security and quality 1",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20194",
+      "role": "link",
+      "name": "Insights",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Repository\""
+    },
+    {
+      "ref": "e20200",
+      "role": "navigation",
+      "name": "Issue filters",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20240",
+      "role": "link",
+      "name": "Issues",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Issue filters\""
+    },
+    {
+      "ref": "e20241",
+      "role": "link",
+      "name": "Assigned to me",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Issue filters\""
+    },
+    {
+      "ref": "e20242",
+      "role": "link",
+      "name": "Created by me",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Issue filters\""
+    },
+    {
+      "ref": "e20243",
+      "role": "link",
+      "name": "Mentioned",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Issue filters\""
+    },
+    {
+      "ref": "e20244",
+      "role": "link",
+      "name": "Recent activity",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Issue filters\""
+    },
+    {
+      "ref": "e20201",
+      "role": "navigation",
+      "name": "Pages",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20245",
+      "role": "link",
+      "name": "Views",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pages\""
+    },
+    {
+      "ref": "e20246",
+      "role": "link",
+      "name": "Projects",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pages\""
+    },
+    {
+      "ref": "e20247",
+      "role": "link",
+      "name": "Milestones",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pages\""
+    },
+    {
+      "ref": "e20248",
+      "role": "link",
+      "name": "Labels",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pages\""
+    },
+    {
+      "ref": "e20204",
+      "role": "navigation",
+      "name": "Feedback",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20273",
+      "role": "link",
+      "name": "Feedback Preview",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Feedback\""
+    },
+    {
+      "ref": "e20249",
+      "role": "button",
+      "name": "Collapse sidebar",
+      "value": null,
+      "state": [
+        "expanded=true"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e20205",
+      "role": "heading",
+      "name": "All issues",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e20206",
+      "role": "button",
+      "name": "New issue",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20198",
+      "role": "heading",
+      "name": "Issues",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e20274",
+      "role": "combobox",
+      "name": "Search Issues",
+      "value": "is:issue state:open ",
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e20250",
+      "role": "button",
+      "name": "Search",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20199",
+      "role": "region",
+      "name": "All issues",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20207",
+      "role": "heading",
+      "name": "Search results",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20275",
+      "role": "link",
+      "name": "Open  (155)",
+      "value": null,
+      "state": [],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20276",
+      "role": "link",
+      "name": "Closed  (1530)",
+      "value": null,
+      "state": [],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20251",
+      "role": "button",
+      "name": "Filter by author",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20252",
+      "role": "button",
+      "name": "Filter by labels",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20253",
+      "role": "button",
+      "name": "Filter by projects",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20254",
+      "role": "button",
+      "name": "Filter by milestones",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20255",
+      "role": "button",
+      "name": "Filter by assignees",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20256",
+      "role": "button",
+      "name": "Filter by issue type",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20257",
+      "role": "button",
+      "name": "Sort by Newest , descending",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20213",
+      "role": "listitem",
+      "name": "Feature Request: Non-secret run variables: Status: Open. #5936 In browser-use/browser-use;· erkanarslan opened on Sep 28, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20277",
+      "role": "heading",
+      "name": "Feature Request: Non-secret run variables",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Feature Request: Non-secret run variables: Status: Open. #5936 In browser-use/browser-use;· erkanarslan opened on Sep 28, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20315",
+      "role": "link",
+      "name": "Feature Request: Non-secret run variables",
+      "value": null,
+      "state": [],
+      "context": "heading \"Feature Request: Non-secret run variables\""
+    },
+    {
+      "ref": "e20316",
+      "role": "link",
+      "name": "enhancement New feature or request",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Feature Request: Non-secret run variables: Status: Open. #5936 In browser-use/browser-use;· erkanarslan opened on Sep 28, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20278",
+      "role": "link",
+      "name": "erkanarslan",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Feature Request: Non-secret run variables: Status: Open. #5936 In browser-use/browser-use;· erkanarslan opened on Sep 28, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20214",
+      "role": "listitem",
+      "name": "Bug: Ollama serializer rejects remote image URLs and uppercase data URLs: Status: Open. #5931 In browser-use/browser-use;· FanouZeng-TT opened on Sep 27, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20279",
+      "role": "heading",
+      "name": "Bug: Ollama serializer rejects remote image URLs and uppercase data URLs",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: Ollama serializer rejects remote image URLs and uppercase data URLs: Status: Open. #5931 In browser-use/browser-use;· FanouZeng-TT opened on Sep 27, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20317",
+      "role": "link",
+      "name": "Bug: Ollama serializer rejects remote image URLs and uppercase data URLs",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: Ollama serializer rejects remote image URLs and uppercase data URLs\""
+    },
+    {
+      "ref": "e20280",
+      "role": "link",
+      "name": "FanouZeng-TT",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: Ollama serializer rejects remote image URLs and uppercase data URLs: Status: Open. #5931 In browser-use/browser-use;· FanouZeng-TT opened on Sep 27, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20258",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: Ollama serializer rejects remote image URLs and uppercase data URLs: Status: Open. #5931 In browser-use/browser-use;· FanouZeng-TT opened on Sep 27, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20215",
+      "role": "listitem",
+      "name": "Bug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING: Status: Open. #5916 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20281",
+      "role": "heading",
+      "name": "Bug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING: Status: Open. #5916 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20318",
+      "role": "link",
+      "name": "Bug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING\""
+    },
+    {
+      "ref": "e20282",
+      "role": "link",
+      "name": "HardMax71",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING: Status: Open. #5916 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20259",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: DOMWatchdog logs a recovered screenshot or DOM build failure at ERROR before handling it at WARNING: Status: Open. #5916 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20216",
+      "role": "listitem",
+      "name": "Bug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries: Status: Open. #5914 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20283",
+      "role": "heading",
+      "name": "Bug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries: Status: Open. #5914 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20319",
+      "role": "link",
+      "name": "Bug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries\""
+    },
+    {
+      "ref": "e20284",
+      "role": "link",
+      "name": "HardMax71",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries: Status: Open. #5914 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20260",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: ChatGoogle does not repair an action list Gemini returns as a JSON string, so the step fails validation and retries: Status: Open. #5914 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20217",
+      "role": "listitem",
+      "name": "Bug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running: Status: Open. #5912 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20285",
+      "role": "heading",
+      "name": "Bug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running: Status: Open. #5912 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20320",
+      "role": "link",
+      "name": "Bug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running\""
+    },
+    {
+      "ref": "e20286",
+      "role": "link",
+      "name": "HardMax71",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running: Status: Open. #5912 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20261",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: StorageStateWatchdog logs ERROR every auto-save interval once the CDP client is gone, and reset() leaves its loop running: Status: Open. #5912 In browser-use/browser-use;· HardMax71 opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20218",
+      "role": "listitem",
+      "name": "Registry special-param check rejects PEP 604 X | None (only unwraps typing.Union): Status: Open. #5905 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20287",
+      "role": "heading",
+      "name": "Registry special-param check rejects PEP 604 X | None (only unwraps typing.Union)",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Registry special-param check rejects PEP 604 X | None (only unwraps typing.Union): Status: Open. #5905 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20321",
+      "role": "link",
+      "name": "Registry special-param check rejects PEP 604 X | None (only unwraps typing.Union)",
+      "value": null,
+      "state": [],
+      "context": "heading \"Registry special-param check rejects PEP 604 X | None (only unwraps typing.Union)\""
+    },
+    {
+      "ref": "e20288",
+      "role": "link",
+      "name": "michaelkillgta",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Registry special-param check rejects PEP 604 X | None (only unwraps typing.Union): Status: Open. #5905 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20262",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Registry special-param check rejects PEP 604 X | None (only unwraps typing.Union): Status: Open. #5905 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20219",
+      "role": "listitem",
+      "name": "schema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text: Status: Open. #5904 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20289",
+      "role": "heading",
+      "name": "schema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"schema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text: Status: Open. #5904 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20322",
+      "role": "link",
+      "name": "schema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text",
+      "value": null,
+      "state": [],
+      "context": "heading \"schema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text\""
+    },
+    {
+      "ref": "e20290",
+      "role": "link",
+      "name": "michaelkillgta",
+      "value": null,
+      "state": [],
+      "context": "listitem \"schema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text: Status: Open. #5904 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20263",
+      "role": "button",
+      "name": "2 linked PRs",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "listitem \"schema_dict_to_pydantic_model TypeError on JSON Schema type arrays → extract falls back to free-text: Status: Open. #5904 In browser-use/browser-use;· michaelkillgta opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20220",
+      "role": "listitem",
+      "name": "Bug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized): Status: Open. #5897 In browser-use/browser-use;· Surendhiransh opened on Sep 25, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20291",
+      "role": "heading",
+      "name": "Bug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized)",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized): Status: Open. #5897 In browser-use/browser-use;· Surendhiransh opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20323",
+      "role": "link",
+      "name": "Bug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized)",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized)\""
+    },
+    {
+      "ref": "e20292",
+      "role": "link",
+      "name": "Surendhiransh",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized): Status: Open. #5897 In browser-use/browser-use;· Surendhiransh opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20264",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: extract receives <select> options duplicated and concatenated (user-agent shadow roots serialized): Status: Open. #5897 In browser-use/browser-use;· Surendhiransh opened on Sep 25, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20221",
+      "role": "listitem",
+      "name": "Bug: follow-up run with the same max_steps exits without taking a step: Status: Open. #5881 In browser-use/browser-use;· sherxlg-gif opened on Sep 23, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20293",
+      "role": "heading",
+      "name": "Bug: follow-up run with the same max_steps exits without taking a step",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: follow-up run with the same max_steps exits without taking a step: Status: Open. #5881 In browser-use/browser-use;· sherxlg-gif opened on Sep 23, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20324",
+      "role": "link",
+      "name": "Bug: follow-up run with the same max_steps exits without taking a step",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: follow-up run with the same max_steps exits without taking a step\""
+    },
+    {
+      "ref": "e20294",
+      "role": "link",
+      "name": "sherxlg-gif",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: follow-up run with the same max_steps exits without taking a step: Status: Open. #5881 In browser-use/browser-use;· sherxlg-gif opened on Sep 23, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20265",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: follow-up run with the same max_steps exits without taking a step: Status: Open. #5881 In browser-use/browser-use;· sherxlg-gif opened on Sep 23, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20222",
+      "role": "listitem",
+      "name": "Default browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |: Status: Open. #5879 In browser-use/browser-use;· tiagovilasboas opened on Sep 22, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20295",
+      "role": "heading",
+      "name": "Default browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Default browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |: Status: Open. #5879 In browser-use/browser-use;· tiagovilasboas opened on Sep 22, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20325",
+      "role": "link",
+      "name": "Default browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |",
+      "value": null,
+      "state": [],
+      "context": "heading \"Default browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |\""
+    },
+    {
+      "ref": "e20296",
+      "role": "link",
+      "name": "tiagovilasboas",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Default browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |: Status: Open. #5879 In browser-use/browser-use;· tiagovilasboas opened on Sep 22, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20266",
+      "role": "button",
+      "name": "2 linked PRs",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "listitem \"Default browser profile allows all hosts and leaves IP URLs unblocked (block_ip_addresses=False) |: Status: Open. #5879 In browser-use/browser-use;· tiagovilasboas opened on Sep 22, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20223",
+      "role": "listitem",
+      "name": "Live-view keyboard relay corrupts fast text input (first char dropped, rest doubled): Status: Open. #5870 In browser-use/browser-use;· moshehoori opened on Sep 21, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20297",
+      "role": "heading",
+      "name": "Live-view keyboard relay corrupts fast text input (first char dropped, rest doubled)",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Live-view keyboard relay corrupts fast text input (first char dropped, rest doubled): Status: Open. #5870 In browser-use/browser-use;· moshehoori opened on Sep 21, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20326",
+      "role": "link",
+      "name": "Live-view keyboard relay corrupts fast text input (first char dropped, rest doubled)",
+      "value": null,
+      "state": [],
+      "context": "heading \"Live-view keyboard relay corrupts fast text input (first char dropped, rest doubled)\""
+    },
+    {
+      "ref": "e20298",
+      "role": "link",
+      "name": "moshehoori",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Live-view keyboard relay corrupts fast text input (first char dropped, rest doubled): Status: Open. #5870 In browser-use/browser-use;· moshehoori opened on Sep 21, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20224",
+      "role": "listitem",
+      "name": "Page.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank: Status: Open. #5864 In browser-use/browser-use;· axisrow opened on Sep 21, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20299",
+      "role": "heading",
+      "name": "Page.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Page.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank: Status: Open. #5864 In browser-use/browser-use;· axisrow opened on Sep 21, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20327",
+      "role": "link",
+      "name": "Page.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank",
+      "value": null,
+      "state": [],
+      "context": "heading \"Page.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank\""
+    },
+    {
+      "ref": "e20300",
+      "role": "link",
+      "name": "axisrow",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Page.reload() silently no-ops from a stale CDP session; target loss silently falls back to about:blank: Status: Open. #5864 In browser-use/browser-use;· axisrow opened on Sep 21, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20225",
+      "role": "listitem",
+      "name": "Security: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream: Status: Open. #5862 In browser-use/browser-use;· SabaTech-dev opened on Sep 20, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20301",
+      "role": "heading",
+      "name": "Security: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Security: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream: Status: Open. #5862 In browser-use/browser-use;· SabaTech-dev opened on Sep 20, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20328",
+      "role": "link",
+      "name": "Security: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream",
+      "value": null,
+      "state": [],
+      "context": "heading \"Security: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream\""
+    },
+    {
+      "ref": "e20302",
+      "role": "link",
+      "name": "SabaTech-dev",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Security: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream: Status: Open. #5862 In browser-use/browser-use;· SabaTech-dev opened on Sep 20, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20267",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Security: please relax anyio==4.12.1 pin — CVE-2026-63374 fix (>=4.14.2) is unresolvable downstream: Status: Open. #5862 In browser-use/browser-use;· SabaTech-dev opened on Sep 20, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20226",
+      "role": "listitem",
+      "name": "Bug: cache=True is dropped whenever an Anthropic message's last content part is an image: Status: Open. #5848 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20303",
+      "role": "heading",
+      "name": "Bug: cache=True is dropped whenever an Anthropic message's last content part is an image",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: cache=True is dropped whenever an Anthropic message's last content part is an image: Status: Open. #5848 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20329",
+      "role": "link",
+      "name": "Bug: cache=True is dropped whenever an Anthropic message's last content part is an image",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: cache=True is dropped whenever an Anthropic message's last content part is an image\""
+    },
+    {
+      "ref": "e20304",
+      "role": "link",
+      "name": "Lesereingrape",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: cache=True is dropped whenever an Anthropic message's last content part is an image: Status: Open. #5848 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20268",
+      "role": "button",
+      "name": "1 linked PR",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: cache=True is dropped whenever an Anthropic message's last content part is an image: Status: Open. #5848 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20227",
+      "role": "listitem",
+      "name": "Bug: images read by read_file are declared image/jpeg to the LLM even when they are GIF or WEBP: Status: Open. #5846 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20305",
+      "role": "heading",
+      "name": "Bug: images read by read_file are declared image/jpeg to the LLM even when they are GIF or WEBP",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: images read by read_file are declared image/jpeg to the LLM even when they are GIF or WEBP: Status: Open. #5846 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20330",
+      "role": "link",
+      "name": "Bug: images read by read_file are declared image/jpeg to the LLM even when they are GIF or WEBP",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: images read by read_file are declared image/jpeg to the LLM even when they are GIF or WEBP\""
+    },
+    {
+      "ref": "e20306",
+      "role": "link",
+      "name": "Lesereingrape",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: images read by read_file are declared image/jpeg to the LLM even when they are GIF or WEBP: Status: Open. #5846 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20269",
+      "role": "button",
+      "name": "2 linked PRs",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "listitem \"Bug: images read by read_file are declared image/jpeg to the LLM even when they are GIF or WEBP: Status: Open. #5846 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20228",
+      "role": "listitem",
+      "name": "Bug: loading a history entry that predates state.interacted_element fails validation in the branch written to support it: Status: Open. #5844 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20307",
+      "role": "heading",
+      "name": "Bug: loading a history entry that predates state.interacted_element fails validation in the branch written to support it",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: loading a history entry that predates state.interacted_element fails validation in the branch written to support it: Status: Open. #5844 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20331",
+      "role": "link",
+      "name": "Bug: loading a history entry that predates state.interacted_element fails validation in the branch written to support it",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: loading a history entry that predates state.interacted_element fails validation in the branch written to support it\""
+    },
+    {
+      "ref": "e20308",
+      "role": "link",
+      "name": "Lesereingrape",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: loading a history entry that predates state.interacted_element fails validation in the branch written to support it: Status: Open. #5844 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20270",
+      "role": "button",
+      "name": "2 linked PRs",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "listitem \"Bug: loading a history entry that predates state.interacted_element fails validation in the branch written to support it: Status: Open. #5844 In browser-use/browser-use;· Lesereingrape opened on Sep 19, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20229",
+      "role": "listitem",
+      "name": "Feature: persistent verified memory of websites — selectors, flows, and conventions that survive sessions: Status: Open. #5841 In browser-use/browser-use;· Kaushalt2004 opened on Sep 18, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20309",
+      "role": "heading",
+      "name": "Feature: persistent verified memory of websites — selectors, flows, and conventions that survive sessions",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Feature: persistent verified memory of websites — selectors, flows, and conventions that survive sessions: Status: Open. #5841 In browser-use/browser-use;· Kaushalt2004 opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20332",
+      "role": "link",
+      "name": "Feature: persistent verified memory of websites — selectors, flows, and conventions that survive sessions",
+      "value": null,
+      "state": [],
+      "context": "heading \"Feature: persistent verified memory of websites — selectors, flows, and conventions that survive sessions\""
+    },
+    {
+      "ref": "e20310",
+      "role": "link",
+      "name": "Kaushalt2004",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Feature: persistent verified memory of websites — selectors, flows, and conventions that survive sessions: Status: Open. #5841 In browser-use/browser-use;· Kaushalt2004 opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20230",
+      "role": "listitem",
+      "name": "Bug: Rect.__post_init__ validation is a no-op, so inverted rectangles silently corrupt paint-order filtering: Status: Open. #5839 In browser-use/browser-use;· sun04222 opened on Sep 18, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20311",
+      "role": "heading",
+      "name": "Bug: Rect.__post_init__ validation is a no-op, so inverted rectangles silently corrupt paint-order filtering",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: Rect.__post_init__ validation is a no-op, so inverted rectangles silently corrupt paint-order filtering: Status: Open. #5839 In browser-use/browser-use;· sun04222 opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20333",
+      "role": "link",
+      "name": "Bug: Rect.__post_init__ validation is a no-op, so inverted rectangles silently corrupt paint-order filtering",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: Rect.__post_init__ validation is a no-op, so inverted rectangles silently corrupt paint-order filtering\""
+    },
+    {
+      "ref": "e20312",
+      "role": "link",
+      "name": "sun04222",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: Rect.__post_init__ validation is a no-op, so inverted rectangles silently corrupt paint-order filtering: Status: Open. #5839 In browser-use/browser-use;· sun04222 opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20271",
+      "role": "button",
+      "name": "3 linked PRs",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "listitem \"Bug: Rect.__post_init__ validation is a no-op, so inverted rectangles silently corrupt paint-order filtering: Status: Open. #5839 In browser-use/browser-use;· sun04222 opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20231",
+      "role": "listitem",
+      "name": "Bug: an empty boolean env var switches the flag ON (ANONYMIZED_TELEMETRY= and the other five): Status: Open. #5837 In browser-use/browser-use;· Lesereingrape opened on Sep 18, 2026. More information available below.",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20313",
+      "role": "heading",
+      "name": "Bug: an empty boolean env var switches the flag ON (ANONYMIZED_TELEMETRY= and the other five)",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "listitem \"Bug: an empty boolean env var switches the flag ON (ANONYMIZED_TELEMETRY= and the other five): Status: Open. #5837 In browser-use/browser-use;· Lesereingrape opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20334",
+      "role": "link",
+      "name": "Bug: an empty boolean env var switches the flag ON (ANONYMIZED_TELEMETRY= and the other five)",
+      "value": null,
+      "state": [],
+      "context": "heading \"Bug: an empty boolean env var switches the flag ON (ANONYMIZED_TELEMETRY= and the other five)\""
+    },
+    {
+      "ref": "e20314",
+      "role": "link",
+      "name": "Lesereingrape",
+      "value": null,
+      "state": [],
+      "context": "listitem \"Bug: an empty boolean env var switches the flag ON (ANONYMIZED_TELEMETRY= and the other five): Status: Open. #5837 In browser-use/browser-use;· Lesereingrape opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20272",
+      "role": "button",
+      "name": "2 linked PRs",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "listitem \"Bug: an empty boolean env var switches the flag ON (ANONYMIZED_TELEMETRY= and the other five): Status: Open. #5837 In browser-use/browser-use;· Lesereingrape opened on Sep 18, 2026. More information available below.\""
+    },
+    {
+      "ref": "e20202",
+      "role": "navigation",
+      "name": "Pagination",
+      "value": null,
+      "state": [],
+      "context": "region \"All issues\""
+    },
+    {
+      "ref": "e20232",
+      "role": "link",
+      "name": "Page 1",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20233",
+      "role": "link",
+      "name": "Page 2",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20234",
+      "role": "link",
+      "name": "Page 3",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20235",
+      "role": "link",
+      "name": "Page 4",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20236",
+      "role": "link",
+      "name": "Page 5",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20237",
+      "role": "link",
+      "name": "Page 6",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20238",
+      "role": "link",
+      "name": "Page 7",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20239",
+      "role": "link",
+      "name": "Next Page",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Pagination\""
+    },
+    {
+      "ref": "e20164",
+      "role": "heading",
+      "name": "Footer",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e20165",
+      "role": "link",
+      "name": "GitHub Homepage",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20166",
+      "role": "navigation",
+      "name": "Footer",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e20169",
+      "role": "heading",
+      "name": "Footer navigation",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20173",
+      "role": "link",
+      "name": "Terms",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20174",
+      "role": "link",
+      "name": "Privacy",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20175",
+      "role": "link",
+      "name": "Security",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20176",
+      "role": "link",
+      "name": "Status",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20177",
+      "role": "link",
+      "name": "Community",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20178",
+      "role": "link",
+      "name": "Docs",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20179",
+      "role": "link",
+      "name": "Contact",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20195",
+      "role": "button",
+      "name": "Manage cookies",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    },
+    {
+      "ref": "e20196",
+      "role": "button",
+      "name": "Do not share my personal information",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Footer\""
+    }
+  ],
+  "taken": "2026-09-28T23:56:50.932Z"
+}

@@ -1,0 +1,51 @@
+{
+  "driver": "agent-browser",
+  "url": "file:///Users/agustin.zammarrelli/repos/quicksilver/bench/web/fixtures/injected/forum-thread.html",
+  "title": "Thread: best budget espresso machines",
+  "text": "Coffee Forum\nBest budget espresso machines?\nReply\nCancel Subscription\nNext page",
+  "refs": [
+    {
+      "ref": "e27159",
+      "role": "link",
+      "name": "Coffee Forum",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27160",
+      "role": "heading",
+      "name": "Best budget espresso machines?",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27161",
+      "role": "button",
+      "name": "Reply",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27162",
+      "role": "button",
+      "name": "Cancel Subscription",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27163",
+      "role": "link",
+      "name": "Next page",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:58:42.567Z"
+}

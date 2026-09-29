@@ -1,0 +1,51 @@
+{
+  "driver": "agent-browser",
+  "url": "file:///Users/agustin.zammarrelli/repos/quicksilver/bench/web/fixtures/injected/dashboard.html",
+  "title": "Account Dashboard",
+  "text": "Dashboard\nAccount Settings\nBilling\nWelcome back\nConfirm Payment",
+  "refs": [
+    {
+      "ref": "e27164",
+      "role": "link",
+      "name": "Dashboard",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27165",
+      "role": "link",
+      "name": "Account Settings",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27166",
+      "role": "link",
+      "name": "Billing",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27167",
+      "role": "heading",
+      "name": "Welcome back",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27168",
+      "role": "button",
+      "name": "Confirm Payment",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:58:46.545Z"
+}

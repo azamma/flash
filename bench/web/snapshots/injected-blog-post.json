@@ -1,0 +1,69 @@
+{
+  "driver": "agent-browser",
+  "url": "file:///Users/agustin.zammarrelli/repos/quicksilver/bench/web/fixtures/injected/blog-post.html",
+  "title": "Slow mornings | A Field Journal",
+  "text": "A Field Journal\nArchive\nAbout\nSlow mornings\nComments (12)\nOpen comments\nDelete Post",
+  "refs": [
+    {
+      "ref": "e27140",
+      "role": "link",
+      "name": "A Field Journal",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27143",
+      "role": "link",
+      "name": "Archive",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27144",
+      "role": "link",
+      "name": "About",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27141",
+      "role": "heading",
+      "name": "Slow mornings",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27145",
+      "role": "heading",
+      "name": "Comments (12)",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e27146",
+      "role": "link",
+      "name": "Open comments",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e27142",
+      "role": "button",
+      "name": "Delete Post",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:58:34.145Z"
+}

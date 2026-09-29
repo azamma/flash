@@ -1239,8 +1239,9 @@ async function cmdWebPick({ pos, flags }) {
   const real = ranked.filter(([id]) => id !== 'none');
   const byRef = Object.fromEntries(page.refs.map((r) => [r.ref, r]));
   const lines = [];
+  const match = !!real.length && ranked[0][0] !== 'none';
   let command = null, unsure = false;
-  if (!real.length || ranked[0][0] === 'none') {
+  if (!match) {
     lines.push(`(no element on the page matches "${clip(intent, 80)}")`);
   } else {
     const [topId, topP] = real[0];
@@ -1258,7 +1259,7 @@ async function cmdWebPick({ pos, flags }) {
   }
   audit = { query: intent, session, results: real.slice(0, 3).map(([id, p]) => ({ id, p: +f2(p) })) };
   const foot = webFooter(t0, 'web-pick', session, page, stats, lines.join('\n'));
-  emit(flags, { intent, top: real.slice(0, 3).map(([id, p]) => ({ ref: id, p, ...byRef[id] })), unsure, command }, lines, foot);
+  emit(flags, { intent, match, top: real.slice(0, 3).map(([id, p]) => ({ ref: id, p, ...byRef[id] })), unsure, command }, lines, foot);
 }
 
 async function cmdWebCheck({ pos, flags }) {

@@ -1,0 +1,879 @@
+{
+  "driver": "agent-browser",
+  "url": "https://developer.mozilla.org/en-US/",
+  "title": "MDN Web Docs",
+  "text": "Skip to main content\nSkip to search\nAuth0 Built for vibe coders. Trusted by enterprises. Auth0 secures so you can keep vibing. Start building today\nAD\nMDN\nHTML\nCSS\nJavaScript\nWeb APIs\nAll\nLearn\nTools\nAbout\nBlog\nSearch the site\nLog in\nMDN\nSwitch color theme\nEnglish (US)\nResources for Developers, by Developers _\nCSS\nHTML\nJavaScript\nSearch\nAuth0\nAD\nFeatured articles\nBlog\nCelebrating 20 years of MDN\nCelebrating 20 years of MDN\nWeb APIs\nNavigation API\nNavigation API\nWeb APIs\nTrusted Types API\nTrusted Types API\nCSS\nUsing CSS anchor positioning\nUsing CSS anchor positioning\nLatest news\ndeveloper.mozilla.org\nIntroducing the MDN MCP server\nIntroducing the MDN MCP server\ndeveloper.mozilla.org\nUnder the hood of MDN's new frontend\nUnder the hood of MDN's new frontend\ndeveloper.mozilla.org\nImage formats: Codecs and compression tools\nImage formats: Codecs and compression tools\ndeveloper.mozilla.org\nA beginner-friendly guide to view transitions in CSS\nA beginner-friendly guide to view transitions in CSS\nRecent contributions\nmdn/translated-content (external)\n2026/03/18 時点の英語版に基づき更新 (external)\nmdn/translated-content (external)\nchore(fr): update of `Web/CSS/Guides/Grid_layout/Line-based_placement` (external)\nmdn/translated-content (external)\nchore(fr): update of `Web/CSS/Guides/Grid_layout/Logical_values_and_writing_modes` (external)\nmdn/content (external)\nFF157 ExprFeat: JS Export * default proposal (external)\nmdn/content (external)\nFF157 Relnote: Export * from module proposal (external)\nmdn/content (external)\nAdd note about Fetch Metadata headers on non-secure origins (external)\nmdn/content (external)\nAdd ReadOnlyInline for Element.part (external)\nmdn/content (external)\nFix spelling report (external)\nContributor Spotlight\nSHRINIVASS ARUNACHALAM BALASUBRAMANIAN\nGet involved\nAuth0\nAD\nMDN logo\nMDN on GitHub\nMDN on Bluesky\nMDN on X\nMDN on Mastodon\nMDN blog RSS feed\nAbout\nBlog\nMozilla careers (external)\nAdvertise with us\nMDN Plus\nProduct help (external)\nMDN Community\nCommunity resources\nWriting guidelines\nMDN Discord (external)\nMDN on GitHub (external)\nWeb technologies\nLearn web development\nGuides\nTutorials\nGlossary\nHacks blog (external)\nMozilla logo\nWebsite Privacy Notice (external)\nTelemetry Settings (external)\nLegal (external)\nCommunity Participation Guidelines (external)\na Creative Commons license",
+  "refs": [
+    {
+      "ref": "e26322",
+      "role": "link",
+      "name": "Skip to main content",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26323",
+      "role": "link",
+      "name": "Skip to search",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26308",
+      "role": "link",
+      "name": "Auth0 Built for vibe coders. Trusted by enterprises. Auth0 secures so you can keep vibing. Start building today",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26309",
+      "role": "link",
+      "name": "AD",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26324",
+      "role": "link",
+      "name": "MDN",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26376",
+      "role": "button",
+      "name": "HTML",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26377",
+      "role": "button",
+      "name": "CSS",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26378",
+      "role": "button",
+      "name": "JavaScript",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26379",
+      "role": "button",
+      "name": "Web APIs",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26380",
+      "role": "button",
+      "name": "All",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26381",
+      "role": "button",
+      "name": "Learn",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26382",
+      "role": "button",
+      "name": "Tools",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26383",
+      "role": "button",
+      "name": "About",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26384",
+      "role": "link",
+      "name": "Blog",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26351",
+      "role": "button",
+      "name": "Search the site",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26385",
+      "role": "link",
+      "name": "Log in",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26328",
+      "role": "link",
+      "name": "MDN",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26329",
+      "role": "button",
+      "name": "Switch color theme",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26330",
+      "role": "button",
+      "name": "English (US)",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26325",
+      "role": "heading",
+      "name": "Resources for Developers, by Developers _",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26331",
+      "role": "link",
+      "name": "CSS",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26332",
+      "role": "link",
+      "name": "HTML",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26333",
+      "role": "link",
+      "name": "JavaScript",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26326",
+      "role": "button",
+      "name": "Search",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26310",
+      "role": "link",
+      "name": "Auth0",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26311",
+      "role": "link",
+      "name": "AD",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26312",
+      "role": "heading",
+      "name": "Featured articles",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26352",
+      "role": "link",
+      "name": "Blog",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26353",
+      "role": "heading",
+      "name": "Celebrating 20 years of MDN",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26386",
+      "role": "link",
+      "name": "Celebrating 20 years of MDN",
+      "value": null,
+      "state": [],
+      "context": "heading \"Celebrating 20 years of MDN\""
+    },
+    {
+      "ref": "e26354",
+      "role": "link",
+      "name": "Web APIs",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26355",
+      "role": "heading",
+      "name": "Navigation API",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26387",
+      "role": "link",
+      "name": "Navigation API",
+      "value": null,
+      "state": [],
+      "context": "heading \"Navigation API\""
+    },
+    {
+      "ref": "e26356",
+      "role": "link",
+      "name": "Web APIs",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26357",
+      "role": "heading",
+      "name": "Trusted Types API",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26388",
+      "role": "link",
+      "name": "Trusted Types API",
+      "value": null,
+      "state": [],
+      "context": "heading \"Trusted Types API\""
+    },
+    {
+      "ref": "e26358",
+      "role": "link",
+      "name": "CSS",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26359",
+      "role": "heading",
+      "name": "Using CSS anchor positioning",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26389",
+      "role": "link",
+      "name": "Using CSS anchor positioning",
+      "value": null,
+      "state": [],
+      "context": "heading \"Using CSS anchor positioning\""
+    },
+    {
+      "ref": "e26313",
+      "role": "heading",
+      "name": "Latest news",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26360",
+      "role": "link",
+      "name": "developer.mozilla.org",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26361",
+      "role": "heading",
+      "name": "Introducing the MDN MCP server",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26390",
+      "role": "link",
+      "name": "Introducing the MDN MCP server",
+      "value": null,
+      "state": [],
+      "context": "heading \"Introducing the MDN MCP server\""
+    },
+    {
+      "ref": "e26362",
+      "role": "link",
+      "name": "developer.mozilla.org",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26363",
+      "role": "heading",
+      "name": "Under the hood of MDN's new frontend",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26391",
+      "role": "link",
+      "name": "Under the hood of MDN's new frontend",
+      "value": null,
+      "state": [],
+      "context": "heading \"Under the hood of MDN's new frontend\""
+    },
+    {
+      "ref": "e26364",
+      "role": "link",
+      "name": "developer.mozilla.org",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26365",
+      "role": "heading",
+      "name": "Image formats: Codecs and compression tools",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26392",
+      "role": "link",
+      "name": "Image formats: Codecs and compression tools",
+      "value": null,
+      "state": [],
+      "context": "heading \"Image formats: Codecs and compression tools\""
+    },
+    {
+      "ref": "e26366",
+      "role": "link",
+      "name": "developer.mozilla.org",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26367",
+      "role": "heading",
+      "name": "A beginner-friendly guide to view transitions in CSS",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26393",
+      "role": "link",
+      "name": "A beginner-friendly guide to view transitions in CSS",
+      "value": null,
+      "state": [],
+      "context": "heading \"A beginner-friendly guide to view transitions in CSS\""
+    },
+    {
+      "ref": "e26314",
+      "role": "heading",
+      "name": "Recent contributions",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26334",
+      "role": "link",
+      "name": "mdn/translated-content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26368",
+      "role": "link",
+      "name": "2026/03/18 時点の英語版に基づき更新 (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26335",
+      "role": "link",
+      "name": "mdn/translated-content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26369",
+      "role": "link",
+      "name": "chore(fr): update of `Web/CSS/Guides/Grid_layout/Line-based_placement` (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26336",
+      "role": "link",
+      "name": "mdn/translated-content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26370",
+      "role": "link",
+      "name": "chore(fr): update of `Web/CSS/Guides/Grid_layout/Logical_values_and_writing_modes` (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26337",
+      "role": "link",
+      "name": "mdn/content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26371",
+      "role": "link",
+      "name": "FF157 ExprFeat: JS Export * default proposal (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26338",
+      "role": "link",
+      "name": "mdn/content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26372",
+      "role": "link",
+      "name": "FF157 Relnote: Export * from module proposal (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26339",
+      "role": "link",
+      "name": "mdn/content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26373",
+      "role": "link",
+      "name": "Add note about Fetch Metadata headers on non-secure origins (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26340",
+      "role": "link",
+      "name": "mdn/content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26374",
+      "role": "link",
+      "name": "Add ReadOnlyInline for Element.part (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26341",
+      "role": "link",
+      "name": "mdn/content (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26375",
+      "role": "link",
+      "name": "Fix spelling report (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26315",
+      "role": "heading",
+      "name": "Contributor Spotlight",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26316",
+      "role": "link",
+      "name": "SHRINIVASS ARUNACHALAM BALASUBRAMANIAN",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26317",
+      "role": "link",
+      "name": "Get involved",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26318",
+      "role": "link",
+      "name": "Auth0",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26319",
+      "role": "link",
+      "name": "AD",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26320",
+      "role": "link",
+      "name": "MDN logo",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26342",
+      "role": "link",
+      "name": "MDN on GitHub",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26343",
+      "role": "link",
+      "name": "MDN on Bluesky",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26344",
+      "role": "link",
+      "name": "MDN on X",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26345",
+      "role": "link",
+      "name": "MDN on Mastodon",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26346",
+      "role": "link",
+      "name": "MDN blog RSS feed",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26394",
+      "role": "link",
+      "name": "About",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26395",
+      "role": "link",
+      "name": "Blog",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26396",
+      "role": "link",
+      "name": "Mozilla careers (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26397",
+      "role": "link",
+      "name": "Advertise with us",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26398",
+      "role": "link",
+      "name": "MDN Plus",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26399",
+      "role": "link",
+      "name": "Product help (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26400",
+      "role": "link",
+      "name": "MDN Community",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26401",
+      "role": "link",
+      "name": "Community resources",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26402",
+      "role": "link",
+      "name": "Writing guidelines",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26403",
+      "role": "link",
+      "name": "MDN Discord (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26404",
+      "role": "link",
+      "name": "MDN on GitHub (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26405",
+      "role": "link",
+      "name": "Web technologies",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26406",
+      "role": "link",
+      "name": "Learn web development",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26407",
+      "role": "link",
+      "name": "Guides",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26408",
+      "role": "link",
+      "name": "Tutorials",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26409",
+      "role": "link",
+      "name": "Glossary",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26410",
+      "role": "link",
+      "name": "Hacks blog (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26321",
+      "role": "link",
+      "name": "Mozilla logo",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26347",
+      "role": "link",
+      "name": "Website Privacy Notice (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26348",
+      "role": "link",
+      "name": "Telemetry Settings (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26349",
+      "role": "link",
+      "name": "Legal (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26350",
+      "role": "link",
+      "name": "Community Participation Guidelines (external)",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26327",
+      "role": "link",
+      "name": "a Creative Commons license",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:57:55.714Z"
+}

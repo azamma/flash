@@ -1,0 +1,143 @@
+{
+  "driver": "agent-browser",
+  "url": "https://httpbin.org/forms/post",
+  "title": "",
+  "text": "Customer name: \nTelephone: \nE-mail address: \n Small\n Medium\n Large\n Bacon\n Extra Cheese\n Onion\n Mushroom\nHoras Horas\nMinutos Minutos\nMostrar selector de hora Mostrar selector de hora\nDelivery instructions: \nSubmit order",
+  "refs": [
+    {
+      "ref": "e26130",
+      "role": "textbox",
+      "name": "Customer name: ",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26131",
+      "role": "textbox",
+      "name": "Telephone: ",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26132",
+      "role": "textbox",
+      "name": "E-mail address: ",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26133",
+      "role": "radio",
+      "name": " Small",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26134",
+      "role": "radio",
+      "name": " Medium",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26135",
+      "role": "radio",
+      "name": " Large",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26136",
+      "role": "checkbox",
+      "name": " Bacon",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26137",
+      "role": "checkbox",
+      "name": " Extra Cheese",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26138",
+      "role": "checkbox",
+      "name": " Onion",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26139",
+      "role": "checkbox",
+      "name": " Mushroom",
+      "value": null,
+      "state": [
+        "checked=false"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26142",
+      "role": "spinbutton",
+      "name": "Horas Horas",
+      "value": "0",
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26143",
+      "role": "spinbutton",
+      "name": "Minutos Minutos",
+      "value": "0",
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26141",
+      "role": "button",
+      "name": "Mostrar selector de hora Mostrar selector de hora",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26140",
+      "role": "textbox",
+      "name": "Delivery instructions: ",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26129",
+      "role": "button",
+      "name": "Submit order",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:57:47.486Z"
+}

@@ -1,0 +1,1353 @@
+{
+  "driver": "agent-browser",
+  "url": "https://docs.python.org/3/",
+  "title": "3.14.7 Documentation",
+  "text": "Related\nindex\nmodules\nPython\nLanguage\nGerman | Deutsch\nGreek | Ελληνικά\nEnglish\nSpanish | español\nPersian | فارسی\nFrench | français\nItalian | italiano\nJapanese | 日本語\nKorean | 한국어\nPolish | polski\nBrazilian Portuguese | Português brasileiro\nRomanian | Românește\nRussian | Русский\nTurkish | Türkçe\nSimplified Chinese | 简体中文\nTraditional Chinese | 繁體中文\nPython version\ndev (3.16)\npre (3.15)\n3.14.7\n3.13\n3.12\n3.11\n3.10\n3.9\n3.8\n3.7\n3.6\n3.5\n3.4\n3.3\n3.2\n3.1\n3.0\n2.7\n2.6\n3.14.7 Documentation\nQuick search\nGo\nTheme \nAuto\nLight\nDark\nPython 3.14.7 documentation\nWhat's new in Python 3.14?\nall \"What's new\" documents since Python 2.0\nTutorial\nBuilt-ins reference\nLibrary reference\nLanguage reference\nPython setup and usage\nPython HOWTOs\nInstalling Python modules\nExtending and embedding\nPython's C API\nFAQs\nDeprecations\nPython developer's guide\nPython Packaging User Guide\nAudio/visual talks\nPython Enhancement Proposals\nStatic Typing with Python\nGlobal module index\nGeneral index\nGlossary\nSearch page\nComplete table of contents\nReporting issues\nContributing to docs\nDownload the documentation\nHistory and license of Python\nCopyright\nAbout the documentation\nMain\nDownload\nDownload these documents\nDocs by version\nPython 3.16 (in development)\nPython 3.15 (pre-release)\nPython 3.14 (stable)\nPython 3.13 (stable)\nPython 3.12 (security-fixes)\nPython 3.11 (security-fixes)\nPython 3.10 (security-fixes)\nPython 3.9 (EOL)\nPython 3.8 (EOL)\nPython 3.7 (EOL)\nPython 3.6 (EOL)\nPython 3.5 (EOL)\nPython 3.4 (EOL)\nPython 3.3 (EOL)\nPython 3.2 (EOL)\nPython 3.1 (EOL)\nPython 3.0 (EOL)\nPython 2.7 (EOL)\nPython 2.6 (EOL)\nAll versions\nOther resources\nPEP Index\nBeginner's Guide\nBook List\nAudio/Visual Talks\nPython Developer’s Guide\n«\nRelated\nindex\nmodules\nPython\nLanguage\nGerman | Deutsch\nGreek | Ελληνικά\nEnglish\nSpanish | español\nPersian | فارسی\nFrench | français\nItalian | italiano\nJapanese | 日本語\nKorean | 한국어\nPolish | polski\nBrazilian Portuguese | Português brasileiro\nRomanian | Românește\nRussian | Русский\nTurkish | Türkçe\nSimplified Chinese | 简体中文\nTraditional Chinese | 繁體中文\nPython version\ndev (3.16)\npre (3.15)\n3.14.7\n3.13\n3.12\n3.11\n3.10\n3.9\n3.8\n3.7\n3.6\n3.5\n3.4\n3.3\n3.2\n3.1\n3.0\n2.7\n2.6\n3.14.7 Documentation\nQuick search\nGo\nTheme \nAuto\nLight\nDark\nCopyright\nHistory and License\nPlease donate.\nFound a bug\nSphinx",
+  "refs": [
+    {
+      "ref": "e26144",
+      "role": "navigation",
+      "name": "Related",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26157",
+      "role": "link",
+      "name": "index",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26158",
+      "role": "link",
+      "name": "modules",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26159",
+      "role": "link",
+      "name": "Python",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26168",
+      "role": "combobox",
+      "name": "Language",
+      "value": "English",
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26232",
+      "role": "option",
+      "name": "German | Deutsch",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26233",
+      "role": "option",
+      "name": "Greek | Ελληνικά",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26234",
+      "role": "option",
+      "name": "English",
+      "value": null,
+      "state": [
+        "selected"
+      ],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26235",
+      "role": "option",
+      "name": "Spanish | español",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26236",
+      "role": "option",
+      "name": "Persian | فارسی",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26237",
+      "role": "option",
+      "name": "French | français",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26238",
+      "role": "option",
+      "name": "Italian | italiano",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26239",
+      "role": "option",
+      "name": "Japanese | 日本語",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26240",
+      "role": "option",
+      "name": "Korean | 한국어",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26241",
+      "role": "option",
+      "name": "Polish | polski",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26242",
+      "role": "option",
+      "name": "Brazilian Portuguese | Português brasileiro",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26243",
+      "role": "option",
+      "name": "Romanian | Românește",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26244",
+      "role": "option",
+      "name": "Russian | Русский",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26245",
+      "role": "option",
+      "name": "Turkish | Türkçe",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26246",
+      "role": "option",
+      "name": "Simplified Chinese | 简体中文",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26247",
+      "role": "option",
+      "name": "Traditional Chinese | 繁體中文",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26169",
+      "role": "combobox",
+      "name": "Python version",
+      "value": "3.14.7",
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26248",
+      "role": "option",
+      "name": "dev (3.16)",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26249",
+      "role": "option",
+      "name": "pre (3.15)",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26250",
+      "role": "option",
+      "name": "3.14.7",
+      "value": null,
+      "state": [
+        "selected"
+      ],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26251",
+      "role": "option",
+      "name": "3.13",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26252",
+      "role": "option",
+      "name": "3.12",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26253",
+      "role": "option",
+      "name": "3.11",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26254",
+      "role": "option",
+      "name": "3.10",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26255",
+      "role": "option",
+      "name": "3.9",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26256",
+      "role": "option",
+      "name": "3.8",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26257",
+      "role": "option",
+      "name": "3.7",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26258",
+      "role": "option",
+      "name": "3.6",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26259",
+      "role": "option",
+      "name": "3.5",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26260",
+      "role": "option",
+      "name": "3.4",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26261",
+      "role": "option",
+      "name": "3.3",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26262",
+      "role": "option",
+      "name": "3.2",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26263",
+      "role": "option",
+      "name": "3.1",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26264",
+      "role": "option",
+      "name": "3.0",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26265",
+      "role": "option",
+      "name": "2.7",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26266",
+      "role": "option",
+      "name": "2.6",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26160",
+      "role": "link",
+      "name": "3.14.7 Documentation",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26161",
+      "role": "link",
+      "name": "",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26228",
+      "role": "searchbox",
+      "name": "Quick search",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26229",
+      "role": "button",
+      "name": "Go",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26170",
+      "role": "combobox",
+      "name": "Theme ",
+      "value": "Auto",
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26267",
+      "role": "option",
+      "name": "Auto",
+      "value": null,
+      "state": [
+        "selected"
+      ],
+      "context": "combobox \"Theme \""
+    },
+    {
+      "ref": "e26268",
+      "role": "option",
+      "name": "Light",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Theme \""
+    },
+    {
+      "ref": "e26269",
+      "role": "option",
+      "name": "Dark",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Theme \""
+    },
+    {
+      "ref": "e26152",
+      "role": "heading",
+      "name": "Python 3.14.7 documentation",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26171",
+      "role": "link",
+      "name": "What's new in Python 3.14?",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26172",
+      "role": "link",
+      "name": "all \"What's new\" documents since Python 2.0",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26173",
+      "role": "link",
+      "name": "Tutorial",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26174",
+      "role": "link",
+      "name": "Built-ins reference",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26175",
+      "role": "link",
+      "name": "Library reference",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26176",
+      "role": "link",
+      "name": "Language reference",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26177",
+      "role": "link",
+      "name": "Python setup and usage",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26178",
+      "role": "link",
+      "name": "Python HOWTOs",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26179",
+      "role": "link",
+      "name": "Installing Python modules",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26180",
+      "role": "link",
+      "name": "Extending and embedding",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26181",
+      "role": "link",
+      "name": "Python's C API",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26182",
+      "role": "link",
+      "name": "FAQs",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26183",
+      "role": "link",
+      "name": "Deprecations",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26184",
+      "role": "link",
+      "name": "Python developer's guide",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26185",
+      "role": "link",
+      "name": "Python Packaging User Guide",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26186",
+      "role": "link",
+      "name": "Audio/visual talks",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26187",
+      "role": "link",
+      "name": "Python Enhancement Proposals",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26188",
+      "role": "link",
+      "name": "Static Typing with Python",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26189",
+      "role": "link",
+      "name": "Global module index",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26190",
+      "role": "link",
+      "name": "General index",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26191",
+      "role": "link",
+      "name": "Glossary",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26192",
+      "role": "link",
+      "name": "Search page",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26193",
+      "role": "link",
+      "name": "Complete table of contents",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26194",
+      "role": "link",
+      "name": "Reporting issues",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26195",
+      "role": "link",
+      "name": "Contributing to docs",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26196",
+      "role": "link",
+      "name": "Download the documentation",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26197",
+      "role": "link",
+      "name": "History and license of Python",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26198",
+      "role": "link",
+      "name": "Copyright",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26199",
+      "role": "link",
+      "name": "About the documentation",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26146",
+      "role": "navigation",
+      "name": "Main",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26153",
+      "role": "heading",
+      "name": "Download",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26162",
+      "role": "link",
+      "name": "Download these documents",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26154",
+      "role": "heading",
+      "name": "Docs by version",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26200",
+      "role": "link",
+      "name": "Python 3.16 (in development)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26201",
+      "role": "link",
+      "name": "Python 3.15 (pre-release)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26202",
+      "role": "link",
+      "name": "Python 3.14 (stable)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26203",
+      "role": "link",
+      "name": "Python 3.13 (stable)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26204",
+      "role": "link",
+      "name": "Python 3.12 (security-fixes)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26205",
+      "role": "link",
+      "name": "Python 3.11 (security-fixes)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26206",
+      "role": "link",
+      "name": "Python 3.10 (security-fixes)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26207",
+      "role": "link",
+      "name": "Python 3.9 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26208",
+      "role": "link",
+      "name": "Python 3.8 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26209",
+      "role": "link",
+      "name": "Python 3.7 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26210",
+      "role": "link",
+      "name": "Python 3.6 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26211",
+      "role": "link",
+      "name": "Python 3.5 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26212",
+      "role": "link",
+      "name": "Python 3.4 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26213",
+      "role": "link",
+      "name": "Python 3.3 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26214",
+      "role": "link",
+      "name": "Python 3.2 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26215",
+      "role": "link",
+      "name": "Python 3.1 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26216",
+      "role": "link",
+      "name": "Python 3.0 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26217",
+      "role": "link",
+      "name": "Python 2.7 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26218",
+      "role": "link",
+      "name": "Python 2.6 (EOL)",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26219",
+      "role": "link",
+      "name": "All versions",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26155",
+      "role": "heading",
+      "name": "Other resources",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26220",
+      "role": "link",
+      "name": "PEP Index",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26221",
+      "role": "link",
+      "name": "Beginner's Guide",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26222",
+      "role": "link",
+      "name": "Book List",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26223",
+      "role": "link",
+      "name": "Audio/Visual Talks",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26224",
+      "role": "link",
+      "name": "Python Developer’s Guide",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26156",
+      "role": "generic",
+      "name": "«",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26145",
+      "role": "navigation",
+      "name": "Related",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26163",
+      "role": "link",
+      "name": "index",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26164",
+      "role": "link",
+      "name": "modules",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26165",
+      "role": "link",
+      "name": "Python",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26225",
+      "role": "combobox",
+      "name": "Language",
+      "value": "English",
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26270",
+      "role": "option",
+      "name": "German | Deutsch",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26271",
+      "role": "option",
+      "name": "Greek | Ελληνικά",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26272",
+      "role": "option",
+      "name": "English",
+      "value": null,
+      "state": [
+        "selected"
+      ],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26273",
+      "role": "option",
+      "name": "Spanish | español",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26274",
+      "role": "option",
+      "name": "Persian | فارسی",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26275",
+      "role": "option",
+      "name": "French | français",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26276",
+      "role": "option",
+      "name": "Italian | italiano",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26277",
+      "role": "option",
+      "name": "Japanese | 日本語",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26278",
+      "role": "option",
+      "name": "Korean | 한국어",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26279",
+      "role": "option",
+      "name": "Polish | polski",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26280",
+      "role": "option",
+      "name": "Brazilian Portuguese | Português brasileiro",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26281",
+      "role": "option",
+      "name": "Romanian | Românește",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26282",
+      "role": "option",
+      "name": "Russian | Русский",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26283",
+      "role": "option",
+      "name": "Turkish | Türkçe",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26284",
+      "role": "option",
+      "name": "Simplified Chinese | 简体中文",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26285",
+      "role": "option",
+      "name": "Traditional Chinese | 繁體中文",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Language\""
+    },
+    {
+      "ref": "e26226",
+      "role": "combobox",
+      "name": "Python version",
+      "value": "3.14.7",
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26286",
+      "role": "option",
+      "name": "dev (3.16)",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26287",
+      "role": "option",
+      "name": "pre (3.15)",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26288",
+      "role": "option",
+      "name": "3.14.7",
+      "value": null,
+      "state": [
+        "selected"
+      ],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26289",
+      "role": "option",
+      "name": "3.13",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26290",
+      "role": "option",
+      "name": "3.12",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26291",
+      "role": "option",
+      "name": "3.11",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26292",
+      "role": "option",
+      "name": "3.10",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26293",
+      "role": "option",
+      "name": "3.9",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26294",
+      "role": "option",
+      "name": "3.8",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26295",
+      "role": "option",
+      "name": "3.7",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26296",
+      "role": "option",
+      "name": "3.6",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26297",
+      "role": "option",
+      "name": "3.5",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26298",
+      "role": "option",
+      "name": "3.4",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26299",
+      "role": "option",
+      "name": "3.3",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26300",
+      "role": "option",
+      "name": "3.2",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26301",
+      "role": "option",
+      "name": "3.1",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26302",
+      "role": "option",
+      "name": "3.0",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26303",
+      "role": "option",
+      "name": "2.7",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26304",
+      "role": "option",
+      "name": "2.6",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Python version\""
+    },
+    {
+      "ref": "e26166",
+      "role": "link",
+      "name": "3.14.7 Documentation",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26167",
+      "role": "link",
+      "name": "",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26230",
+      "role": "searchbox",
+      "name": "Quick search",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26231",
+      "role": "button",
+      "name": "Go",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26227",
+      "role": "combobox",
+      "name": "Theme ",
+      "value": "Auto",
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Related\""
+    },
+    {
+      "ref": "e26305",
+      "role": "option",
+      "name": "Auto",
+      "value": null,
+      "state": [
+        "selected"
+      ],
+      "context": "combobox \"Theme \""
+    },
+    {
+      "ref": "e26306",
+      "role": "option",
+      "name": "Light",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Theme \""
+    },
+    {
+      "ref": "e26307",
+      "role": "option",
+      "name": "Dark",
+      "value": null,
+      "state": [],
+      "context": "combobox \"Theme \""
+    },
+    {
+      "ref": "e26147",
+      "role": "link",
+      "name": "Copyright",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26148",
+      "role": "link",
+      "name": "History and License",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26149",
+      "role": "link",
+      "name": "Please donate.",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26150",
+      "role": "link",
+      "name": "Found a bug",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26151",
+      "role": "link",
+      "name": "Sphinx",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:57:51.100Z"
+}

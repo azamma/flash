@@ -1,0 +1,553 @@
+{
+  "driver": "agent-browser",
+  "url": "https://www.w3.org/",
+  "title": "W3C",
+  "text": "Skip to content\n2026 community survey\nLanguage options\n日本語ホームページ Japanese website\n简体中文首页 Chinese website\nMain\nW3C Visit the W3C homepage\nStandards & groups\nGet involved\nResources\nNews & events\nSupport us\nAbout\nSearch\nSign in\nMaking the web work\nstandards and guidelines\naccessibility\ninternationalization\nprivacy\nsecurity\nRead more about W3C\nWorking with stakeholders of the web\nE-commerce\nMedia & Entertainment\nPublishing\nDiscover how W3C supports these organizations\nTPAC 2026\nVisit the TPAC 2026 website\nWeb standards\nMembers\nstaff\nLearn more about web standards\nGet involved\nWays to get involved\nLatest news\nNews\nPress Releases\nBlog\nConsortium Members elect Board of Directors\nConsortium Members elect Board of Directors\nConsortium Members elect Board of Directors\nRecap of the web & AI international standards seminar: generative UI and WebSkill\nRecap of the web & AI international standards seminar: generative UI and WebSkill\nRecap of the web & AI international standards seminar: generative UI and WebSkill\nCrafting WCAG 3 for more accessible user experiences\nCrafting WCAG 3 for more accessible user experiences\nCrafting WCAG 3 for more accessible user experiences\nW3C Workshop Report: The Future of ODRL\nW3C Workshop Report: The Future of ODRL\nW3C Workshop Report: The Future of ODRL\nHome\nContact\nHelp\nSupport us\nLegal & Policies\nCorporation\nSystem Status\nW3C on Mastodon\nW3C on GitHub\nWorld Wide Web Consortium\nliability\ntrademark\npermissive license",
+  "refs": [
+    {
+      "ref": "e26411",
+      "role": "link",
+      "name": "Skip to content",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26414",
+      "role": "link",
+      "name": "2026 community survey",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26412",
+      "role": "navigation",
+      "name": "Language options",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26465",
+      "role": "link",
+      "name": "日本語ホームページ Japanese website",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Language options\""
+    },
+    {
+      "ref": "e26466",
+      "role": "link",
+      "name": "简体中文首页 Chinese website",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Language options\""
+    },
+    {
+      "ref": "e26413",
+      "role": "navigation",
+      "name": "Main",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26434",
+      "role": "link",
+      "name": "W3C Visit the W3C homepage",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26467",
+      "role": "button",
+      "name": "Standards & groups",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26468",
+      "role": "button",
+      "name": "Get involved",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26469",
+      "role": "button",
+      "name": "Resources",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26470",
+      "role": "button",
+      "name": "News & events",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26471",
+      "role": "button",
+      "name": "Support us",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26472",
+      "role": "button",
+      "name": "About",
+      "value": null,
+      "state": [
+        "expanded=false"
+      ],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26473",
+      "role": "link",
+      "name": "Search",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26474",
+      "role": "link",
+      "name": "Sign in",
+      "value": null,
+      "state": [],
+      "context": "navigation \"Main\""
+    },
+    {
+      "ref": "e26415",
+      "role": "heading",
+      "name": "Making the web work",
+      "value": null,
+      "state": [
+        "level=1"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26435",
+      "role": "link",
+      "name": "standards and guidelines",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26436",
+      "role": "link",
+      "name": "accessibility",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26437",
+      "role": "link",
+      "name": "internationalization",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26438",
+      "role": "link",
+      "name": "privacy",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26439",
+      "role": "link",
+      "name": "security",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26416",
+      "role": "link",
+      "name": "Read more about W3C",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26417",
+      "role": "heading",
+      "name": "Working with stakeholders of the web",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26440",
+      "role": "link",
+      "name": "E-commerce",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26441",
+      "role": "link",
+      "name": "Media & Entertainment",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26442",
+      "role": "link",
+      "name": "Publishing",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26418",
+      "role": "link",
+      "name": "Discover how W3C supports these organizations",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26419",
+      "role": "heading",
+      "name": "TPAC 2026",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26420",
+      "role": "link",
+      "name": "Visit the TPAC 2026 website",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26421",
+      "role": "heading",
+      "name": "Web standards",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26443",
+      "role": "link",
+      "name": "Members",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26444",
+      "role": "link",
+      "name": "staff",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26422",
+      "role": "link",
+      "name": "Learn more about web standards",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26423",
+      "role": "heading",
+      "name": "Get involved",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26424",
+      "role": "link",
+      "name": "Ways to get involved",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26425",
+      "role": "heading",
+      "name": "Latest news",
+      "value": null,
+      "state": [
+        "level=2"
+      ],
+      "context": null
+    },
+    {
+      "ref": "e26445",
+      "role": "link",
+      "name": "News",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26446",
+      "role": "link",
+      "name": "Press Releases",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26447",
+      "role": "link",
+      "name": "Blog",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26426",
+      "role": "generic",
+      "name": "Consortium Members elect Board of Directors",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26448",
+      "role": "heading",
+      "name": "Consortium Members elect Board of Directors",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"Consortium Members elect Board of Directors\""
+    },
+    {
+      "ref": "e26454",
+      "role": "link",
+      "name": "Consortium Members elect Board of Directors",
+      "value": null,
+      "state": [],
+      "context": "heading \"Consortium Members elect Board of Directors\""
+    },
+    {
+      "ref": "e26427",
+      "role": "generic",
+      "name": "Recap of the web & AI international standards seminar: generative UI and WebSkill",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26449",
+      "role": "heading",
+      "name": "Recap of the web & AI international standards seminar: generative UI and WebSkill",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"Recap of the web & AI international standards seminar: generative UI and WebSkill\""
+    },
+    {
+      "ref": "e26455",
+      "role": "link",
+      "name": "Recap of the web & AI international standards seminar: generative UI and WebSkill",
+      "value": null,
+      "state": [],
+      "context": "heading \"Recap of the web & AI international standards seminar: generative UI and WebSkill\""
+    },
+    {
+      "ref": "e26428",
+      "role": "generic",
+      "name": "Crafting WCAG 3 for more accessible user experiences",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26450",
+      "role": "heading",
+      "name": "Crafting WCAG 3 for more accessible user experiences",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"Crafting WCAG 3 for more accessible user experiences\""
+    },
+    {
+      "ref": "e26456",
+      "role": "link",
+      "name": "Crafting WCAG 3 for more accessible user experiences",
+      "value": null,
+      "state": [],
+      "context": "heading \"Crafting WCAG 3 for more accessible user experiences\""
+    },
+    {
+      "ref": "e26429",
+      "role": "generic",
+      "name": "W3C Workshop Report: The Future of ODRL",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26451",
+      "role": "heading",
+      "name": "W3C Workshop Report: The Future of ODRL",
+      "value": null,
+      "state": [
+        "level=3"
+      ],
+      "context": "generic \"W3C Workshop Report: The Future of ODRL\""
+    },
+    {
+      "ref": "e26457",
+      "role": "link",
+      "name": "W3C Workshop Report: The Future of ODRL",
+      "value": null,
+      "state": [],
+      "context": "heading \"W3C Workshop Report: The Future of ODRL\""
+    },
+    {
+      "ref": "e26458",
+      "role": "link",
+      "name": "Home",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26459",
+      "role": "link",
+      "name": "Contact",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26460",
+      "role": "link",
+      "name": "Help",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26461",
+      "role": "link",
+      "name": "Support us",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26462",
+      "role": "link",
+      "name": "Legal & Policies",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26463",
+      "role": "link",
+      "name": "Corporation",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26464",
+      "role": "link",
+      "name": "System Status",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26452",
+      "role": "link",
+      "name": "W3C on Mastodon",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26453",
+      "role": "link",
+      "name": "W3C on GitHub",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26430",
+      "role": "link",
+      "name": "World Wide Web Consortium",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26431",
+      "role": "link",
+      "name": "liability",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26432",
+      "role": "link",
+      "name": "trademark",
+      "value": null,
+      "state": [],
+      "context": null
+    },
+    {
+      "ref": "e26433",
+      "role": "link",
+      "name": "permissive license",
+      "value": null,
+      "state": [],
+      "context": null
+    }
+  ],
+  "taken": "2026-09-28T23:57:59.043Z"
+}
