@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
 export const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
@@ -25,6 +26,46 @@ export function sessionName(flags, cwd = process.cwd()) {
 
 export function pageFile(session) {
   return path.join(WEB_HOME, session, 'page.json');
+}
+
+// ---------- run-state files (Task 11: `flash web run`'s type/--resume pause) ----------
+
+export const RUNS_HOME = path.join(WEB_HOME, 'runs');
+export const RUN_TTL_MS = 3600_000; // 1 hour (plan.md)
+
+const runFile = (id) => path.join(RUNS_HOME, `${id}.json`);
+
+// Swept on every save/load, no separate cron — same "prune on read" rule as flash.mjs's answer cache.
+export function cleanupExpiredRuns() {
+  let files;
+  try { files = fs.readdirSync(RUNS_HOME); } catch { return; }
+  for (const f of files) {
+    const p = path.join(RUNS_HOME, f);
+    try { if (Date.now() - fs.statSync(p).mtimeMs > RUN_TTL_MS) fs.rmSync(p, { force: true }); } catch {}
+  }
+}
+
+// Saves a paused run's state (0600) under a fresh id and returns the id. Never carries a typed
+// value (there isn't one yet at pause time) or anything beyond what resuming needs: which step,
+// which ref, and that ref's role/name/context to re-verify freshness before typing into it.
+export function saveRunState(state) {
+  cleanupExpiredRuns();
+  fs.mkdirSync(RUNS_HOME, { recursive: true });
+  const id = crypto.randomUUID();
+  fs.writeFileSync(runFile(id), JSON.stringify(state), { mode: 0o600 });
+  try { fs.chmodSync(runFile(id), 0o600); } catch {}
+  return id;
+}
+
+// Loads and consumes (deletes) a run-state file — resuming is one-shot. Null if it never existed,
+// or has already expired (cleanupExpiredRuns runs first and would have removed it).
+export function loadRunState(id) {
+  cleanupExpiredRuns();
+  try {
+    const st = JSON.parse(fs.readFileSync(runFile(id), 'utf8'));
+    fs.rmSync(runFile(id), { force: true });
+    return st;
+  } catch { return null; }
 }
 
 // ---------- agent-browser adapter ----------

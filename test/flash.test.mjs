@@ -720,8 +720,8 @@ test('flash web click reports "no element matches" and never acts', async () => 
 // One `run` step's forced answer: `operation` and `target` together, matching runStep's single
 // fan-out request. `target` is still supplied even for done/stuck (runStep always asks both).
 function forceRun(operation, targetChoice, ids, targetProbs) {
-  const opProbs = { click: 0.05, done: 0.05, stuck: 0.05 };
-  opProbs[operation] = 0.9;
+  const OPS = ['click', 'type', 'done', 'stuck'];
+  const opProbs = Object.fromEntries(OPS.map((o) => [o, o === operation ? 0.9 : 0.1 / (OPS.length - 1)]));
   jev.force({ status: 200, body: { answers: {
     operation: { type: 'choice', choice: operation, confidence: 0.9, probabilities: opProbs },
     target: { type: 'choice', choice: targetChoice, confidence: 0.9,
@@ -752,7 +752,7 @@ test('flash web run stops on "stuck" without acting', async () => {
 test('flash web run stops "? unsure" on low confidence without acting', async () => {
   const env = agentBrowserRounds([{ tree: '- link "Option A" [ref=e1]\n- link "Option B" [ref=e2]\n' }]);
   jev.force({ status: 200, body: { answers: {
-    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.9, done: 0.05, stuck: 0.05 } },
+    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.9, type: 0.03, done: 0.03, stuck: 0.04 } },
     target: { type: 'choice', choice: 'e1', confidence: 0.5, probabilities: { e1: 0.5, e2: 0.45, none: 0.05 } },
   } } });
   const r = await flash(['web', 'run', 'pick one', '--session', 'run-unsure', '--json'], { env });
@@ -839,6 +839,121 @@ test('flash web run stops after 3 steps with no page change, never retrying the 
   for (const l of out.log) assert.match(l, /page changed: no$/);
   const clickCalls = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).filter((c) => c[2] === 'click');
   assert.equal(clickCalls.length, 3, 'each click acted on once, never retried');
+});
+
+// ---------- flash web run: type / --resume (Task 11) ----------
+
+test('flash web run pauses on a text field, types the exact stdin value on --resume, and continues', async () => {
+  const env = agentBrowserRounds([
+    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 1: initial
+    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 2: freshness before pausing (unchanged)
+    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 3: resume's own re-check (unchanged)
+    { url: 'https://example.com/confirm', title: 'Confirmed', tree: '- heading "Confirmed" [ref=e9]\n- link "Home" [ref=e1]\n' }, // round 4: post-fill
+  ]);
+  forceRun('type', 'e5', ['e1', 'e5', 'none']);
+  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'run-pause', '--json'], { env });
+  assert.equal(r1.code, 0, r1.stderr);
+  const out1 = JSON.parse(r1.stdout);
+  assert.equal(out1.stop, 'needs-input');
+  assert.equal(out1.ref, 'e5');
+  assert.equal(out1.secret, false);
+  assert.ok(out1.resumeId);
+  assert.match(out1.log.at(-1), /^1\. needs input: @e5 textbox "Origin" · resume: echo "<text>" \| flash web run --resume [\w-]+$/);
+  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"fill"/, 'nothing is typed before resume');
+  assert.equal(jev.requests.length, 1, 'no risky call for a type pause');
+
+  const runStateFile = path.join(home, 'web', 'runs', `${out1.resumeId}.json`);
+  assert.ok(fs.existsSync(runStateFile));
+  if (process.platform !== 'win32') assert.equal(fs.statSync(runStateFile).mode & 0o777, 0o600);
+
+  forceRun('done', 'none', ['e1', 'e9', 'none']);
+  const r2 = await flash(['web', 'run', '--resume', out1.resumeId, '--json'], { env, input: 'Paris\n' });
+  assert.equal(r2.code, 0, r2.stderr);
+  const out2 = JSON.parse(r2.stdout);
+  assert.equal(out2.stop, 'done');
+  assert.equal(out2.acted, 1);
+  assert.match(out2.log[0], /^1\. typed @e5 textbox "Origin" · page changed: yes$/);
+  assert.equal(out2.log[1], '2. done');
+  assert.doesNotMatch(r2.stdout, /Paris/, "the typed value never appears in flash's own stdout");
+  assert.doesNotMatch(r2.stderr, /Paris/);
+  assert.doesNotMatch(fs.readFileSync(path.join(home, 'history.jsonl'), 'utf8'), /Paris/);
+  assert.ok(!fs.existsSync(runStateFile), 'the run-state file is consumed (deleted) on resume');
+
+  const fillCall = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c[2] === 'fill');
+  assert.deepEqual(fillCall, ['--session', 'flash-run-pause', 'fill', '@e5', 'Paris'], 'the driver receives the value verbatim');
+});
+
+test('flash web run --resume reads --value when given, instead of stdin', async () => {
+  const env = agentBrowserRounds([
+    { tree: '- textbox "City" [ref=e5]\n' },
+    { tree: '- textbox "City" [ref=e5]\n' },
+    { tree: '- textbox "City" [ref=e5]\n' },
+    { url: 'https://example.com/2', tree: '- heading "Next" [ref=e9]\n' },
+  ]);
+  forceRun('type', 'e5', ['e5', 'none']);
+  const r1 = await flash(['web', 'run', 'enter the city', '--session', 'run-value-flag', '--json'], { env });
+  const id = JSON.parse(r1.stdout).resumeId;
+  forceRun('done', 'none', ['e9', 'none']);
+  const r2 = await flash(['web', 'run', '--resume', id, '--value', 'Lima', '--json'], { env });
+  assert.equal(r2.code, 0, r2.stderr);
+  const fillCall = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c[2] === 'fill');
+  assert.deepEqual(fillCall, ['--session', 'flash-run-value-flag', 'fill', '@e5', 'Lima']);
+});
+
+test('flash web run pauses with "needs secret input" for a password field, never echoing its name', async () => {
+  const maskedTree = '- textbox "Password" [ref=e5]: ••••••••\n- link "Home" [ref=e1]\n';
+  const env = agentBrowserRounds([{ tree: maskedTree }, { tree: maskedTree }]);
+  forceRun('type', 'e5', ['e1', 'e5', 'none']);
+  const r = await flash(['web', 'run', 'log in', '--session', 'run-secret', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'needs-input');
+  assert.equal(out.secret, true);
+  assert.doesNotMatch(r.stdout, /Password/);
+  assert.match(out.log.at(-1), /^1\. needs secret input · resume: echo "<secret>" \| flash web run --resume [\w-]+$/);
+});
+
+test('flash web run --resume on a changed field re-picks instead of typing blind', async () => {
+  const env = agentBrowserRounds([
+    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 1: initial
+    { tree: '- textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 2: freshness before pausing (unchanged)
+    { tree: '- group "Reloaded"\n  - textbox "Origin" [ref=e5]\n- link "Home" [ref=e1]\n' }, // round 3: resume's re-check -- context now differs
+  ]);
+  forceRun('type', 'e5', ['e1', 'e5', 'none']);
+  const r1 = await flash(['web', 'run', 'search a flight', '--session', 'run-stale-resume', '--json'], { env });
+  const out1 = JSON.parse(r1.stdout);
+  assert.equal(out1.stop, 'needs-input');
+
+  forceRun('done', 'none', ['e1', 'e5', 'none']); // the re-pick, decided fresh on the changed page
+  const r2 = await flash(['web', 'run', '--resume', out1.resumeId, '--json'], { env, input: 'Paris\n' });
+  assert.equal(r2.code, 0, r2.stderr);
+  const out2 = JSON.parse(r2.stdout);
+  assert.equal(out2.stop, 'done');
+  assert.equal(out2.acted, 0, 'nothing was typed -- the field had gone stale');
+  assert.deepEqual(out2.log, ['1. done'], 're-picked at the same step, not advanced past it');
+  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"fill"/, 'never typed into the stale ref');
+  assert.doesNotMatch(r2.stdout, /Paris/);
+});
+
+test('flash web run --resume errors clearly on an unknown or already-used id', async () => {
+  const r = await flash(['web', 'run', '--resume', 'nonexistent-id']);
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /no pending run "nonexistent-id"/);
+  assert.match(r.stderr, /flash web run/);
+});
+
+test('flash web run sweeps expired run-state files (past the 1h TTL) on the next run', async () => {
+  const dir = path.join(home, 'web', 'runs');
+  fs.mkdirSync(dir, { recursive: true });
+  const staleFile = path.join(dir, 'stale-id.json');
+  fs.writeFileSync(staleFile, JSON.stringify({ goal: 'x' }), { mode: 0o600 });
+  const twoHoursAgo = new Date(Date.now() - 2 * 3600_000);
+  fs.utimesSync(staleFile, twoHoursAgo, twoHoursAgo);
+
+  const env = agentBrowserRounds([{ tree: '- link "Home" [ref=e1]\n' }]);
+  forceRun('done', 'none', ['e1', 'none']);
+  await flash(['web', 'run', 'anything', '--session', 'run-cleanup', '--json'], { env });
+  assert.ok(!fs.existsSync(staleFile), 'a run-state file older than 1h is swept automatically');
 });
 
 test('flash web check answers yes/no over url, title and text, with the untrusted-data instruction', async () => {

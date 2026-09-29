@@ -117,9 +117,9 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 11: Input pause and `--resume`
 **Description:** On `type`, save state to `~/.flash/web/runs/<id>.json` (0600, expires after 1 h, expired files removed on the next run) and return `needs input: @eN textbox "<name>" · resume: echo "<text>" | flash web run --resume <id>`. `--resume` reads the value from stdin (or `--value` if given), types it verbatim, continues. Password fields say `needs secret input` and never echo.
 **Acceptance criteria:**
-- [ ] Jev never produces text; typed value equals stdin exactly.
-- [ ] Resume on a changed field (freshness fails) re-picks instead of typing blind.
-- [ ] Expired run files are cleaned up.
+- [x] Jev never produces text; typed value equals stdin exactly.
+- [x] Resume on a changed field (freshness fails) re-picks instead of typing blind.
+- [x] Expired run files are cleaned up.
 **Verification:** `npm test`.
 **Dependencies:** 10 · **Files:** `web.mjs`, `flash.mjs`, tests · **Scope:** S
 
