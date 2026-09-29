@@ -715,6 +715,132 @@ test('flash web click reports "no element matches" and never acts', async () => 
   assert.match(r.stdout, /no element on the page matches/);
 });
 
+// ---------- flash web run ----------
+
+// One `run` step's forced answer: `operation` and `target` together, matching runStep's single
+// fan-out request. `target` is still supplied even for done/stuck (runStep always asks both).
+function forceRun(operation, targetChoice, ids, targetProbs) {
+  const opProbs = { click: 0.05, done: 0.05, stuck: 0.05 };
+  opProbs[operation] = 0.9;
+  jev.force({ status: 200, body: { answers: {
+    operation: { type: 'choice', choice: operation, confidence: 0.9, probabilities: opProbs },
+    target: { type: 'choice', choice: targetChoice, confidence: 0.9,
+      probabilities: targetProbs || Object.fromEntries(ids.map((id) => [id, id === targetChoice ? 0.9 : 0.1 / (ids.length - 1)])) },
+  } } });
+}
+
+test('flash web run stops on "done" without acting', async () => {
+  const env = agentBrowserRounds([{ tree: '- link "Home" [ref=e1]\n' }]);
+  forceRun('done', 'none', ['e1', 'none']);
+  const r = await flash(['web', 'run', 'search for wombats', '--session', 'run-done', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'done');
+  assert.equal(out.acted, 0);
+  assert.equal(jev.requests.length, 1, 'only the run-step fan-out — no risky call, nothing to act on');
+  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
+});
+
+test('flash web run stops on "stuck" without acting', async () => {
+  const env = agentBrowserRounds([{ tree: '- link "Home" [ref=e1]\n' }]);
+  forceRun('stuck', 'none', ['e1', 'none']);
+  const r = await flash(['web', 'run', 'buy a spaceship', '--session', 'run-stuck', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(JSON.parse(r.stdout).stop, 'stuck');
+});
+
+test('flash web run stops "? unsure" on low confidence without acting', async () => {
+  const env = agentBrowserRounds([{ tree: '- link "Option A" [ref=e1]\n- link "Option B" [ref=e2]\n' }]);
+  jev.force({ status: 200, body: { answers: {
+    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.9, done: 0.05, stuck: 0.05 } },
+    target: { type: 'choice', choice: 'e1', confidence: 0.5, probabilities: { e1: 0.5, e2: 0.45, none: 0.05 } },
+  } } });
+  const r = await flash(['web', 'run', 'pick one', '--session', 'run-unsure', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(JSON.parse(r.stdout).stop, 'unsure');
+  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
+});
+
+test('flash web run stops on a stale target without acting', async () => {
+  const env = agentBrowserRounds([
+    { tree: '- group "Details"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
+    { tree: '- group "Payment"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' }, // context changed before acting
+  ]);
+  forceRun('click', 'e2', ['e1', 'e2', 'none']);
+  const r = await flash(['web', 'run', 'continue', '--session', 'run-stale', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'stale');
+  assert.equal(jev.requests.length, 1, 'no risky call once stale');
+  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
+});
+
+test('flash web run stops on a risky target (backstop) and names it, without acting', async () => {
+  const env = agentBrowserRounds([
+    { tree: '- button "Delete" [ref=e2]\n- link "Home" [ref=e1]\n' },
+    { tree: '- button "Delete" [ref=e2]\n- link "Home" [ref=e1]\n' },
+  ]);
+  forceRun('click', 'e2', ['e1', 'e2', 'none']);
+  const r = await flash(['web', 'run', 'remove the item', '--session', 'run-risky', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'risky');
+  assert.match(out.log.join('\n'), /risky @e2 button "Delete"/);
+  assert.equal(jev.requests.length, 1, 'the backstop fires without ever calling the risky noul');
+  assert.doesNotMatch(fs.readFileSync(env.FAKE_AB_LOG, 'utf8'), /"click"/);
+});
+
+test('flash web run clicks across two steps, reusing the post-act snapshot, then stops on "done"', async () => {
+  const env = agentBrowserRounds([
+    { url: 'https://example.com/a', title: 'A', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
+    { url: 'https://example.com/a', title: 'A', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' }, // freshness: unchanged
+    { url: 'https://example.com/b', title: 'B', tree: '- heading "B" [ref=e9]\n- link "Home" [ref=e1]\n' }, // post-act: navigated
+  ]);
+  forceRun('click', 'e2', ['e1', 'e2', 'none']);
+  forceRisky(0.05);
+  forceRun('done', 'none', ['e1', 'e9', 'none']);
+  const r = await flash(['web', 'run', 'go to page b', '--session', 'run-multi', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'done');
+  assert.equal(out.acted, 1);
+  assert.match(out.log[0], /^1\. clicked @e2 button "Continue" · page changed: yes$/);
+  assert.equal(out.log[1], '2. done');
+  // exactly 3 snapshot rounds (initial, freshness, post-act) — step 2 reuses the post-act page,
+  // no 4th snapshot call before deciding "done".
+  const snapshotCalls = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).filter((c) => c[2] === 'snapshot');
+  assert.equal(snapshotCalls.length, 3);
+});
+
+test('flash web run stops at --max-steps', async () => {
+  const env = agentBrowserRounds([
+    { url: 'https://example.com/a', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
+    { url: 'https://example.com/a', tree: '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n' },
+    { url: 'https://example.com/b', tree: '- heading "B" [ref=e9]\n- link "Home" [ref=e1]\n' },
+  ]);
+  forceRun('click', 'e2', ['e1', 'e2', 'none']);
+  forceRisky(0.05);
+  const r = await flash(['web', 'run', 'go to page b', '--session', 'run-maxsteps', '--max-steps', '1', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'max-steps');
+  assert.equal(out.acted, 1);
+});
+
+test('flash web run stops after 3 steps with no page change, never retrying the same click', async () => {
+  const tree = '- button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n';
+  const env = agentBrowserRounds(Array(7).fill({ tree })); // 1 initial + 3 x (freshness, post-act), all identical
+  for (let i = 0; i < 3; i++) { forceRun('click', 'e2', ['e1', 'e2', 'none']); forceRisky(0.05); }
+  const r = await flash(['web', 'run', 'keep clicking continue', '--session', 'run-nochange', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.stop, 'no-change');
+  assert.equal(out.acted, 3);
+  for (const l of out.log) assert.match(l, /page changed: no$/);
+  const clickCalls = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse).filter((c) => c[2] === 'click');
+  assert.equal(clickCalls.length, 3, 'each click acted on once, never retried');
+});
+
 test('flash web check answers yes/no over url, title and text, with the untrusted-data instruction', async () => {
   writePage('check-1', { url: 'https://example.com/cart', title: 'Your cart', text: 'MATCH: 2 items in your cart', refs: [] });
   const r = await flash(['web', 'check', 'is this a shopping cart page?', '--session', 'check-1']);

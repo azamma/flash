@@ -109,8 +109,8 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 10: `flash web run "<goal>"` — click-only loop
 **Description:** Loop: snapshot → fan-out (operation + targets) → freshness → risky gate → act, up to `--max-steps` (8). Stops on done, stuck, low confidence, risky, max steps, or 3 steps without change. Prints the step log and why it stopped.
 **Acceptance criteria:**
-- [ ] Each stop reason covered by a scripted fake-driver test.
-- [ ] No mutating action retried; every step logged.
+- [x] Each stop reason covered by a scripted fake-driver test.
+- [x] No mutating action retried; every step logged.
 **Verification:** `npm test`.
 **Dependencies:** 9 · **Files:** `web.mjs`, `flash.mjs`, tests · **Scope:** M
 

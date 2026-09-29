@@ -1083,12 +1083,13 @@ Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Read
 --history lists the last N runs with what was asked and where Jev pointed, --plain drops the banner,
 --json prints the raw history (query, inputs, result ids/lines/scores; never file content),
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
-  web: `flash web <snapshot|pick|check|click> [--session NAME]
+  web: `flash web <snapshot|pick|check|click|run> [--session NAME]
 Drive a browser through an adapter (agent-browser today) so Claude never reads the raw page.
   snapshot            capture the current page to ~/.flash/web/<session>/page.json, one summary line
   pick "<intent>"     choose the one element that best satisfies intent; never acts
   check "<question>"  yes/no judgement over the page's url, title and visible text
   click "<intent>"    pick, verify it's still there and not risky, click it, report what changed
+  run "<goal>"        a click-only loop toward goal, up to --max-steps (default 8)
 Pick prints the top choice with its probability, up to two runner-ups, and either the exact driver
 command to act on it or "? unsure: read <page.json> lines a-b" when confidence is low (top p < 0.85
 or margin to the runner-up < 0.2, tuned in Task 7b) — read exactly those lines yourself rather than the whole file.
@@ -1099,6 +1100,12 @@ role/name/enclosing text unchanged — unrelated page churn is ignored), runs a 
 check (a keyword/role backstop plus a Jev noul), then clicks and re-snapshots once more to report
 what changed: "clicked @e852 link \"…\" · page changed: url|title|elements". Unsure, stale or risky
 stops before acting and never retries. Prints each step's own wall time.
+Run repeats click's own choose/verify/act loop toward a goal (not a single intent), asking each step
+"click, or is the goal already done, or are you stuck" in the same request as which element to
+click, so a click decision never costs a second round-trip. It stops and prints why on: done, stuck,
+? unsure, a stale or risky target, a failed act, --max-steps, or 3 steps in a row with no page
+change. Never retries a mutating act. A goal that needs typing currently stops "stuck" (text input
+pause/resume is flash web run --resume, to come).
 Every call uses an isolated browser session, flash-<session> (default: this git project's name),
 never agent-browser's shared default session. Needs agent-browser on PATH, or FLASH_AGENT_BROWSER
 set to a command that runs it (e.g. "npx -y agent-browser").`,
@@ -1125,7 +1132,7 @@ Commands:
   find      locate the matching lines inside large files
   search    find the relevant files in a repo, folder by folder, with their source
   ask       one judgment over one document, or a raw spec.json request
-  web       drive a browser through an adapter (snapshot/pick/check/click today; run to come)
+  web       drive a browser through an adapter (snapshot/pick/check/click/run)
   setup     save and verify a key, pick the default provider
   status    check the key, show lifetime savings
   gain      savings by command, project and day
@@ -1393,13 +1400,107 @@ async function cmdWebClick({ pos, flags }) {
   finish(`clicked @${topId} ${refLabel(fresh)} · page changed: ${changed.join('|') || 'none'}`, { acted: true, ref: topId, changed });
 }
 
+const MAX_STEPS_DEFAULT = 8;
+const NO_CHANGE_LIMIT = 3;
+
+// One `run` step's fan-out (plan.md's speculative pattern): `operation` (click|done|stuck — a
+// click-only loop, Task 10; `type`'s input pause is Task 11) and `target` (which ref to click, if
+// any) are asked in the SAME request whenever the page fits in one chunk, so a `click` decision
+// never costs a second round-trip. Above PICK_CHUNK refs, target ranking reuses pickRanked's own
+// chunked merge (one extra small request for `operation` alone — it doesn't need chunking).
+async function runStep(page, goal, flags) {
+  const model = modelName(flags);
+  const stats = { requests: 0, jevTokens: 0 };
+  const operationQ = { type: 'choice',
+    instructions: { question: 'Choose the next step toward `goal` on this page: `click` an element that makes progress, `done` if the goal is already achieved here, or `stuck` if nothing on this page can make progress.', untrusted: UNTRUSTED_NOTE },
+    criteria: { click: 'Click an element that makes progress toward the goal.', done: 'The goal is already achieved on this page.', stuck: 'Nothing on this page can make progress toward the goal.' } };
+  if (page.refs.length <= PICK_CHUNK) {
+    const body = { model, state: { goal }, questions: { operation: operationQ,
+      target: { type: 'choice', instructions: { question: 'If the operation is `click`, the single element to click. Choose `none` otherwise.', untrusted: UNTRUSTED_NOTE }, criteria: pickCriteria(page.refs) } } };
+    const res = await decide(body, flags);
+    stats.requests = 1; stats.jevTokens = res.usage?.input_tokens || 0;
+    const ranked = Object.entries(res.answers.target.probabilities).sort((a, b) => b[1] - a[1]);
+    return { operation: res.answers.operation.choice, ranked, real: ranked.filter(([id]) => id !== 'none'), stats };
+  }
+  const opRes = await decide({ model, state: { goal }, questions: { operation: operationQ } }, flags);
+  stats.requests++; stats.jevTokens += opRes.usage?.input_tokens || 0;
+  const { ranked, real, stats: pickStats } = await pickRanked(page, goal, flags);
+  stats.requests += pickStats.requests; stats.jevTokens += pickStats.jevTokens;
+  return { operation: opRes.answers.operation.choice, ranked, real, stats };
+}
+
+async function cmdWebRun({ pos, flags }) {
+  const goal = pos.shift();
+  if (!goal) die('usage: flash web run "<goal>" [--session NAME] [--max-steps 8]', 2);
+  const driver = requireDriver();
+  const session = sessionName(flags);
+  const file = pageFile(session);
+  const t0 = Date.now();
+  const maxSteps = num(flags['max-steps'], MAX_STEPS_DEFAULT);
+  const stats = { requests: 0, jevTokens: 0 };
+  const { steps, time } = stepper();
+  const log = [];
+  let acted = 0, noChangeStreak = 0;
+
+  const snap = async () => {
+    const r = driver.snapshot(session);
+    if (!r.ok) die(`flash web run failed: ${r.error}`, 5);
+    writePageFile(file, r.page);
+    return r.page;
+  };
+
+  const finish = (reason) => {
+    audit = { query: goal, session };
+    logRow({ ts: new Date().toISOString(), cmd: 'web-run', project: projectName(process.cwd()), session, provider: provider().name,
+      requests: stats.requests, jev_tokens: stats.jevTokens, saved: 0, steps: acted, stop: reason, ms: Date.now() - t0, ...audit });
+    const foot = `— ${stepsLine(steps)} · ${((Date.now() - t0) / 1000).toFixed(1)}s · jev ${fmtK(stats.jevTokens)} tok (${cost(stats.jevTokens)})`;
+    emit(flags, { goal, session, stop: reason, acted, log }, [...log, `stopped: ${reason}`], foot);
+  };
+
+  let page = await time('snapshot', snap);
+  for (let i = 1; i <= maxSteps; i++) {
+    const r = await time('run-step', () => runStep(page, goal, flags));
+    stats.requests += r.stats.requests; stats.jevTokens += r.stats.jevTokens;
+
+    if (r.operation === 'done') { log.push(`${i}. done`); return finish('done'); }
+    if (r.operation === 'stuck') { log.push(`${i}. stuck`); return finish('stuck'); }
+
+    const match = !!r.real.length && r.ranked[0][0] !== 'none';
+    if (!match) { log.push(`${i}. click: no element matches the goal`); return finish('no-match'); }
+    const [topId, topP] = r.real[0];
+    const p2 = r.ranked[1]?.[1] ?? 0;
+    if (topP < UNSURE_P1 || topP - p2 < UNSURE_MARGIN) { log.push(`${i}. ? unsure @${topId}`); return finish('unsure'); }
+
+    const target = page.refs.find((x) => x.ref === topId);
+    const page2 = await time('freshness-snapshot', snap);
+    const fresh = freshRef(target, page2.refs.find((x) => x.ref === topId));
+    if (!fresh) { log.push(`${i}. stale @${topId}`); return finish('stale'); }
+
+    const risk = await time('risky-check', () => risky(page2, fresh, riskyAsk(flags, stats)));
+    if (risk.risky) { log.push(`${i}. risky @${topId} ${refLabel(fresh)} (${risk.reason})`); return finish('risky'); }
+
+    const act = await time('act', async () => driver.act(session, { kind: 'click', ref: topId }));
+    if (!act.ok) { log.push(`${i}. click failed: ${act.error}`); return finish('act-failed'); }
+
+    const page3 = await time('post-act-snapshot', snap);
+    const changed = page3.url !== page2.url || page3.title !== page2.title || page3.refs.length !== page2.refs.length;
+    noChangeStreak = changed ? 0 : noChangeStreak + 1;
+    acted++;
+    log.push(`${i}. clicked @${topId} ${refLabel(fresh)} · page changed: ${changed ? 'yes' : 'no'}`);
+    if (noChangeStreak >= NO_CHANGE_LIMIT) return finish('no-change');
+    page = page3; // reuse the post-act snapshot as the next step's starting page — no redundant re-snapshot
+  }
+  finish('max-steps');
+}
+
 async function cmdWeb({ pos, flags }) {
   const sub = pos.shift();
   if (sub === 'snapshot') return cmdWebSnapshot({ pos, flags });
   if (sub === 'pick') return cmdWebPick({ pos, flags });
   if (sub === 'check') return cmdWebCheck({ pos, flags });
   if (sub === 'click') return cmdWebClick({ pos, flags });
-  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot|pick|check|click`, 2);
+  if (sub === 'run') return cmdWebRun({ pos, flags });
+  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot|pick|check|click|run`, 2);
 }
 
 function cmdSkill() {
