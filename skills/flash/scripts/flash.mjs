@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, UNSURE_P1, UNSURE_MARGIN } from './web.mjs';
+import { agentBrowser, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, UNSURE_P1, UNSURE_MARGIN, risky } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1083,16 +1083,22 @@ Tokens saved by command, project and day, read from ~/.flash/history.jsonl. Read
 --history lists the last N runs with what was asked and where Jev pointed, --plain drops the banner,
 --json prints the raw history (query, inputs, result ids/lines/scores; never file content),
 --md prints a Markdown report: flash gain --md > flash-savings.md`,
-  web: `flash web <snapshot|pick|check> [--session NAME]
+  web: `flash web <snapshot|pick|check|click> [--session NAME]
 Drive a browser through an adapter (agent-browser today) so Claude never reads the raw page.
   snapshot            capture the current page to ~/.flash/web/<session>/page.json, one summary line
   pick "<intent>"     choose the one element that best satisfies intent; never acts
   check "<question>"  yes/no judgement over the page's url, title and visible text
+  click "<intent>"    pick, verify it's still there and not risky, click it, report what changed
 Pick prints the top choice with its probability, up to two runner-ups, and either the exact driver
 command to act on it or "? unsure: read <page.json> lines a-b" when confidence is low (top p < 0.85
 or margin to the runner-up < 0.2, tuned in Task 7b) — read exactly those lines yourself rather than the whole file.
 Check prints "0.93 yes" (or "no"), labelled "? borderline" within --band of --threshold (defaults
 0.5/0.15, same as filter).
+Click snapshots itself, picks, re-snapshots to check the chosen element hasn't gone stale (its own
+role/name/enclosing text unchanged — unrelated page churn is ignored), runs a separate risky-action
+check (a keyword/role backstop plus a Jev noul), then clicks and re-snapshots once more to report
+what changed: "clicked @e852 link \"…\" · page changed: url|title|elements". Unsure, stale or risky
+stops before acting and never retries. Prints each step's own wall time.
 Every call uses an isolated browser session, flash-<session> (default: this git project's name),
 never agent-browser's shared default session. Needs agent-browser on PATH, or FLASH_AGENT_BROWSER
 set to a command that runs it (e.g. "npx -y agent-browser").`,
@@ -1119,7 +1125,7 @@ Commands:
   find      locate the matching lines inside large files
   search    find the relevant files in a repo, folder by folder, with their source
   ask       one judgment over one document, or a raw spec.json request
-  web       drive a browser through an adapter (snapshot today; pick/check/click/run to come)
+  web       drive a browser through an adapter (snapshot/pick/check/click today; run to come)
   setup     save and verify a key, pick the default provider
   status    check the key, show lifetime savings
   gain      savings by command, project and day
@@ -1171,17 +1177,20 @@ function requireDriver() {
   return driver;
 }
 
+function writePageFile(file, page) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(page, null, 2), { mode: 0o600 });
+  try { fs.chmodSync(file, 0o600); } catch {}
+}
+
 async function cmdWebSnapshot({ flags }) {
   const driver = requireDriver();
   const session = sessionName(flags);
   const t0 = Date.now();
   const r = driver.snapshot(session);
   if (!r.ok) die(`flash web snapshot failed: ${r.error}`, 5);
-  const file = pageFile(session);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(r.page, null, 2), { mode: 0o600 });
-  try { fs.chmodSync(file, 0o600); } catch {}
-  console.log(`snapshot saved: ${file} · ${r.page.url} · "${r.page.title}" · ${r.page.refs.length} elements`);
+  writePageFile(pageFile(session), r.page);
+  console.log(`snapshot saved: ${pageFile(session)} · ${r.page.url} · "${r.page.title}" · ${r.page.refs.length} elements`);
   logRow({ ts: new Date().toISOString(), cmd: 'web-snapshot', project: projectName(process.cwd()), session,
     items: r.page.refs.length, requests: 0, jev_tokens: 0, saved: 0, ms: Date.now() - t0 });
 }
@@ -1205,13 +1214,15 @@ function webFooter(t0, cmd, session, page, stats, outText) {
 
 const PICK_CHUNK = 150;
 
-async function cmdWebPick({ pos, flags }) {
-  const intent = pos.shift();
-  if (!intent) die('usage: flash web pick "<intent>" [--session NAME]', 2);
-  const { session, file, page } = loadPage(flags);
-  const t0 = Date.now(), model = modelName(flags);
+// Shared by pick, click and run: ranks `page.refs` (+`none`) by how well they satisfy `intent`,
+// chunking above PICK_CHUNK refs (`find`'s merge pattern: per-chunk choice + `exists` noul, scaled
+// and merged). Returns { ranked, real, stats }: `ranked` is [[ref|'none', p], ...] sorted desc
+// (only the unchunked path can return 'none' inside it — the chunked path already drops it, same
+// asymmetry as before this was factored out); `real` is `ranked` with 'none' filtered out.
+async function pickRanked(page, intent, flags) {
+  const model = modelName(flags);
   const stats = { requests: 0, jevTokens: 0 };
-  let ranked; // [[ref|'none', score], ...] sorted desc
+  let ranked;
   if (page.refs.length <= PICK_CHUNK) {
     const body = { model, state: { intent }, questions: { pick: {
       type: 'choice',
@@ -1236,7 +1247,15 @@ async function cmdWebPick({ pos, flags }) {
     }), num(flags.concurrency, 16));
     ranked = perChunk.flat().sort((a, b) => b[1] - a[1]);
   }
-  const real = ranked.filter(([id]) => id !== 'none');
+  return { ranked, real: ranked.filter(([id]) => id !== 'none'), stats };
+}
+
+async function cmdWebPick({ pos, flags }) {
+  const intent = pos.shift();
+  if (!intent) die('usage: flash web pick "<intent>" [--session NAME]', 2);
+  const { session, file, page } = loadPage(flags);
+  const t0 = Date.now();
+  const { ranked, real, stats } = await pickRanked(page, intent, flags);
   const byRef = Object.fromEntries(page.refs.map((r) => [r.ref, r]));
   const lines = [];
   const match = !!real.length && ranked[0][0] !== 'none';
@@ -1281,12 +1300,106 @@ async function cmdWebCheck({ pos, flags }) {
   emit(flags, { question, p, answer, borderline }, [line], foot);
 }
 
+// Per-step wall time, shared by click and run (the whole point of both is speed — plan.md): every
+// driver/Jev call is timed and reported, not just the total. Returns { steps, time(name, fn) }.
+function stepper() {
+  const steps = [];
+  return { steps, time: async (name, fn) => { const s = Date.now(); const r = await fn(); steps.push([name, Date.now() - s]); return r; } };
+}
+
+const stepsLine = (steps) => steps.map(([n, ms]) => `${n} ${ms}ms`).join(' · ');
+
+// Per-element freshness (plan.md): before any act, the target ref must still exist in the fresh
+// snapshot with the same role, name and enclosing container text. Unrelated churn elsewhere on the
+// page (an ad, a counter, a timestamp) never aborts — only a changed ref, or its own context, does.
+function freshRef(before, after) {
+  if (!after || after.role !== before.role || after.name !== before.name || after.context !== before.context) return null;
+  return after;
+}
+
+// Builds the injected `ask` for web.mjs's risky(): a separate noul call about the one chosen target,
+// never the fan-out that picked it (plan.md). Carries the untrusted-data note; judges only `target`.
+function riskyAsk(flags, stats) {
+  return async (page, ref) => {
+    const body = { model: modelName(flags), state: { url: page.url, title: page.title,
+      target: { element: ref.name || ref.role, role: ref.role, value: ref.value, context: ref.context } },
+      questions: { risky: { type: 'noul', instructions: { question:
+        'Would acting on `target` (clicking it, or submitting whatever value it already holds) perform a ' +
+        'mutating, committing or hard-to-undo action — a purchase, payment, deletion, sending, posting, ' +
+        'publishing, subscribing/unsubscribing, signing or accepting terms? Judge only `target`, not the rest of the page.',
+        untrusted: UNTRUSTED_NOTE } } } };
+    const res = await decide(body, flags);
+    stats.requests++; stats.jevTokens += res.usage?.input_tokens || 0;
+    return res.answers.risky.noul;
+  };
+}
+
+async function cmdWebClick({ pos, flags }) {
+  const intent = pos.shift();
+  if (!intent) die('usage: flash web click "<intent>" [--session NAME]', 2);
+  const driver = requireDriver();
+  const session = sessionName(flags);
+  const file = pageFile(session);
+  const t0 = Date.now();
+  const stats = { requests: 0, jevTokens: 0 };
+  const { steps, time } = stepper();
+
+  const snap = async () => {
+    const r = driver.snapshot(session);
+    if (!r.ok) die(`flash web click failed: ${r.error}`, 5);
+    writePageFile(file, r.page);
+    return r.page;
+  };
+
+  const finish = (line, extra) => {
+    audit = { query: intent, session };
+    logRow({ ts: new Date().toISOString(), cmd: 'web-click', project: projectName(process.cwd()), session, provider: provider().name,
+      requests: stats.requests, jev_tokens: stats.jevTokens, saved: 0, steps, ms: Date.now() - t0, ...extra, ...audit });
+    const foot = `— ${stepsLine(steps)} · ${((Date.now() - t0) / 1000).toFixed(1)}s · jev ${fmtK(stats.jevTokens)} tok (${cost(stats.jevTokens)})`;
+    emit(flags, { intent, session, steps: steps.map(([n, ms]) => ({ step: n, ms })), ...extra }, [line], foot);
+  };
+
+  const page1 = await time('snapshot', snap);
+  const { ranked, real, stats: pickStats } = await time('pick', () => pickRanked(page1, intent, flags));
+  stats.requests += pickStats.requests; stats.jevTokens += pickStats.jevTokens;
+
+  const byRef1 = Object.fromEntries(page1.refs.map((r) => [r.ref, r]));
+  const match = !!real.length && ranked[0][0] !== 'none';
+  if (!match) return finish(`(no element on the page matches "${clip(intent, 80)}")`, { acted: false, stop: 'no-match' });
+
+  const [topId, topP] = real[0];
+  const p2 = ranked[1]?.[1] ?? 0;
+  if (topP < UNSURE_P1 || topP - p2 < UNSURE_MARGIN) {
+    const span = refLineSpan(fs.readFileSync(file, 'utf8'), topId);
+    return finish(`? unsure: read ${file}${span ? ` lines ${span[0]}-${span[1]}` : ''}`, { acted: false, stop: 'unsure', ref: topId });
+  }
+
+  const target = byRef1[topId];
+  const page2 = await time('freshness-snapshot', snap);
+  const fresh = freshRef(target, page2.refs.find((r) => r.ref === topId));
+  if (!fresh) return finish(`stale: @${topId} ${refLabel(target)} changed before acting — re-run pick`, { acted: false, stop: 'stale', ref: topId });
+
+  const risk = await time('risky-check', () => risky(page2, fresh, riskyAsk(flags, stats)));
+  if (risk.risky) return finish(`risky: stopped before clicking @${topId} ${refLabel(fresh)} (${risk.reason})`, { acted: false, stop: 'risky', ref: topId });
+
+  const act = await time('act', async () => driver.act(session, { kind: 'click', ref: topId }));
+  if (!act.ok) return finish(`click failed: ${act.error}`, { acted: false, stop: 'act-failed', ref: topId });
+
+  const page3 = await time('post-act-snapshot', snap);
+  const changed = [];
+  if (page3.url !== page2.url) changed.push('url');
+  if (page3.title !== page2.title) changed.push('title');
+  if (page3.refs.length !== page2.refs.length) changed.push('elements');
+  finish(`clicked @${topId} ${refLabel(fresh)} · page changed: ${changed.join('|') || 'none'}`, { acted: true, ref: topId, changed });
+}
+
 async function cmdWeb({ pos, flags }) {
   const sub = pos.shift();
   if (sub === 'snapshot') return cmdWebSnapshot({ pos, flags });
   if (sub === 'pick') return cmdWebPick({ pos, flags });
   if (sub === 'check') return cmdWebCheck({ pos, flags });
-  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot|pick|check`, 2);
+  if (sub === 'click') return cmdWebClick({ pos, flags });
+  die(`unknown "flash web ${sub || ''}". Use: flash web snapshot|pick|check|click`, 2);
 }
 
 function cmdSkill() {

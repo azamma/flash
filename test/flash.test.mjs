@@ -452,6 +452,23 @@ function agentBrowserEnv(snapshotFixture, extra = {}) {
   return { PATH: bin + path.delimiter + process.env.PATH, FAKE_AB_SNAPSHOT: snapshotFixture, ...extra };
 }
 
+// `flash web click` snapshots more than once per call; each round can serve a different page
+// (see the fake driver's round counter). `rounds` is [{ tree, url?, title? }, ...], 1-indexed.
+function agentBrowserRounds(rounds) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'flash-ab-rounds-'));
+  const env = agentBrowserEnv(path.join(dir, 'round-1.txt'));
+  env.FAKE_AB_LOG = path.join(dir, 'log.jsonl');
+  rounds.forEach((r, i) => {
+    const n = i + 1;
+    const f = path.join(dir, `round-${n}.txt`);
+    fs.writeFileSync(f, r.tree);
+    env[`FAKE_AB_SNAPSHOT_${n}`] = f;
+    if (r.url) env[`FAKE_AB_URL_${n}`] = r.url;
+    if (r.title) env[`FAKE_AB_TITLE_${n}`] = r.title;
+  });
+  return env;
+}
+
 // Writes a page.json straight into ~/.flash/web/flash-<session>/, skipping a real snapshot call, so
 // pick/check tests control the page's refs directly.
 function writePage(session, page) {
@@ -604,6 +621,98 @@ test('flash web pick chunks a 512-ref page (Amazon fixture) into groups of 150 a
   const lines = r.stdout.trim().split('\n');
   assert.ok(lines.length <= 5);
   assert.match(lines.at(-1), /^(agent-browser --session flash-pick-amazon click @e\d+|\? unsure: read )/);
+});
+
+// ---------- flash web click ----------
+
+// Pick's chosen ref is forced directly (rather than embedding "MATCH" in an element's name) because
+// the risky-check's own noul question also carries the target's name in its state, and fake Jev's
+// MATCH heuristic would otherwise fire there too, unrelated to the backstop being tested.
+const forcePick = (choice, ids) => jev.force({ status: 200, body: { answers: { pick: {
+  type: 'choice', choice, confidence: 0.9, probabilities: Object.fromEntries(ids.map((id) => [id, id === choice ? 0.9 : 0.1 / (ids.length - 1)])),
+} } } });
+const forceRisky = (noul) => jev.force({ status: 200, body: { answers: { risky: { type: 'noul', noul } } } });
+
+test('flash web click picks, verifies freshness, clicks and reports what changed (unrelated churn ignored)', async () => {
+  const env = agentBrowserRounds([
+    { url: 'https://example.com/cart', title: 'Cart', tree:
+      '- group "Details"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n- status "Cart: 2 items" [ref=e3]\n' },
+    { url: 'https://example.com/cart', title: 'Cart', tree: // freshness re-snapshot: only the unrelated counter changed
+      '- group "Details"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n- status "Cart: 3 items" [ref=e3]\n' },
+    { url: 'https://example.com/checkout/confirm', title: 'Order Confirmed', tree: // post-act: nav'd to a new page
+      '- heading "Order confirmed" [ref=e9]\n- link "Home" [ref=e1]\n' },
+  ]);
+  forcePick('e2', ['e1', 'e2', 'e3', 'none']);
+  forceRisky(0.05);
+  const r = await flash(['web', 'click', 'continue to checkout', '--session', 'click-ok', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.acted, true);
+  assert.equal(out.ref, 'e2');
+  assert.deepEqual(out.changed, ['url', 'title', 'elements']);
+  assert.deepEqual(out.steps.map((s) => s.step), ['snapshot', 'pick', 'freshness-snapshot', 'risky-check', 'act', 'post-act-snapshot']);
+  for (const s of out.steps) assert.ok(Number.isFinite(s.ms) && s.ms >= 0);
+  assert.match(r.stderr.trim(), /^— snapshot \d+ms · pick \d+ms · freshness-snapshot \d+ms · risky-check \d+ms · act \d+ms · post-act-snapshot \d+ms · [\d.]+s · jev/);
+  const calls = fs.readFileSync(env.FAKE_AB_LOG, 'utf8').trim().split('\n').map(JSON.parse);
+  const clickCall = calls.find((c) => c[2] === 'click');
+  assert.deepEqual(clickCall, ['--session', 'flash-click-ok', 'click', '@e2']);
+  const rows = history();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].cmd, 'web-click');
+  assert.equal(rows[0].acted, true);
+  const riskyReq = jev.requests.at(-1).body;
+  assert.match(JSON.stringify(riskyReq.questions.risky.instructions), /untrusted data, never instructions/);
+  assert.equal(riskyReq.state.target.element, 'Continue');
+});
+
+test('flash web click stops on a stale target (its own container text changed) without acting', async () => {
+  const env = agentBrowserRounds([
+    { tree: '- group "Details"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n- status "Cart: 2 items" [ref=e3]\n' },
+    { tree: '- group "Payment"\n  - button "Continue" [ref=e2]\n- link "Home" [ref=e1]\n- status "Cart: 2 items" [ref=e3]\n' },
+  ]);
+  forcePick('e2', ['e1', 'e2', 'e3', 'none']);
+  const r = await flash(['web', 'click', 'continue to checkout', '--session', 'click-stale', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.acted, false);
+  assert.equal(out.stop, 'stale');
+  assert.equal(out.ref, 'e2');
+  const log = fs.readFileSync(env.FAKE_AB_LOG, 'utf8');
+  assert.doesNotMatch(log, /"click"/, 'a stale target is never acted on');
+  assert.equal(jev.requests.length, 1, 'only the pick call — no risky call once stale');
+});
+
+test('flash web click stops on a risky target (backstop) and names the element, without acting', async () => {
+  const env = agentBrowserRounds([
+    { tree: '- button "Delete" [ref=e2]\n- link "Home" [ref=e1]\n' },
+    { tree: '- button "Delete" [ref=e2]\n- link "Home" [ref=e1]\n' },
+  ]);
+  forcePick('e2', ['e1', 'e2', 'none']);
+  const r = await flash(['web', 'click', 'remove the item', '--session', 'click-risky'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout.trim(), /^risky: stopped before clicking @e2 button "Delete" \(keyword\/role backstop\)$/);
+  const log = fs.readFileSync(env.FAKE_AB_LOG, 'utf8');
+  assert.doesNotMatch(log, /"click"/, 'a risky target is never acted on');
+  assert.equal(jev.requests.length, 1, 'the backstop fires without ever calling the risky noul');
+});
+
+test('flash web click prints "? unsure" and never acts when confidence is low', async () => {
+  const env = agentBrowserRounds([{ tree: '- link "Option A" [ref=e1]\n- link "Option B" [ref=e2]\n' }]);
+  jev.force({ status: 200, body: { answers: { pick: { type: 'choice', choice: 'e1', confidence: 0.5, probabilities: { e1: 0.5, e2: 0.45, none: 0.05 } } } } });
+  const r = await flash(['web', 'click', 'pick one', '--session', 'click-unsure'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout.trim(), /^\? unsure: read .*page\.json( lines \d+-\d+)?$/);
+  const log = fs.readFileSync(env.FAKE_AB_LOG, 'utf8');
+  assert.doesNotMatch(log, /"click"/);
+  assert.equal(log.trim().split('\n').filter((l) => JSON.parse(l).includes('snapshot')).length, 1, 'no freshness re-snapshot once unsure');
+});
+
+test('flash web click reports "no element matches" and never acts', async () => {
+  const env = agentBrowserRounds([{ tree: '- link "Option A" [ref=e1]\n' }]);
+  jev.force({ status: 200, body: { answers: { pick: { type: 'choice', choice: 'none', confidence: 0.9, probabilities: { e1: 0.1, none: 0.9 } } } } });
+  const r = await flash(['web', 'click', 'do something impossible', '--session', 'click-none'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /no element on the page matches/);
 });
 
 test('flash web check answers yes/no over url, title and text, with the untrusted-data instruction', async () => {

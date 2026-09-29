@@ -100,9 +100,9 @@ with code backstop, untrusted-page instruction, secrets out of Jev and argv, ado
 ### Task 9: `flash web click "<intent>"`
 **Description:** pick → re-snapshot → per-element freshness (ref, role, name, container text unchanged) → risky gate → act → re-snapshot → `clicked @e852 link "…" · page changed: url|title|elements`. Unsure, stale or risky returns to Claude without acting. Never retries. One history row per action via `logRow`.
 **Acceptance criteria:**
-- [ ] Unrelated page churn does not abort; a changed container text does.
-- [ ] Risky target stops and names the element.
-- [ ] Step latency logged; target ≤ 2 s outside page load.
+- [x] Unrelated page churn does not abort; a changed container text does.
+- [x] Risky target stops and names the element.
+- [x] Step latency logged; target ≤ 2 s outside page load.
 **Verification:** `npm test` with a fake driver recording calls; live run on Wikipedia search.
 **Dependencies:** 8 · **Files:** `web.mjs`, `flash.mjs`, tests · **Scope:** M
 
