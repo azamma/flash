@@ -30,8 +30,12 @@ const setRound = (n) => roundFile && fs.writeFileSync(roundFile, String(n));
 const page = (n) => JSON.parse(fs.readFileSync(process.env[`FAKE_BH_PAGE_${n}`] || process.env.FAKE_BH_PAGE, 'utf8'));
 
 let out;
-if (cmd.op === 'init') {
-  out = { ok: true };
+// Mirrors the real glue's tab pin: every op but init must carry the tab id init handed back.
+// FAKE_BH_TAB_GONE simulates that tab having been closed underneath the run.
+if (cmd.op !== 'init' && (cmd.tab !== 'fake-tab-1' || process.env.FAKE_BH_TAB_GONE === '1')) {
+  out = { ok: false, error: 'flash-owned tab is gone; start a new run' };
+} else if (cmd.op === 'init') {
+  out = { ok: true, tab: 'fake-tab-1' };
 } else if (cmd.op === 'snapshot') {
   out = { ok: true, page: page(round()) };
 } else if (cmd.op === 'marker') {

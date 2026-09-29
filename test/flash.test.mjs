@@ -879,6 +879,23 @@ test('flash web run acts on the argmax for a plain nav link even when Jev is spl
   assert.match(JSON.parse(r.stdout).log[0], /^1\. clicked @n4 link "CARTELERA"/);
 });
 
+test('flash web run only ever acts on the tab it created: every op carries its tab id, and a gone tab stops the run', async () => {
+  const refs = [clickRef('n2', 'Continue')];
+  const env = bhEnv([{ refs }, { refs, url: 'https://example.com/b', title: 'B' }]);
+  forceRunStep({ click: ['n2'] }, 'click', 'n2');
+  forceRisky(0.05);
+  forceRunStep({ click: ['n2'] }, 'done');
+  const r = await flash(['web', 'run', 'go on', '--session', 'run-tab', '--driver', 'bh', '--json'], { env });
+  assert.equal(r.code, 0, r.stderr);
+  const ops = fs.readFileSync(env.FAKE_BH_LOG, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  for (const o of ops.filter((o) => o.op !== 'init')) assert.equal(o.tab, 'fake-tab-1', `${o.op} is pinned to the run's own tab`);
+
+  const env2 = bhEnv([{ refs }]);
+  const r2 = await flash(['web', 'run', 'go on', '--session', 'run-tab-gone', '--driver', 'bh', '--json'], { env: { ...env2, FAKE_BH_TAB_GONE: '1' } });
+  assert.match(r2.stdout + r2.stderr, /flash-owned tab is gone/);
+  assert.ok(!bhOps(env2).includes('dispatch'), 'never dispatches without its own tab');
+});
+
 test('flash web run stops on a stale target (guard changed) without dispatching', async () => {
   const refs1 = [clickRef('n2', 'Continue')];
   const refs2 = [{ ...clickRef('n2', 'Continue'), guard: 'g-n2-changed' }]; // guard moved on before acting

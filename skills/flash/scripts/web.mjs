@@ -523,6 +523,32 @@ export const BH_SNAPSHOT_JS = `(() => {
 // the same call — no separate re-snapshot.
 export const BH_PY_GLUE = `import json, os, sys, time
 
+# The daemon's "attached tab" is global: another browser-harness user, a concurrent run or a tab the
+# user is on can be attached at any moment. So this glue never uses it: it opens its own CDP session
+# on the tab this run created (SID) and routes every page-level call through it. Target.*/Browser.*
+# stay on the browser connection.
+SID = None
+_raw_cdp = cdp
+def cdp(method, session_id=None, **params):
+    if session_id is None and SID and not method.startswith(('Target.', 'Browser.')): session_id = SID
+    return _raw_cdp(method, session_id=session_id, **params)
+
+def js(expression, target_id=None):
+    r = cdp('Runtime.evaluate', expression=expression, returnByValue=True, awaitPromise=True)
+    if r.get('exceptionDetails'): raise RuntimeError('js: ' + str(r['exceptionDetails'].get('text')))
+    return r.get('result', {}).get('value')
+
+def wait_for_load(timeout=10.0):
+    end = time.time() + timeout
+    while time.time() < end:
+        if js('document.readyState') == 'complete': return True
+        time.sleep(0.2)
+    return False
+
+def _attach(tab):
+    global SID
+    SID = _raw_cdp('Target.attachToTarget', targetId=tab, flatten=True)['sessionId']
+
 def _snapshot():
     return js(SNAPSHOT_JS)
 
@@ -564,19 +590,32 @@ def _select_js(node, value):
 SNAPSHOT_JS = ${JSON.stringify(BH_SNAPSHOT_JS)}
 
 out = {'ok': False, 'error': 'no command executed'}
+op = None
 try:
     cmd = json.loads(open(os.environ['FLASH_BH_CMD']).read())
     op = cmd.get('op')
+    if op != 'init':
+        # The daemon's attached tab is global: another browser-harness user, a paused run or the
+        # user's own tab can be attached now. Every op re-attaches to the tab this run created, and
+        # refuses outright if that tab is gone, rather than acting on whatever tab is current.
+        tab = cmd.get('tab')
+        if not tab or tab not in [t['targetId'] for t in _raw_cdp('Target.getTargets')['targetInfos']]:
+            raise RuntimeError('flash-owned tab is gone; start a new run')
+        _attach(tab)
     if op == 'init':
-        new_tab(cmd['url']) if cmd.get('url') else new_tab()
+        tab = _raw_cdp('Target.createTarget', url='about:blank', background=True)['targetId']
+        _attach(tab)
         # browser.py:26-27's experiment, ported: keep rAF/menus rendering and trusted input landing
         # in this owned background tab without stealing the user's foreground Chrome tab. Live-tested
         # (see NOTICE/plan.md): holds for both nav clicks and form dispatch, so bringToFront is no
         # longer called per dispatch/scroll -- only once here, for the tab's very first paint.
         cdp('Emulation.setFocusEmulationEnabled', enabled=True)
         cdp('Page.bringToFront')
-        if cmd.get('url'): wait_for_load(10)
-        out = {'ok': True}
+        if cmd.get('url'):
+            cdp('Page.navigate', url=cmd['url'])
+            time.sleep(0.2)
+            wait_for_load(10)
+        out = {'ok': True, 'tab': tab}
     elif op == 'snapshot':
         page = _snapshot()
         out = {'ok': page is not None, 'page': page}
@@ -635,12 +674,16 @@ try:
         time.sleep(0.35)
         out = {'ok': True, 'moved': js('scrollY') != before, 'page': _snapshot()}
     elif op == 'close':
-        close_tab()
+        _raw_cdp('Target.closeTarget', targetId=cmd['tab'])
         out = {'ok': True}
     else:
         out = {'ok': False, 'error': 'unknown op: ' + str(op)}
 except Exception as e:
     out = {'ok': False, 'error': str(e)}
+finally:
+    if SID and op != 'close':
+        try: _raw_cdp('Target.detachFromTarget', sessionId=SID)
+        except Exception: pass
 open(os.environ['FLASH_BH_OUT'], 'w').write(json.dumps(out))
 `;
 
@@ -672,7 +715,14 @@ function bhTmpFiles(session) {
 
 // One `browser-harness` invocation = one command. `BH_TAB_MARKER=0` keeps page titles (and thus
 // our own `title` reads) free of the horse-emoji marker browser-harness prefixes by default.
+// The browser-harness targetId of the tab `init` created for this session. Kept on disk (0600) so a
+// later `--resume` process re-attaches to the same tab; runBh sends it with every other op.
+const bhTabFile = (session) => path.join(path.dirname(pageFile(session)), 'tab.json');
+
 function runBh(session, cmd, opts = {}) {
+  if (cmd.op !== 'init') {
+    try { cmd = { ...cmd, tab: JSON.parse(fs.readFileSync(bhTabFile(session), 'utf8')).tab }; } catch {}
+  }
   const { cmd: bin, pre } = bhCmd();
   const { cmdFile, outFile } = bhTmpFiles(session);
   fs.writeFileSync(cmdFile, JSON.stringify(cmd), { mode: 0o600 });
@@ -706,7 +756,11 @@ const bhInitialized = new Set();
 function bhEnsureInit(session, url) {
   if (bhInitialized.has(session)) return { ok: true };
   const r = runBh(session, { op: 'init', url });
-  if (r.ok) bhInitialized.add(session);
+  if (r.ok) {
+    fs.mkdirSync(path.dirname(bhTabFile(session)), { recursive: true, mode: 0o700 });
+    fs.writeFileSync(bhTabFile(session), JSON.stringify({ tab: r.tab }), { mode: 0o600 });
+    bhInitialized.add(session);
+  }
   return r;
 }
 
@@ -740,7 +794,11 @@ export const browserHarness = {
 
 export function bhInit(session, url) {
   const r = runBh(session, { op: 'init', url });
-  if (r.ok) bhInitialized.add(session);
+  if (r.ok) {
+    fs.mkdirSync(path.dirname(bhTabFile(session)), { recursive: true, mode: 0o700 });
+    fs.writeFileSync(bhTabFile(session), JSON.stringify({ tab: r.tab }), { mode: 0o600 });
+    bhInitialized.add(session);
+  }
   return r;
 }
 
@@ -774,5 +832,7 @@ export function bhMarker(session) {
 
 export function bhClose(session) {
   bhInitialized.delete(session);
-  return runBh(session, { op: 'close' });
+  const r = runBh(session, { op: 'close' });
+  fs.rmSync(bhTabFile(session), { force: true });
+  return r;
 }
