@@ -227,11 +227,123 @@ time, agent-browser call count and total driver time, Jev time, Claude tokens, c
 **Dependencies:** 13 · **Files:** `README.md`, `NOTICE`, `package.json`, `.claude-plugin/plugin.json` · **Scope:** S
 
 ### Checkpoint: Complete
-- [ ] Both gates passed and documented; released.
+- [ ] Both gates passed and documented; released. Superseded for now — Task 13's wall-time gate
+      failed because Claude stayed in the loop between agent-browser calls, so Phase 5 below builds
+      the fast, Claude-out-of-the-loop `run` the user actually wants before Task 14's docs are written.
 
-## Phase 5 (later): browser-harness
+## Phase 5: fast run
 
-### Task 15: browser-harness adapter
-**Description:** Ship jev-ultrafast's `snapshot.js` (MIT, credited); adapter runs it through `browser-harness`, parses into the common format; `act` re-resolves the node, checks occlusion, then `click_at_xy`. Run Task 7's benchmark on it.
-**Verification:** `npm test` with a fake harness; live run.
-**Dependencies:** 14 · **Files:** `web.mjs`, `skills/flash/scripts/snapshot.js`, tests, `NOTICE` · **Scope:** M
+**Renumbering note:** the user's brief called these Tasks 14-18, reusing Task 14's number (already
+taken by "Docs, credit, release" above, still pending) and folding in the old "Phase 5 (later):
+browser-harness" stub (previously Task 15). Smallest sensible fix: this phase's tasks are 15-19;
+they supersede the old browser-harness stub entirely (its `web.mjs`/`snapshot.js`/`NOTICE` goals are
+subsumed by Task 16 below, done in more detail). Task 14 (Docs) stays where it is, still blocked on
+this phase's own gate (Task 19) before it's worth writing.
+
+Why: Task 13 found `flash web` slower than Claude driving agent-browser directly (36.4s vs 23.5s
+median) because Claude stayed in the loop between clicks and every click spawned agent-browser
+(npx, ~2s) three times. jev-ultrafast is fast because there's no Claude in the loop, one persistent
+CDP connection, one in-page atomic snapshot with node identity kept across calls, in-page
+freshness/occlusion checks, and one Jev fan-out per step. This phase ports that shape onto
+`flash web run`, driven by `browser-harness` instead of `agent-browser`: Claude passes the goal once
+and only answers pauses (input needed, unsure, risky, done/stuck).
+
+### Task 15: Persistent fast driver `bh` (browser-harness)
+**Description:** A `bh` adapter in `web.mjs` matching the existing driver contract
+(`name/available/snapshot/act`), plus a fast-path (`bhInit`/`bhResolve`/`bhDispatch`/`bhClose`) used
+only by Task 17's run loop. Investigated two options from the brief: (a) Node's built-in global
+`WebSocket` talking CDP directly to browser-harness's Chrome, or (b) one long-lived
+`browser-harness` process driven over stdin. Neither is literally what's shipped — recorded here,
+not just the commit, because it changes what "persistent" means for this driver: (a) turned out
+infeasible without reverse-engineering browser-harness's own daemon protocol — on this machine
+Chrome's remote-debugging port isn't a plain TCP `--remote-debugging-port` a raw WebSocket can dial
+(no port listening on 9222/9223; the daemon negotiates a native macOS permission sheet, confirmed
+live with `mac-approve`), and (b) isn't supported by the CLI as shipped: `run.py` does
+`sys.stdin.read()` (blocks until the pipe closes) then `exec()`s the result once and exits — there
+is no REPL mode to keep feeding it commands. What browser-harness *does* already give us for free:
+its own daemon holds one persistent CDP connection and the attached tab across separate CLI calls
+(confirmed live: `new_tab()` in one invocation, a later separate invocation still saw the same
+tab). So the actual "persistent" part is the daemon, which already exists; `bh` just talks to it
+with the cheapest possible per-call client instead of agent-browser's ~2s npx spawn. Each call is
+one `browser-harness` invocation (~100-300ms measured, mostly Python startup — no fresh browser or
+CDP handshake) piping in a small fixed Python glue script that reads a JSON command from a temp
+file and writes a JSON result to another (avoids parsing stdout, which can carry an update banner).
+Zero npm dependencies (no WebSocket client needed since browser-harness's Python helpers are the
+transport). Every run creates its own tab via `new_tab("about:blank")` (never `goto_url` on
+whatever tab the daemon last had attached) and closes it on exit; never calls `switch_tab`/
+`list_tabs` on anything else, so the user's other tabs (confirmed live: their signed-in Google
+Calendar tab was sitting right there) are never touched.
+**Acceptance criteria:**
+- [x] `available()` finds `browser-harness` on PATH or `FLASH_BROWSER_HARNESS`, else returns the
+      install hint (same shape as agent-browser's).
+- [x] Every `bh` call creates/uses only its own tab (`new_tab`), never touches another target.
+- [x] Deviation from the brief's two named options justified above and in the commit.
+**Verification:** `npm test` with a fake `browser-harness` on PATH; live smoke test.
+**Dependencies:** 12d · **Files:** `web.mjs`, `plan.md`, `todo.md` · **Scope:** M
+
+### Task 16: In-page snapshot and freshness
+**Description:** Port jev-ultrafast's `snapshot.js` (MIT © 2026 Browser Use; NOTICE) into `web.mjs`
+as `BH_SNAPSHOT_JS`, trimmed to what the common page format and freshness need: the `window.__jevFast`
+node-identity cache (stable ids across calls on the same page instance), password/file/hidden
+excluded entirely (not masked — snapshot.js's own `safe()` filter never puts them in `actions`,
+stricter than the agent-browser adapter's null-value masking), and each ref carrying a short
+enclosing-container text excerpt as `context` (ported from browser.py's `guard()` scope, capped at
+200 chars — the original's 6000-char guard tuple is display-sized for a page, not one ref). The
+pre-act resolve + visible/enabled/occlusion check (connected, not disabled/aria-hidden, on-screen,
+`elementFromPoint` contains it) is ported from browser.py's `browser_operation()` act branch and
+runs in-page via one `Runtime.evaluate`, immediately followed by the real dispatch and one more
+in-page snapshot read — no separate re-snapshot call before acting.
+**Acceptance criteria:**
+- [x] Output refs match the common shape (`ref, role, name, value, state, context`); password/file/
+      hidden inputs never appear.
+- [x] NOTICE credits jev-ultrafast's snapshot.js (MIT © 2026 Browser Use).
+**Verification:** `npm test`.
+**Dependencies:** 15 · **Files:** `web.mjs`, `NOTICE`, tests · **Scope:** M
+
+### Task 17: Fast `run` loop on `bh`
+**Description:** One Jev fan-out per step (`runStep`, unchanged), act by node id, the next step's
+snapshot is the post-act read. Collapses agent-browser's 3 driver round trips per acting step
+(freshness-snapshot, act, post-act-snapshot) to 2 for `bh`: `bhResolve` (fresh in-page snapshot +
+target-still-matches check + occlusion, no dispatch) run concurrently with the risky noul call
+(`Promise.all`) — the noul never gates on the browser and vice versa, and dispatch never happens
+until both are clear — then `bhDispatch` (re-checks freshness, dispatches, returns the new page in
+the same call). Every safety rule from the agent-browser loop carries over unchanged: code backstop
+checked first (never even reaches the noul call if it already fires), untrusted-data instruction on
+every question, mutating act never retried, 3 no-change steps stop the loop, typed input pauses with
+`--resume` reading from stdin, secrets never echoed (Task 16: bh never surfaces a password ref at
+all, so `run` can't pause on one — documented, not a gap: there's nothing to resume), run files 0600
++ 1h expiry (unchanged, already generic), one history row per step (unchanged `logRow`/`finishRun`).
+`--driver bh` selects it; `bh` is the default for `run` when `available()`, agent-browser stays
+available via `--driver agent-browser` and remains the default for `snapshot`/`pick`/`check`/`click`.
+**Acceptance criteria:**
+- [x] `run --driver bh` (or default, when available) uses 2 driver calls per acting step, not 3.
+- [x] Risky noul and `bhResolve` run concurrently; dispatch waits on both.
+- [x] Every stop reason from Task 10/11's loop still reachable on `bh` (unsure, stale, risky,
+      max-steps, no-change, needs-input, done, stuck).
+**Verification:** `npm test`.
+**Dependencies:** 16 · **Files:** `web.mjs`, `flash.mjs`, tests · **Scope:** M
+
+### Task 18: Tests for `bh`
+**Description:** `test/fixtures/web/fake-browser-harness.mjs`, an injectable stand-in for the
+`browser-harness` binary (same file-protocol the real driver uses — reads the JSON command file,
+writes the JSON result file — so no real Python/Chrome needed), scripted per test like the existing
+`agentBrowserRounds` fixture. Covers: pause on `type` + `--resume` continuing the same run, a risky
+stop (backstop and noul), a stale node (freshness fails at `bhResolve` and again at `bhDispatch`),
+and occlusion refusal (a covered element resolves to `stale`).
+**Acceptance criteria:**
+- [x] All four scenarios covered; `npm test` green.
+**Verification:** `npm test`.
+**Dependencies:** 17 · **Files:** `test/fixtures/web/fake-browser-harness.mjs`, `test/flash.test.mjs`, `test/web.test.mjs` · **Scope:** M
+
+### Task 19: Speed benchmark (gate)
+**Description:** Rerun `bench/web/e2e.mjs` with the same 8 tasks plus 4 new longer harmless tasks
+(5-8 steps each). Arms: (A) `claude -p --model sonnet` driving `browser-harness` directly (fair
+baseline on the same driver as the fast path); (B) the same Claude instructed to call
+`flash web run "<goal>"` once and only answer pauses. Never log in, submit data, buy, post or
+delete. Independent URL/title checkers in code (not an LLM judge). Records success, wall time,
+Claude turns, driver time, Jev time, tokens, cost, written into `bench/web/E2E.md` next to the
+Task 13 table.
+**Acceptance criteria:**
+- [ ] Gate computed (not decided): success not lower, median wall time lower, no harmful action.
+**Verification:** run it; review `bench/web/E2E.md` with the user.
+**Dependencies:** 18 · **Files:** `bench/web/*` · **Scope:** M

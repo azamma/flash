@@ -125,3 +125,31 @@ A new driver = one new object; commands never branch on the driver.
 ## Open Questions
 
 - None blocking. Revisit the risky-action wording after the first `run` benchmarks.
+
+## Decisions (Phase 5, fast run, 2026-09-29)
+
+- **Task 13 showed the real bottleneck was Claude, not Jev.** `flash web` made ~2x agent-browser's
+  own round trips per task because every `click`/`run` step re-snapshots for freshness and again
+  after acting — and Claude called it step by step instead of handing over the whole goal. Phase 5
+  fixes both: a persistent `bh` driver (fewer, cheaper round trips) and a `run` loop Claude calls
+  once (jev-ultrafast's shape: no Claude in the loop between steps).
+- **`bh` driver is browser-harness, not a raw CDP WebSocket.** The brief offered two options; neither
+  shipped as literally described — see Task 15's note. browser-harness's own daemon already holds
+  one persistent CDP connection and tab attachment across separate CLI calls; `bh` reuses that
+  instead of reimplementing it, at the cost of a small per-call Python-startup overhead (~100-300ms
+  measured) instead of a true zero-overhead persistent process. Revisit if that overhead ever shows
+  up as the bottleneck in a future benchmark.
+- **Password/file/hidden fields are excluded on `bh`, not masked.** jev-ultrafast's `snapshot.js`
+  never puts them in `actions` at all (stricter than the agent-browser adapter's null-value
+  masking). Consequence: `run --driver bh` can't pause on a password field the way `--driver
+  agent-browser` does (Task 11) — there's nothing to resume, by construction, not a gap.
+  `flash web run` on a login page with `bh` will not see the password box; use agent-browser for
+  flows that need it, or extend `bh`'s snapshot later if that's wanted.
+- **Isolation is per-run, not per-session, for `bh`.** agent-browser's `--session` gives each Flash
+  session (git project) its own browser instance. browser-harness has one local daemon; `bh` owns
+  exactly the tab it creates for one `run`/`click` invocation and closes it on exit, but doesn't
+  keep a session-scoped tab alive across separate `flash web` calls the way agent-browser does.
+  Two concurrent `bh` runs from different sessions on the same machine would race on the daemon's
+  "last attached tab." Acceptable for now (flash web's real use is one active browsing task at a
+  time); noted as a known limitation rather than solved, since solving it means either a
+  browser-harness feature request (named local daemons) or building the isolation ourselves.

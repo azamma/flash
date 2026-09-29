@@ -62,8 +62,17 @@ Derived parts: flash.mjs's validChoice (ported from jev_ultrafast/model.py's
 validate_choice); the risky-action keyword backstop and the per-element
 freshness check planned for `flash web click`/`run` (jev_ultrafast/browser.py,
 jev_ultrafast/questions.py); the hotel fixture used in bench/web
-(jev_ultrafast/static/fixture.html). web.mjs's own tree parser and adapter are
-original code, not copied from snapshot.js.
+(jev_ultrafast/static/fixture.html). web.mjs's agent-browser tree parser and
+adapter are original code, not copied from snapshot.js.
+
+The `bh` driver's `BH_SNAPSHOT_JS` (web.mjs, Phase 5 Task 16) is a trimmed port of
+jev_ultrafast/snapshot.js: the `window.__jevFast` node-identity cache, the
+safe/visible/name/role element classification, and the visible-text scan are
+carried over near-verbatim; the guard-tuple/page-key/marker/fingerprint
+machinery was dropped in favor of web.mjs's existing role/name/context
+freshness check (freshRef). The pre-act resolve + visible/enabled/occlusion
+check (web.mjs's bh glue script) is a port of jev_ultrafast/browser.py's
+`browser_operation()` act branch.
 
 ---
 

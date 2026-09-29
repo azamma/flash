@@ -399,3 +399,309 @@ export async function risky(page, ref, ask) {
   const noul = await ask(page, ref);
   return { risky: noul >= RISKY_NOUL_THRESHOLD, reason: noul >= RISKY_NOUL_THRESHOLD ? 'jev noul' : null, noul };
 }
+
+// ---------- bh driver (Phase 5, Tasks 15-17): browser-harness, persistent daemon, no Claude in the
+// loop between `run` steps. See plan.md's Phase 5 Decisions for why this isn't literally a raw CDP
+// WebSocket or a literal stdin-REPL process (browser-harness's CLI supports neither on this
+// machine) — it's the cheapest client the existing daemon already supports: one short-lived
+// `browser-harness` invocation per call (~100-300ms, no fresh browser/CDP handshake), always
+// against a tab this driver created itself and closes when done.
+
+// jev-ultrafast's snapshot.js (MIT © 2026 Browser Use; NOTICE), trimmed: kept verbatim are the
+// window.__jevFast node-identity cache, the safe/visible/name/role classification and the
+// visible-text scan; dropped are the guard-tuple/page-key/marker/fingerprint machinery (web.mjs
+// already has its own role/name/context freshness check, freshRef, reused here instead) and the
+// scroll/wait pseudo-actions (not used by pick/click/run today). Output refs already match the
+// common page format directly — no Node-side remapping. password/file/hidden inputs are excluded
+// entirely by `safe()`, not masked (stricter than the agent-browser adapter; see plan.md).
+export const BH_SNAPSHOT_JS = `(() => {
+  if (!document.body) return null;
+  const cache = window.__jevFast ||= { ids: new WeakMap(), nodes: new Map(), next: 1 };
+  const identity = e => { if (!cache.ids.has(e)) cache.ids.set(e, cache.next++); const id = cache.ids.get(e); cache.nodes.set(id, e); return id; };
+  for (const [id, e] of cache.nodes) if (!e.isConnected) cache.nodes.delete(id);
+  const safe = e => !['password','file','hidden'].includes(e.type);
+  const visible = e => !e.closest('[aria-hidden=true],[inert]') && e.checkVisibility({checkOpacity:true,checkVisibilityCSS:true});
+  const name = (e, seen = new Set()) => {
+    if (!e || seen.has(e)) return '';
+    seen.add(e);
+    const referenced = (e.getAttribute('aria-labelledby') || '').split(/\\s+/)
+      .map(id => name(document.getElementById(id), seen)).filter(Boolean).join(' ');
+    return referenced || e.getAttribute('aria-label') ||
+      [...(e.labels || [])].map(l => name(l, seen)).filter(Boolean).join(' ') ||
+      (['button','submit','reset'].includes(e.type) ? e.value : '') || e.getAttribute('alt') ||
+      (e.tagName === 'INPUT' ? '' : [...e.childNodes].map(n => n.nodeType === 3 ? n.textContent :
+        n.nodeType === 1 && n.getAttribute('aria-hidden') !== 'true' ? name(n, seen) : '').join(' ').trim()) ||
+      e.getAttribute('title') || e.getAttribute('placeholder') || '';
+  };
+  const roles = ['button','link','checkbox','radio','switch','tab','menuitem','menuitemradio',
+    'option','gridcell','combobox','textbox','searchbox','spinbutton'];
+  const selector = 'a[href],button,input,textarea,select,summary,[contenteditable=true],' +
+    roles.map(role => '[role="' + role + '"]').join(',');
+  const role = e => {
+    const explicit = e.getAttribute('role');
+    if (roles.includes(explicit)) return explicit;
+    if (e.tagName === 'BUTTON' || e.tagName === 'SUMMARY') return 'button';
+    if (e.tagName === 'A') return 'link';
+    if (e.tagName === 'SELECT') return 'combobox';
+    if (e.tagName === 'TEXTAREA' || e.isContentEditable) return 'textbox';
+    if (e.tagName === 'INPUT') {
+      if (['checkbox','radio'].includes(e.type)) return e.type;
+      if (['button','submit','reset','image'].includes(e.type)) return 'button';
+      if (e.type === 'search') return 'searchbox';
+      if (e.type === 'number') return 'spinbutton';
+      if (['text','email','url','tel'].includes(e.type)) return 'textbox';
+    }
+    return null;
+  };
+  const scopeText = e => {
+    const s = e.closest('form,dialog,[role="dialog"],article,li,tr,[role="row"],nav,header,footer,main,section') || e.parentElement;
+    return ((s && s.innerText) || '').trim().slice(0, 200);
+  };
+  const refs = [];
+  for (const e of document.querySelectorAll(selector)) {
+    if (!safe(e) || !visible(e) || e.matches(':disabled') || e.closest('[aria-disabled=true]')) continue;
+    const r = e.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) continue;
+    const rname = role(e);
+    if (!rname) continue;
+    const x = r.x + r.width / 2, y = r.y + r.height / 2;
+    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+    const rlabel = name(e) || rname;
+    const state = [];
+    for (const key of ['checked', 'selected', 'expanded']) {
+      const v = e.getAttribute('aria-' + key);
+      if (v !== null) state.push(key + '=' + v);
+    }
+    if (['checkbox', 'radio'].includes(e.type)) state.push('checked=' + String(e.checked));
+    const context = scopeText(e);
+    const node = identity(e);
+    if (e.tagName === 'SELECT') {
+      const value = [...e.selectedOptions].map(o => o.label || o.value).join(', ');
+      refs.push({ ref: 'n' + node, role: rname, name: rlabel, value, state, context });
+    } else {
+      const value = 'value' in e ? String(e.value) : (e.isContentEditable ? e.innerText.trim() : null);
+      refs.push({ ref: 'n' + node, role: rname, name: rlabel, value, state, context });
+    }
+  }
+  refs.splice(250);
+  const words = [], walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const range = document.createRange(); let node, length = 0;
+  while ((node = walker.nextNode()) && length < 6000) {
+    const value = node.textContent.trim(), parent = node.parentElement;
+    if (!value || !parent || parent.closest('script,style,noscript,template') || !visible(parent)) continue;
+    range.selectNodeContents(node); const r = range.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth) {
+      words.push(value); length += value.length;
+    }
+  }
+  return { url: location.href, title: document.title, text: words.join('\\n').slice(0, 6000), refs };
+})()`;
+
+// One fixed Python program, piped to `browser-harness` on every call (its helpers — new_tab, js,
+// cdp, close_tab — are pre-imported into the exec'd script's globals). Reads one JSON command from
+// FLASH_BH_CMD, writes one JSON result to FLASH_BH_OUT (never parses stdout: browser-harness can
+// print an update banner there). `resolve`/`dispatch` re-run BH_SNAPSHOT_JS fresh, so freshness is
+// checked against the page as it is right now, not a stale earlier read; `dispatch` re-checks it
+// again immediately before touching the DOM (browser.py's `fresh()` re-check, ported), then
+// dispatches and returns the post-act snapshot in the same call — no separate re-snapshot.
+export const BH_PY_GLUE = `import json, os, sys, time
+
+def _snapshot():
+    return js(SNAPSHOT_JS)
+
+def _resolve_js(node):
+    return (
+        "(() => { const e=window.__jevFast && window.__jevFast.nodes.get(%d); "
+        "if (!e || !e.isConnected) return null; "
+        "if (e.matches(':disabled') || e.closest('[aria-disabled=true],[inert]')) return null; "
+        "if (!e.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})) return null; "
+        "const r=e.getBoundingClientRect(), x=r.x+r.width/2, y=r.y+r.height/2; "
+        "if (!r.width||!r.height||x<0||y<0||x>=innerWidth||y>=innerHeight) return null; "
+        "if (!e.contains(document.elementFromPoint(x,y))) return null; "
+        "return {x:x,y:y}; })()"
+    ) % node
+
+def _select_js(node, value):
+    return (
+        "(() => { const e=window.__jevFast.nodes.get(%d); if (!e || e.tagName!=='SELECT') return false; "
+        "const v=%s; const has=[...e.options].some(o=>o.value===v && !o.disabled); "
+        "if (!has) return false; e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); "
+        "e.dispatchEvent(new Event('change',{bubbles:true})); return true; })()"
+    ) % (node, json.dumps(value))
+
+SNAPSHOT_JS = ${JSON.stringify(BH_SNAPSHOT_JS)}
+
+out = {'ok': False, 'error': 'no command executed'}
+try:
+    cmd = json.loads(open(os.environ['FLASH_BH_CMD']).read())
+    op = cmd.get('op')
+    if op == 'init':
+        new_tab(cmd['url']) if cmd.get('url') else new_tab()
+        out = {'ok': True}
+    elif op == 'snapshot':
+        page = _snapshot()
+        out = {'ok': page is not None, 'page': page}
+    elif op in ('resolve', 'dispatch'):
+        page = _snapshot()
+        refs = (page or {}).get('refs', [])
+        target = next((r for r in refs if r.get('ref') == cmd.get('ref')), None)
+        stale = (
+            page is None or target is None or
+            (cmd.get('role') and target.get('role') != cmd.get('role')) or
+            (cmd.get('name') and target.get('name') != cmd.get('name')) or
+            (cmd.get('context') and target.get('context') != cmd.get('context'))
+        )
+        if stale or op == 'resolve':
+            out = {'ok': not stale, 'stale': stale, 'page': page}
+        else:
+            node = int(cmd['ref'][1:])
+            kind = cmd.get('kind')
+            dispatched = False
+            if kind == 'select':
+                dispatched = bool(js(_select_js(node, cmd.get('value', ''))))
+            else:
+                pos = js(_resolve_js(node))
+                if pos is not None:
+                    x, y = pos['x'], pos['y']
+                    for ev in ('mousePressed', 'mouseReleased'):
+                        cdp('Input.dispatchMouseEvent', type=ev, x=x, y=y, button='left', clickCount=1)
+                    if kind == 'fill':
+                        mod = 4 if sys.platform == 'darwin' else 2
+                        cdp('Input.dispatchKeyEvent', type='keyDown', key='a', code='KeyA', modifiers=mod, commands=['selectAll'])
+                        cdp('Input.dispatchKeyEvent', type='keyUp', key='a', code='KeyA', modifiers=mod)
+                        cdp('Input.insertText', text=cmd.get('value', ''))
+                    dispatched = True
+            if not dispatched:
+                out = {'ok': False, 'stale': True, 'page': page}
+            else:
+                time.sleep(0.12)
+                out = {'ok': True, 'stale': False, 'page': _snapshot()}
+    elif op == 'close':
+        close_tab()
+        out = {'ok': True}
+    else:
+        out = {'ok': False, 'error': 'unknown op: ' + str(op)}
+except Exception as e:
+    out = {'ok': False, 'error': str(e)}
+open(os.environ['FLASH_BH_OUT'], 'w').write(json.dumps(out))
+`;
+
+const BH_INSTALL_HINT = 'browser-harness not found on PATH, ~/.local/bin, or FLASH_BROWSER_HARNESS. ' +
+  'Install: https://github.com/browser-use/browser-harness/blob/main/install.md';
+
+let _bhResolved = null;
+function bhCmd() {
+  if (_bhResolved) return _bhResolved;
+  const custom = process.env.FLASH_BROWSER_HARNESS;
+  const candidates = custom ? [custom.trim()] : ['browser-harness', path.join(os.homedir(), '.local', 'bin', 'browser-harness')];
+  for (const c of candidates) {
+    const [cmd, ...pre] = c.split(/\s+/);
+    try {
+      execFileSync(cmd, [...pre, '--version'], { timeout: 10_000, stdio: ['ignore', 'pipe', 'pipe'] });
+      return _bhResolved = { cmd, pre, ok: true };
+    } catch {}
+  }
+  const [cmd, ...pre] = candidates[0].split(/\s+/);
+  return _bhResolved = { cmd, pre, ok: false };
+}
+
+function bhTmpFiles(session) {
+  const dir = path.join(WEB_HOME, session, '.bh');
+  fs.mkdirSync(dir, { recursive: true });
+  const id = crypto.randomBytes(6).toString('hex');
+  return { cmdFile: path.join(dir, `${id}.cmd.json`), outFile: path.join(dir, `${id}.out.json`) };
+}
+
+// One `browser-harness` invocation = one command. `BH_TAB_MARKER=0` keeps page titles (and thus
+// our own `title` reads) free of the horse-emoji marker browser-harness prefixes by default.
+function runBh(session, cmd, opts = {}) {
+  const { cmd: bin, pre } = bhCmd();
+  const { cmdFile, outFile } = bhTmpFiles(session);
+  fs.writeFileSync(cmdFile, JSON.stringify(cmd), { mode: 0o600 });
+  try {
+    execFileSync(bin, pre, {
+      input: BH_PY_GLUE, encoding: 'utf8', timeout: opts.timeout ?? 30_000, stdio: ['pipe', 'ignore', 'pipe'],
+      env: { ...process.env, FLASH_BH_CMD: cmdFile, FLASH_BH_OUT: outFile, BH_TAB_MARKER: '0' },
+    });
+  } catch (e) {
+    return { ok: false, error: (e.stderr || '').toString().trim() || e.message };
+  } finally {
+    try { fs.rmSync(cmdFile, { force: true }); } catch {}
+  }
+  try {
+    const out = JSON.parse(fs.readFileSync(outFile, 'utf8'));
+    fs.rmSync(outFile, { force: true });
+    return out;
+  } catch (e) {
+    return { ok: false, error: `bh: no result written (${e.message})` };
+  }
+}
+
+function toBhPage(raw) {
+  return { driver: 'browser-harness', url: raw?.url || '', title: raw?.title || '', text: raw?.text || '',
+    refs: raw?.refs || [], taken: new Date().toISOString() };
+}
+
+// Isolated tab, created once per session per process (the daemon keeps it attached across our
+// later calls in this same run — see plan.md). Never touches a tab this driver didn't create.
+const bhInitialized = new Set();
+function bhEnsureInit(session, url) {
+  if (bhInitialized.has(session)) return { ok: true };
+  const r = runBh(session, { op: 'init', url });
+  if (r.ok) bhInitialized.add(session);
+  return r;
+}
+
+export const browserHarness = {
+  name: 'bh',
+  available() {
+    return bhCmd().ok ? true : BH_INSTALL_HINT;
+  },
+  snapshot(session) {
+    const init = bhEnsureInit(session);
+    if (!init.ok) return { ok: false, error: init.error || 'browser-harness init failed' };
+    const r = runBh(session, { op: 'snapshot' });
+    if (!r.ok) return { ok: false, error: r.error || 'snapshot failed' };
+    return { ok: true, page: toBhPage(r.page) };
+  },
+  // Plain adapter contract (used by pick/check/click, and by the old click-only loop if selected):
+  // no freshness re-check here (the caller already diffed two of its own snapshot() calls, same
+  // as agent-browser's act()) — just resolve the still-existing node and dispatch.
+  act(session, action) {
+    bhEnsureInit(session);
+    const r = runBh(session, { op: 'dispatch', ref: action.ref, kind: action.kind, value: action.value ?? '' });
+    if (!r.ok) return { ok: false, error: r.stale ? 'stale: element changed or is no longer actionable' : (r.error || 'act failed') };
+    return { ok: true };
+  },
+};
+
+// ---------- fast-path primitives (Task 17's collapsed run loop) ----------
+// Unlike the plain adapter above, these carry the target's role/name/context so `resolve`/
+// `dispatch` do the SAME freshness compare as `freshRef()` (web.mjs/flash.mjs), just done in-page
+// instead of via a second snapshot() round trip.
+
+export function bhInit(session, url) {
+  const r = runBh(session, { op: 'init', url });
+  if (r.ok) bhInitialized.add(session);
+  return r;
+}
+
+export function bhSnapshot(session) {
+  const r = runBh(session, { op: 'snapshot' });
+  return r.ok ? { ok: true, page: toBhPage(r.page) } : { ok: false, error: r.error || 'snapshot failed' };
+}
+
+export function bhResolve(session, ref, target) {
+  const r = runBh(session, { op: 'resolve', ref, role: target.role, name: target.name, context: target.context });
+  return { ok: r.ok, stale: !!r.stale, page: r.page ? toBhPage(r.page) : null, error: r.error };
+}
+
+export function bhDispatch(session, ref, kind, value, target) {
+  const r = runBh(session, { op: 'dispatch', ref, kind, value: value ?? '', role: target.role, name: target.name, context: target.context });
+  return { ok: r.ok && !r.stale, stale: !!r.stale, page: r.page ? toBhPage(r.page) : null, error: r.error };
+}
+
+export function bhClose(session) {
+  bhInitialized.delete(session);
+  return runBh(session, { op: 'close' });
+}
