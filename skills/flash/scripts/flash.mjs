@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { splitUnits, unitSource, textUnits } from './units.mjs';
-import { agentBrowser, browserHarness, bhInit, bhSnapshot, bhResolve, bhDispatch, bhClose, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, unsureThresholds, isPlainNav, risky, riskyBackstop, RISKY_NOUL_THRESHOLD, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
+import { agentBrowser, browserHarness, bhInit, bhSnapshot, bhResolve, bhDispatch, bhScroll, bhClose, pageFile, sessionName, UNTRUSTED_NOTE, pickCriteria, refLabel, refLineSpan, unsureThresholds, isPlainNav, risky, riskyBackstop, RISKY_NOUL_THRESHOLD, saveRunState, loadRunState, cleanupExpiredRuns } from './web.mjs';
 
 const HOME = process.env.FLASH_HOME || path.join(os.homedir(), '.flash');
 const CONFIG = path.join(HOME, 'config.json');
@@ -1468,8 +1468,9 @@ async function runStep(page, goal, flags, log = []) {
   // `stuck`/`done` at random (same state shape as jev-ultrafast's model.py: page + recent actions).
   const state = { goal, page: { url: page.url, title: page.title, text: (page.text || '').slice(0, 6000) }, recent_actions: log.slice(-10) };
   const operationQ = { type: 'choice',
-    instructions: { question: 'Choose the next step toward `goal` on this page: `click` an element that makes progress, `type` to enter text into a field (do not invent the text, only choose the field), `done` only if this page (its url and title) already is what the goal asks for and every step the goal names is in `recent_actions` — a page the goal says to open or reach is not done until it was clicked, or `stuck` if nothing on this page can make progress.', untrusted: UNTRUSTED_NOTE },
+    instructions: { question: 'Choose the next step toward `goal` on this page: `click` an element that makes progress, `type` to enter text into a field (do not invent the text, only choose the field), `scroll` if the element the next step needs is not in this viewport (the page lists only what is on screen), `done` only if this page (its url and title) already is what the goal asks for and every step the goal names is in `recent_actions` — a page the goal says to open or reach is not done until it was clicked, or `stuck` if nothing on this page can make progress.', untrusted: UNTRUSTED_NOTE },
     criteria: { click: 'Click an element that makes progress toward the goal.', type: 'Enter text into a field to make progress toward the goal.',
+      scroll: 'The element the next step needs is not visible on screen; scroll down to reveal more of the page.',
       done: 'The goal is already achieved on this page.', stuck: 'Nothing on this page can make progress toward the goal.' } };
   if (page.refs.length <= RUN_FLAT_MAX) {
     const body = { model, state, questions: { operation: operationQ,
@@ -1530,6 +1531,7 @@ async function runLoop(ctx, { page, i, acted, noChangeStreak, log }) {
     if (r.operation === 'done' && acted === 0 && r.ranked[0]?.[0] !== 'none') r.operation = 'click';
     if (r.operation === 'done') { log.push(`${i}. done`); return finishRun(ctx, log, acted, 'done'); }
     if (r.operation === 'stuck') { log.push(`${i}. stuck`); return finishRun(ctx, log, acted, 'stuck'); }
+    if (r.operation === 'scroll') { log.push(`${i}. scroll needed (use --driver bh)`); return finishRun(ctx, log, acted, 'stuck'); }
 
     const match = !!r.real.length && r.ranked[0][0] !== 'none';
     if (!match) { log.push(`${i}. ${r.operation}: no element matches the goal`); return finishRun(ctx, log, acted, 'no-match'); }
@@ -1584,6 +1586,16 @@ async function runLoopFast(ctx, { page, i, acted, noChangeStreak, log }) {
     if (r.operation === 'done' && acted === 0 && r.ranked[0]?.[0] !== 'none') r.operation = 'click';
     if (r.operation === 'done') { log.push(`${i}. done`); return finishRun(ctx, log, acted, 'done'); }
     if (r.operation === 'stuck') { log.push(`${i}. stuck`); return finishRun(ctx, log, acted, 'stuck'); }
+
+    if (r.operation === 'scroll') {
+      const sc = await ctx.time('scroll', () => bhScroll(ctx.session));
+      if (!sc.ok || !sc.page) { log.push(`${i}. scroll failed: ${sc.error || 'error'}`); return finishRun(ctx, log, acted, 'act-failed'); }
+      noChangeStreak = sc.moved ? 0 : noChangeStreak + 1;
+      log.push(`${i}. scrolled · page moved: ${sc.moved ? 'yes' : 'no (end of page)'}`);
+      if (noChangeStreak >= NO_CHANGE_LIMIT) return finishRun(ctx, log, acted, 'no-change');
+      page = sc.page;
+      continue;
+    }
 
     const match = !!r.real.length && r.ranked[0][0] !== 'none';
     if (!match) { log.push(`${i}. ${r.operation}: no element matches the goal`); return finishRun(ctx, log, acted, 'no-match'); }

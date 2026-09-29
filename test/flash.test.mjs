@@ -749,7 +749,7 @@ test('flash web click reports "no element matches" and never acts', async () => 
 // One `run` step's forced answer: `operation` and `target` together, matching runStep's single
 // fan-out request. `target` is still supplied even for done/stuck (runStep always asks both).
 function forceRun(operation, targetChoice, ids, targetProbs) {
-  const OPS = ['click', 'type', 'done', 'stuck'];
+  const OPS = ['click', 'type', 'scroll', 'done', 'stuck'];
   const opProbs = Object.fromEntries(OPS.map((o) => [o, o === operation ? 0.9 : 0.1 / (OPS.length - 1)]));
   // A single-candidate `ids` (e.g. a page with no refs, just `none`) must get probability 1, not
   // 0.9 — the map below has nothing else to spread the remaining 0.1 across, which would fail
@@ -784,7 +784,7 @@ test('flash web run stops on "stuck" without acting', async () => {
 test('flash web run stops "? unsure" on low confidence without acting', async () => {
   const env = agentBrowserRounds([{ tree: '- link "Option A" [ref=e1]\n- link "Option B" [ref=e2]\n' }]);
   jev.force({ status: 200, body: { answers: {
-    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.9, type: 0.03, done: 0.03, stuck: 0.04 } },
+    operation: { type: 'choice', choice: 'click', confidence: 0.5, probabilities: { click: 0.9, type: 0.03, scroll: 0, done: 0.03, stuck: 0.04 } },
     target: { type: 'choice', choice: 'e1', confidence: 0.5, probabilities: { e1: 0.5, e2: 0.45, none: 0.05 } },
   } } });
   const r = await flash(['web', 'run', 'pick one', '--session', 'run-unsure', '--json'], { env });

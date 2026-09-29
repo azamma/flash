@@ -593,6 +593,12 @@ try:
                         wait_for_load(10)
                         break
                 out = {'ok': True, 'stale': False, 'page': _snapshot()}
+    elif op == 'scroll':
+        if js('document.visibilityState') != 'visible': cdp('Page.bringToFront')
+        before = js('scrollY')
+        cdp('Input.dispatchMouseEvent', type='mouseWheel', x=js('innerWidth')//2, y=js('innerHeight')//2, deltaX=0, deltaY=int(js('innerHeight') * 0.8))
+        time.sleep(0.35)
+        out = {'ok': True, 'moved': js('scrollY') != before, 'page': _snapshot()}
     elif op == 'close':
         close_tab()
         out = {'ok': True}
@@ -716,6 +722,12 @@ export function bhResolve(session, ref, target) {
 export function bhDispatch(session, ref, kind, value, target) {
   const r = runBh(session, { op: 'dispatch', ref, kind, value: value ?? '', role: target.role, name: target.name, context: target.context });
   return { ok: r.ok && !r.stale, stale: !!r.stale, page: r.page ? toBhPage(r.page) : null, error: r.error };
+}
+
+// Snapshots are viewport-only (jev-ultrafast's design), so run needs a way to reveal the rest.
+export function bhScroll(session) {
+  const r = runBh(session, { op: 'scroll' });
+  return { ok: !!r.ok, moved: !!r.moved, page: r.page ? toBhPage(r.page) : null, error: r.error };
 }
 
 export function bhClose(session) {
